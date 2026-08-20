@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Answer Screen - No Results Found</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&amp;family=JetBrains+Mono:wght@500&amp;family=Noto+Sans:wght@400&amp;family=Source+Serif+4:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-tertiary-container": "#e4a38c",
+                        "error-container": "#ffdad6",
+                        "tertiary-container": "#673827",
+                        "on-primary-container": "#84bdb2",
+                        "secondary-fixed-dim": "#ffb77f",
+                        "surface-bright": "#f8faf8",
+                        "on-surface": "#191c1b",
+                        "inverse-primary": "#98d2c7",
+                        "secondary": "#924c00",
+                        "tertiary-fixed-dim": "#fbb79f",
+                        "on-primary-fixed-variant": "#124f47",
+                        "primary-container": "#0e4d45",
+                        "surface-variant": "#e1e3e1",
+                        "on-primary-fixed": "#00201c",
+                        "primary-fixed": "#b4eee2",
+                        "secondary-container": "#fda053",
+                        "tertiary": "#4c2313",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#f0f1ef",
+                        "on-tertiary-fixed": "#341004",
+                        "primary": "#00352f",
+                        "surface-container-low": "#f2f4f2",
+                        "surface-tint": "#2f685f",
+                        "tertiary-fixed": "#ffdbcf",
+                        "surface-container-highest": "#e1e3e1",
+                        "primary-fixed-dim": "#98d2c7",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed": "#ffdcc4",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#6a3a29",
+                        "inverse-surface": "#2e3130",
+                        "on-secondary-fixed": "#2f1500",
+                        "on-secondary-fixed-variant": "#6f3800",
+                        "error": "#ba1a1a",
+                        "surface-container-high": "#e7e8e7",
+                        "outline-variant": "#bfc8c5",
+                        "surface-container": "#edeeec",
+                        "on-background": "#191c1b",
+                        "surface": "#f8faf8",
+                        "outline": "#707976",
+                        "background": "#F7F4EE",
+                        "on-error-container": "#93000a",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface-variant": "#404946",
+                        "on-error": "#ffffff",
+                        "on-secondary-container": "#6f3900",
+                        "surface-dim": "#d9dad9",
+                        "warning": "#B45309",
+                        "archival-border": "#E3DDD2"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px",
+                        "card": "12px",
+                        "input": "8px"
+                    },
+                    spacing: {
+                        "sm": "12px",
+                        "base": "8px",
+                        "lg": "48px",
+                        "md": "24px",
+                        "gutter": "24px",
+                        "max-width": "1200px",
+                        "xs": "4px",
+                        "xl": "80px"
+                    },
+                    fontFamily: {
+                        "headline-lg-mobile": ["\"Source Serif 4\""],
+                        "headline-lg": ["\"Source Serif 4\""],
+                        "body-hindi": ["Noto Sans"],
+                        "display-lg": ["\"Source Serif 4\""],
+                        "caption": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["\"Source Serif 4\""],
+                        "body-md": ["Inter"],
+                        "label-mono": ["JetBrains Mono"]
+                    },
+                    fontSize: {
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "body-hindi": ["18px", { "lineHeight": "30px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "60px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "caption": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "26px", "fontWeight": "400" }],
+                        "label-mono": ["13px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }]
+                    },
+                    boxShadow: {
+                        'ask-bar': '0 4px 20px rgba(18, 33, 46, 0.08)'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background antialiased min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<nav class="bg-surface dark:bg-inverse-surface border-b border-outline-variant dark:border-outline docked full-width top-0 z-50">
+<div class="flex justify-between items-center w-full px-md max-w-max-width mx-auto py-sm">
+<div class="font-headline-lg text-headline-lg font-bold text-primary dark:text-primary-fixed">RTI AI</div>
+<div class="hidden md:flex space-x-lg">
+<a class="text-primary dark:text-primary-fixed border-b-2 border-secondary font-bold pb-1 font-label-mono text-label-mono hover:text-secondary dark:hover:text-secondary-fixed-dim transition-colors opacity-80" href="#">Ask</a>
+<a class="text-on-surface-variant dark:text-surface-variant font-medium font-label-mono text-label-mono hover:text-secondary dark:hover:text-secondary-fixed-dim transition-colors" href="#">Draft Application</a>
+<a class="text-on-surface-variant dark:text-surface-variant font-medium font-label-mono text-label-mono hover:text-secondary dark:hover:text-secondary-fixed-dim transition-colors" href="#">Browse the Act</a>
+<a class="text-on-surface-variant dark:text-surface-variant font-medium font-label-mono text-label-mono hover:text-secondary dark:hover:text-secondary-fixed-dim transition-colors" href="#">Track</a>
+</div>
+<div>
+<button class="text-primary dark:text-primary-fixed hover:text-secondary transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">language</span>
+</button>
+</div>
+</div>
+</nav>
+<!-- Main Content Grid -->
+<main class="flex-grow w-full max-w-max-width mx-auto px-md py-lg grid grid-cols-1 md:grid-cols-12 gap-gutter relative">
+<!-- Left Column (65%) -->
+<section class="md:col-span-8 flex flex-col gap-lg">
+<!-- User Question -->
+<header>
+<h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">
+                    How do I apply for a passport using RTI?
+                </h1>
+</header>
+<!-- Warning Card -->
+<div class="bg-surface-container-lowest border border-warning rounded-card p-md flex flex-col gap-sm">
+<div class="flex items-center gap-sm text-warning">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">warning</span>
+<h2 class="font-headline-md text-headline-md">I couldn't find this in the RTI Act, 2005</h2>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                    This question appears to fall outside the Act's text. I won't guess — here's what I can do instead.
+                </p>
+</div>
+<!-- Alternatives List -->
+<div class="flex flex-col gap-base">
+<button class="bg-surface-container-lowest border border-archival-border rounded-input p-sm flex justify-between items-center hover:bg-surface-container-low transition-colors group">
+<span class="font-body-md text-body-md text-on-surface">Show me the closest related sections</span>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">arrow_forward</span>
+</button>
+<button class="bg-surface-container-lowest border border-archival-border rounded-input p-sm flex justify-between items-center hover:bg-surface-container-low transition-colors group">
+<span class="font-body-md text-body-md text-on-surface">Ask about state-specific RTI rules</span>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">arrow_forward</span>
+</button>
+<button class="bg-surface-container-lowest border border-archival-border rounded-input p-sm flex justify-between items-center hover:bg-surface-container-low transition-colors group">
+<span class="font-body-md text-body-md text-on-surface">Rephrase my question</span>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">arrow_forward</span>
+</button>
+</div>
+</section>
+<!-- Right Column (35%) -->
+<aside class="md:col-span-4 flex flex-col gap-md">
+<!-- Sources Panel -->
+<div class="bg-surface-container-lowest border border-archival-border rounded-card p-md h-full flex flex-col">
+<h3 class="font-headline-md text-headline-md text-primary mb-md pb-xs border-b border-archival-border">Sources used</h3>
+<div class="flex-grow flex flex-col items-center justify-center text-center opacity-70 mt-lg">
+<img alt="Document icon placeholder" class="w-24 h-24 mb-md object-contain opacity-50 grayscale" src="https://lh3.googleusercontent.com/aida/AP1WRLs91LHoz2ztkj9kb3ITNathIjRIyMzsEccrgRcvGOyfLpg8WCQYbLCfni-gFz-JbBC3mhPSRQWigYe-H4_FrZQtZiAI857ouYN2eaSqHE3UYvYs5XK6FgE2CJVLZycCClotupzFPC5eFhPZ-IC9lIHYN-wo25GS-rz7h-qS9A5YEqyzsMSortTaoKmSa_pwwbTAYAVgRbLJtwb1l3Dc5NFS2hzCcpAvrwZftiqCjaFt7bIiRXJr4C8_HnY"/>
+<p class="font-body-md text-body-md text-on-surface-variant">No section crossed the confidence threshold (0.62)</p>
+</div>
+</div>
+</aside>
+</main>
+<!-- Bottom Ask Bar -->
+<div class="sticky bottom-md w-full max-w-max-width mx-auto px-md z-40 mb-lg mt-auto">
+<div class="bg-surface-container-lowest border border-archival-border rounded-card p-sm flex items-center shadow-ask-bar focus-within:border-primary transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant ml-xs mr-sm">search</span>
+<input class="flex-grow bg-transparent border-none focus:ring-0 font-body-md text-body-md text-on-surface placeholder-on-surface-variant outline-none" placeholder="Ask a follow-up..." type="text"/>
+<button class="bg-[#C6742A] text-on-primary rounded-input px-md py-sm font-label-mono text-label-mono hover:opacity-90 transition-opacity flex items-center gap-xs">
+                Send
+                <span class="material-symbols-outlined text-sm">send</span>
+</button>
+</div>
+</div>
+<!-- Footer -->
+<footer class="bg-surface-container-low dark:bg-surface-dim border-t border-outline-variant dark:border-outline full-width bottom-0 mt-lg">
+<div class="flex flex-col md:flex-row justify-between items-center w-full py-lg px-md max-w-max-width mx-auto gap-md">
+<div class="flex flex-col gap-sm">
+<span class="font-headline-md text-headline-md text-on-surface">RTI AI</span>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">© 2024 Statutory AI. This assistant provides guidance based on the RTI Act; it is not legal counsel.</p>
+</div>
+<div class="flex flex-wrap gap-md">
+<a class="font-label-mono text-label-mono text-on-surface-variant dark:text-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors" href="#">Legal Disclaimer</a>
+<a class="font-label-mono text-label-mono text-on-surface-variant dark:text-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors" href="#">Support</a>
+<a class="font-label-mono text-label-mono text-on-surface-variant dark:text-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors" href="#">Privacy Policy</a>
+<a class="font-label-mono text-label-mono text-on-surface-variant dark:text-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors" href="#">Archival Guidelines</a>
+</div>
+</div>
+</footer>
+</body></html>

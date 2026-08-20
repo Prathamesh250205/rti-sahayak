@@ -1,0 +1,129 @@
+<!-- Ported from
+     design/stitch_rti_sahayak_ai_assistant/system_telemetry_modal/code.html.
+     Every tile here is backed by a real, measured value from GET /api/system
+     - see that endpoint for exactly what's measured and how (provider
+     config, the live Chroma collection, the retrieval threshold in force,
+     the startup warm-up duration, the most recent /api/draft call).
+
+     Deliberately dropped from the source, per the same honesty standard
+     applied to browse.html and no_grounding.html:
+       - "Citation Accuracy" and "Grounded Answers" percentage tiles - no
+         ground truth exists anywhere in this codebase to compute either.
+       - The "Retrieval Scores (Last Query)" bar chart - would need a full
+         per-chunk score breakdown this app doesn't track (only a single
+         best-distance scalar is kept).
+       - The terminal-style log strip - fabricated log lines, including a
+         reference to "Cohere Rerank v3", a reranking service this app has
+         never used.
+     Two tiles not in the source were added because the task required them:
+     Grounding Threshold and Warm-up Time. The "Latency" tile became "Last
+     Request", reporting the real most recent call instead of an invented
+     P50 percentile (this app doesn't aggregate latency across requests). -->
+<div class="hidden fixed inset-0 z-50 modal-overlay items-center justify-center p-md" id="telemetry-modal">
+<div class="bg-paper-base border border-paper-border w-full max-w-[720px] shadow-[0_4px_20px_rgba(18,33,46,0.08)] rounded-lg overflow-hidden flex flex-col max-h-[90vh]">
+<div class="flex items-center justify-between p-md border-b border-paper-border bg-white shrink-0">
+<h2 class="font-label-mono text-label-mono text-paper-text uppercase tracking-widest">System Telemetry</h2>
+<button aria-label="Close modal" class="text-on-surface-variant hover:text-paper-text transition-colors flex items-center justify-center w-8 h-8 rounded hover:bg-surface-container-low" id="telemetry-close" type="button">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+<div class="p-md md:p-lg bg-white relative overflow-y-auto">
+<div class="absolute inset-0 grid-bg-pattern pointer-events-none"></div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-md relative z-10" id="telemetry-grid">
+<p class="font-label-mono text-label-mono text-on-surface-variant col-span-full">Loading...</p>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+(function () {
+  var modal = document.getElementById('telemetry-modal');
+  var grid = document.getElementById('telemetry-grid');
+  var closeBtn = document.getElementById('telemetry-close');
+  var triggerBtn = document.getElementById('telemetry-trigger');
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function tile(label, value, extra) {
+    return '<div class="border border-paper-border bg-paper-base p-sm rounded flex flex-col justify-center">'
+      + '<div class="font-label-mono text-[11px] text-on-surface-variant uppercase mb-xs">' + escapeHtml(label) + '</div>'
+      + '<div class="font-label-mono text-sm text-paper-text font-semibold">' + escapeHtml(value) + '</div>'
+      + (extra ? '<div class="font-label-mono text-[10px] text-on-surface-variant mt-1">' + escapeHtml(extra) + '</div>' : '')
+      + '</div>';
+  }
+
+  function loadTelemetry() {
+    grid.innerHTML = '<p class="font-label-mono text-label-mono text-on-surface-variant col-span-full">Loading...</p>';
+    fetch('/api/system')
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error('Request failed with status ' + response.status);
+        }
+        return response.json();
+      })
+      .then(function (data) {
+        var tiles = [];
+
+        if (data.provider) {
+          var fallbackNote = 'Fallback: ' + data.provider.fallback
+            + (data.provider.fallback_configured ? ' (key configured)' : ' (no API key set)');
+          tiles.push(tile('Provider', data.provider.primary + ' · ' + data.provider.model, fallbackNote));
+        }
+        if (typeof data.chunks_indexed === 'number') {
+          tiles.push(tile('Chunks Indexed', String(data.chunks_indexed)));
+        }
+        if (typeof data.sections_indexed === 'number') {
+          tiles.push(tile('Sections Indexed', String(data.sections_indexed)));
+        }
+        if (typeof data.max_relevant_distance === 'number') {
+          tiles.push(tile('Grounding Threshold', data.max_relevant_distance.toFixed(2)));
+        }
+        if (typeof data.warm_up_seconds === 'number') {
+          tiles.push(tile('Warm-up Time', data.warm_up_seconds.toFixed(2) + 's'));
+        }
+        if (data.last_request) {
+          var lr = data.last_request;
+          var lrExtra = 'chunks used: ' + lr.chunks_used
+            + (typeof lr.best_distance === 'number' ? ' · best distance: ' + lr.best_distance.toFixed(3) : '');
+          tiles.push(tile('Last Request', lr.latency_ms + 'ms', lrExtra));
+        }
+
+        grid.innerHTML = tiles.length
+          ? tiles.join('')
+          : '<p class="font-label-mono text-label-mono text-on-surface-variant col-span-full">No telemetry available yet.</p>';
+      })
+      .catch(function (err) {
+        grid.innerHTML = '<p class="font-label-mono text-label-mono text-error col-span-full">Could not load telemetry: ' + escapeHtml(err.message) + '</p>';
+      });
+  }
+
+  function openModal() {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    loadTelemetry();
+  }
+
+  function closeModal() {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+
+  if (triggerBtn) {
+    triggerBtn.addEventListener('click', openModal);
+  }
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', function (e) {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+      closeModal();
+    }
+  });
+})();
+</script>

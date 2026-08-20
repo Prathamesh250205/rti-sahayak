@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>{% block title %}RTI Sahayak{% endblock %}</title>
+<link href="/static/vendor/tailwind.css" rel="stylesheet"/>
+<link href="/static/vendor/fonts.css" rel="stylesheet"/>
+<style>
+    .cite { font-family:"JetBrains Mono",monospace; font-size:.75rem;
+      padding:.05rem .4rem; margin:0 .15rem; border:1px solid #924c00;
+      border-radius:999px; color:#924c00; white-space:nowrap; cursor:pointer; }
+    :lang(hi), :lang(mr), .devanagari { font-family:"Noto Sans Devanagari",sans-serif; }
+
+    /* Component classes below, ported from each screen's <head><style> block in
+       design/stitch_rti_sahayak_ai_assistant/*/code.html. Verbatim per screen -
+       not deduplicated across near-duplicate names (e.g. .paper-shadow vs
+       .shadow-ambient vs .ai-input-shadow are the same rule under different
+       names in different screens; .flat-card vs .card-flat likewise). Three
+       classes were found defined differently by two screens each and were
+       deliberately left out - see the task report for .statutory-line,
+       .btn-primary, .btn-secondary. Per-screen "body { ... }" resets were also
+       left out - they conflict with each other and with the bg-background
+       already on <body> in this file. */
+
+    /* rounded-DEFAULT is a literal class name the design source uses, but
+       Tailwind only ever generates the bare .rounded class for a "DEFAULT"
+       scale key - it never generates rounded-DEFAULT itself. Value copied
+       from theme.extend.borderRadius.DEFAULT in web/tailwind.config.js. */
+    .rounded-DEFAULT { border-radius: 0.25rem; }
+
+    /* draft_application_desktop */
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #E3DDD2; border-radius: 10px; }
+    /* .form-input-flat and .form-label-mono moved to web/tailwind.input.css,
+       inside a components layer, so the compiler actually processes their
+       Tailwind-composed rules; see that file. */
+    .paper-shadow {
+        box-shadow: 0 4px 20px rgba(18, 33, 46, 0.08);
+    }
+    .amber-button {
+        background-color: #C6742A;
+        color: #ffffff;
+    }
+    .amber-button:hover {
+        background-color: #a86224;
+    }
+    .secondary-button {
+        border: 1px solid #12212E;
+        color: #12212E;
+        background-color: transparent;
+    }
+    .secondary-button:hover {
+        background-color: #F7F4EE;
+    }
+
+    /* home_screen_desktop */
+    .ai-input-shadow {
+        box-shadow: 0 4px 20px rgba(18, 33, 46, 0.08);
+    }
+
+    /* home_screen_mobile */
+    .card-flat {
+        background-color: #FFFFFF;
+        border: 1px solid #E3DDD2;
+        border-radius: 12px;
+        box-shadow: none;
+    }
+    .shadow-ambient {
+        box-shadow: 0 4px 20px rgba(18, 33, 46, 0.08);
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .input-base {
+        background-color: #FFFFFF;
+        border: 1px solid #E3DDD2;
+        border-radius: 8px;
+    }
+    .input-base:focus {
+        border-color: #12212E;
+        outline: none;
+        box-shadow: none;
+    }
+
+    /* system_telemetry_modal */
+    .modal-overlay {
+        background-color: rgba(18, 33, 46, 0.4);
+        backdrop-filter: blur(2px);
+    }
+    .grid-bg-pattern {
+        background-image:
+            linear-gradient(to right, #E3DDD2 1px, transparent 1px),
+            linear-gradient(to bottom, #E3DDD2 1px, transparent 1px);
+        background-size: 24px 24px;
+        opacity: 0.5;
+    }
+
+    /* track_application_desktop */
+    .flat-card {
+        background-color: #FFFFFF;
+        border: 1px solid #E3DDD2;
+        border-radius: 12px;
+        box-shadow: none;
+    }
+    .status-tag-amber {
+        background-color: #F7F4EE;
+        border: 1px solid #C6742A;
+        color: #C6742A;
+        border-radius: 9999px;
+        padding: 4px 12px;
+    }
+
+    /* browse_the_act_desktop */
+    /* Named .statutory-line-browse, not .statutory-line - this screen and
+       track_application_desktop each define .statutory-line differently, so
+       the bare name was deliberately left out (see the .statutory-line entry
+       in the note above). This is this screen's own version only. */
+    .statutory-line-browse {
+        border-left: 2px solid #0E4D45;
+        padding-left: 16px;
+        margin-left: 4px;
+    }
+
+    /* answer_screen_desktop */
+    .amber-bg { background-color: #C6742A; }
+    .amber-text { color: #C6742A; }
+    .amber-border { border-color: #C6742A; }
+    .statutory-border { border-left-color: #0E4D45; }
+    .cursor-blink { animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+</style>
+{% block head_extra %}{% endblock %}
+</head>
+<body class="bg-background">
+{% block nav %}{% endblock %}
+{% block content %}{% endblock %}
+{% block scripts %}{% endblock %}
+</body>
+</html>

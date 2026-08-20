@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>System Telemetry</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&amp;family=JetBrains+Mono:wght@500&amp;family=Noto+Sans:wght@400&amp;family=Source+Serif+4:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-fixed-variant": "#124f47",
+                    "tertiary-fixed": "#ffdbcf",
+                    "surface-dim": "#d9dad9",
+                    "error": "#ba1a1a",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-fixed": "#ffdcc4",
+                    "primary": "#00352f",
+                    "on-error": "#ffffff",
+                    "primary-fixed-dim": "#98d2c7",
+                    "surface-container": "#edeeec",
+                    "surface-container-highest": "#e1e3e1",
+                    "primary-container": "#0e4d45",
+                    "on-secondary-container": "#6f3900",
+                    "primary-fixed": "#b4eee2",
+                    "surface-bright": "#f8faf8",
+                    "on-primary": "#ffffff",
+                    "on-primary-container": "#84bdb2",
+                    "tertiary": "#4c2313",
+                    "outline-variant": "#bfc8c5",
+                    "on-secondary": "#ffffff",
+                    "surface": "#f8faf8",
+                    "on-tertiary-fixed": "#341004",
+                    "secondary": "#924c00",
+                    "on-tertiary-container": "#e4a38c",
+                    "on-surface-variant": "#404946",
+                    "on-surface": "#191c1b",
+                    "on-secondary-fixed-variant": "#6f3800",
+                    "surface-container-low": "#f2f4f2",
+                    "secondary-container": "#fda053",
+                    "secondary-fixed-dim": "#ffb77f",
+                    "surface-tint": "#2f685f",
+                    "on-tertiary-fixed-variant": "#6a3a29",
+                    "inverse-on-surface": "#f0f1ef",
+                    "inverse-primary": "#98d2c7",
+                    "outline": "#707976",
+                    "on-tertiary": "#ffffff",
+                    "inverse-surface": "#2e3130",
+                    "tertiary-container": "#673827",
+                    "tertiary-fixed-dim": "#fbb79f",
+                    "on-background": "#191c1b",
+                    "surface-variant": "#e1e3e1",
+                    "background": "#f8faf8",
+                    "error-container": "#ffdad6",
+                    "surface-container-high": "#e7e8e7",
+                    "on-primary-fixed": "#00201c",
+                    "on-error-container": "#93000a",
+                    "on-secondary-fixed": "#2f1500",
+                    "paper-base": "#F7F4EE",
+                    "paper-border": "#E3DDD2",
+                    "paper-text": "#12212E",
+                    "amber-action": "#C6742A",
+                    "statutory-line": "#0E4D45",
+                    "success-tag-bg": "#E8F5E9",
+                    "success-tag-text": "#1E7A5A"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "base": "8px",
+                    "xs": "4px",
+                    "gutter": "24px",
+                    "sm": "12px",
+                    "max-width": "1200px",
+                    "md": "24px",
+                    "lg": "48px",
+                    "xl": "80px"
+            },
+            "fontFamily": {
+                    "caption": ["Inter"],
+                    "headline-lg": ["\"Source Serif 4\""],
+                    "headline-lg-mobile": ["\"Source Serif 4\""],
+                    "display-lg": ["\"Source Serif 4\""],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "body-hindi": ["Noto Sans"],
+                    "label-mono": ["JetBrains Mono"],
+                    "headline-md": ["\"Source Serif 4\""]
+            },
+            "fontSize": {
+                    "caption": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "60px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "26px", "fontWeight": "400"}],
+                    "body-hindi": ["18px", {"lineHeight": "30px", "fontWeight": "400"}],
+                    "label-mono": ["13px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body {
+            background-color: #F7F4EE; /* paper-base fallback */
+            color: #12212E; /* paper-text fallback */
+        }
+        .modal-overlay {
+            background-color: rgba(18, 33, 46, 0.4);
+            backdrop-filter: blur(2px);
+        }
+        .grid-bg-pattern {
+            background-image: 
+                linear-gradient(to right, #E3DDD2 1px, transparent 1px),
+                linear-gradient(to bottom, #E3DDD2 1px, transparent 1px);
+            background-size: 24px 24px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased min-h-screen relative overflow-hidden flex items-center justify-center">
+<!-- Background Screen Context -->
+<div class="absolute inset-0 z-0">
+        {{DATA:SCREEN:SCREEN_10}}
+    </div>
+<!-- Modal Overlay -->
+<div class="modal-overlay absolute inset-0 z-10 flex items-center justify-center p-md">
+<!-- Modal Container -->
+<div class="bg-paper-base border border-paper-border w-full max-w-[720px] shadow-[0_4px_20px_rgba(18,33,46,0.08)] relative z-20 rounded-lg overflow-hidden flex flex-col">
+<!-- Header -->
+<div class="flex items-center justify-between p-md border-b border-paper-border bg-[#FFFFFF]">
+<h2 class="font-label-mono text-label-mono text-paper-text uppercase tracking-widest">System Telemetry</h2>
+<button aria-label="Close modal" class="text-on-surface-variant hover:text-paper-text transition-colors flex items-center justify-center w-8 h-8 rounded hover:bg-surface-container-low">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+<!-- Content Area -->
+<div class="p-md md:p-lg flex flex-col gap-lg bg-[#FFFFFF] relative">
+<!-- Subtle grid background for tech feel -->
+<div class="absolute inset-0 grid-bg-pattern pointer-events-none"></div>
+<!-- 2x3 Grid of Stats -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-md relative z-10">
+<!-- Stat 1 -->
+<div class="border border-paper-border bg-paper-base p-sm rounded col-span-1 md:col-span-2 lg:col-span-1">
+<div class="flex items-center gap-2 mb-xs">
+<span class="w-2 h-2 rounded-full bg-[#1E7A5A]"></span>
+<span class="font-label-mono text-[11px] text-on-surface-variant uppercase">Provider</span>
+</div>
+<div class="font-label-mono text-sm text-paper-text font-semibold">Gemini Flash</div>
+<div class="font-label-mono text-[10px] text-on-surface-variant mt-1">Fallback: Groq llama-3.3-70b · idle</div>
+</div>
+<!-- Stat 2 -->
+<div class="border border-paper-border bg-paper-base p-sm rounded flex flex-col justify-center">
+<div class="font-label-mono text-[11px] text-on-surface-variant uppercase mb-xs">Latency</div>
+<div class="font-label-mono text-sm text-paper-text font-semibold">P50 1.6s</div>
+</div>
+<!-- Stat 3 -->
+<div class="border border-paper-border bg-paper-base p-sm rounded flex flex-col justify-center">
+<div class="font-label-mono text-[11px] text-on-surface-variant uppercase mb-xs">Sections Indexed</div>
+<div class="font-label-mono text-sm text-paper-text font-semibold">31</div>
+</div>
+<!-- Stat 4 -->
+<div class="border border-paper-border bg-paper-base p-sm rounded flex flex-col justify-center">
+<div class="font-label-mono text-[11px] text-on-surface-variant uppercase mb-xs">Chunks</div>
+<div class="font-label-mono text-sm text-paper-text font-semibold">412</div>
+</div>
+<!-- Stat 5 -->
+<div class="border border-paper-border bg-paper-base p-sm rounded flex flex-col justify-center">
+<div class="font-label-mono text-[11px] text-on-surface-variant uppercase mb-xs">Citation Accuracy</div>
+<div class="font-label-mono text-sm text-[#1E7A5A] font-semibold">96%</div>
+</div>
+<!-- Stat 6 -->
+<div class="border border-paper-border bg-paper-base p-sm rounded flex flex-col justify-center">
+<div class="font-label-mono text-[11px] text-on-surface-variant uppercase mb-xs">Grounded Answers</div>
+<div class="font-label-mono text-sm text-[#1E7A5A] font-semibold">100%</div>
+</div>
+</div>
+<!-- Bar Chart: Retrieval Scores -->
+<div class="border border-paper-border bg-paper-base p-md rounded relative z-10 flex flex-col">
+<div class="font-label-mono text-[11px] text-on-surface-variant uppercase mb-md">Retrieval Scores (Last Query)</div>
+<div class="flex items-end gap-sm h-32 w-full pt-4 border-b border-paper-border">
+<!-- Y-axis rough labels -->
+<div class="flex flex-col justify-between h-full pr-2 border-r border-paper-border mr-2 font-label-mono text-[9px] text-outline">
+<span>1.0</span>
+<span>0.5</span>
+<span>0.0</span>
+</div>
+<!-- Bars -->
+<div class="flex-1 flex items-end justify-around h-full pb-1">
+<div class="flex flex-col items-center gap-1 group w-12">
+<div class="w-full bg-statutory-line opacity-80 group-hover:opacity-100 transition-opacity" style="height: 85%;"></div>
+<span class="font-label-mono text-[9px] text-paper-text mt-1">Sec 7</span>
+</div>
+<div class="flex flex-col items-center gap-1 group w-12">
+<div class="w-full bg-statutory-line opacity-60 group-hover:opacity-100 transition-opacity" style="height: 72%;"></div>
+<span class="font-label-mono text-[9px] text-paper-text mt-1">Sec 8</span>
+</div>
+<div class="flex flex-col items-center gap-1 group w-12">
+<div class="w-full bg-statutory-line opacity-70 group-hover:opacity-100 transition-opacity" style="height: 90%;"></div>
+<span class="font-label-mono text-[9px] text-paper-text mt-1">Sec 19</span>
+</div>
+<div class="flex flex-col items-center gap-1 group w-12">
+<div class="w-full bg-statutory-line opacity-50 group-hover:opacity-100 transition-opacity" style="height: 64%;"></div>
+<span class="font-label-mono text-[9px] text-paper-text mt-1">Sec 20</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Log Strip -->
+<div class="bg-[#12212E] p-md border-t border-paper-border">
+<div class="font-label-mono text-[11px] leading-relaxed text-[#F7F4EE] opacity-90 flex flex-col gap-1">
+<div class="flex items-start gap-2">
+<span class="text-outline-variant shrink-0">[14:22:01]</span>
+<span class="text-secondary-fixed shrink-0">INFO:</span>
+<span class="text-on-primary">Retrieval triggered for 'disposal of request'...</span>
+</div>
+<div class="flex items-start gap-2">
+<span class="text-outline-variant shrink-0">[14:22:02]</span>
+<span class="text-secondary-fixed shrink-0">DEBUG:</span>
+<span class="text-on-primary opacity-70">Reranking 12 chunks via Cohere Rerank v3...</span>
+</div>
+<div class="flex items-start gap-2">
+<span class="text-outline-variant shrink-0">[14:22:03]</span>
+<span class="text-primary-fixed shrink-0">SUCCESS:</span>
+<span class="text-on-primary">3 sections validated against statutory text.</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body></html>

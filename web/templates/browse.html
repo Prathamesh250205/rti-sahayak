@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}Browse the Act - RTI Sahayak{% endblock %}
+
+{% block nav %}
+<!-- TopNavBar -->
+<header class="bg-surface w-full top-0 border-b border-outline-variant flat no shadows">
+<div class="flex justify-between items-center max-w-max-width mx-auto px-gutter py-sm">
+<a class="font-headline-md text-headline-md font-bold text-primary flex items-center gap-2" href="/">
+<span class="material-symbols-outlined" data-icon="account_balance">account_balance</span>
+                RTI Sahayak
+            </a>
+<nav class="hidden md:flex gap-6 items-center">
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-body-md text-body-md" href="/ask">Ask</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-body-md text-body-md" href="/draft">Draft Application</a>
+<a class="text-secondary border-b-2 border-secondary pb-1 font-body-md text-body-md" href="/browse">Browse the Act</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-body-md text-body-md" href="/track">Track</a>
+</nav>
+<div class="flex items-center gap-4">
+<div class="relative hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm" data-icon="search">search</span>
+<input class="pl-10 pr-4 py-2 border border-custom-border rounded bg-white text-custom-ink focus:border-custom-ink focus:ring-0 w-80 font-body-md text-sm placeholder:text-outline-variant transition-colors" id="act-search-input" placeholder="Search the Act — try 'third party' or 'section 8'" type="text"/>
+</div>
+<div class="relative hidden sm:block">
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors flex" id="lang-pill" type="button">
+<span class="material-symbols-outlined" data-icon="language">language</span>
+</button>
+<span class="hidden absolute top-full right-0 mt-xs w-64 bg-white border border-custom-border rounded p-sm font-caption text-caption text-on-surface-variant shadow-[0_4px_20px_rgba(18,33,46,0.08)] z-50" id="lang-note">Multilingual drafting is in development.</span>
+</div>
+<a class="bg-custom-amber text-white px-4 py-2 rounded font-caption text-caption hover:opacity-90 transition-opacity" href="/login">Login</a>
+</div>
+</div>
+</header>
+{% endblock %}
+
+{% block content %}
+<!-- Main Layout -->
+<main class="flex-1 flex max-w-[1400px] w-full mx-auto">
+<!-- Left Pane: Section List (real distinct sections from the Chroma collection - no chapter
+     grouping is rendered here since the ingested metadata has no chapter field to group by) -->
+<aside class="w-[280px] shrink-0 border-r border-custom-border bg-white hidden lg:flex flex-col py-md overflow-y-auto" style="height: calc(100vh - 65px);">
+<div class="px-md mb-4">
+<h2 class="font-label-mono text-label-mono text-outline uppercase tracking-widest">Sections</h2>
+</div>
+<nav class="flex flex-col" id="section-nav">
+<p class="px-md text-sm text-outline italic" id="section-nav-loading">Loading sections...</p>
+</nav>
+</aside>
+<!-- Center Pane: Statutory Text / Search Results -->
+<article class="flex-1 bg-[#F7F4EE] overflow-y-auto relative" style="height: calc(100vh - 65px);">
+<!-- Sticky Sub-header -->
+<div class="sticky top-0 bg-[#F7F4EE]/95 backdrop-blur z-10 border-b border-custom-border px-lg py-sm flex justify-between items-center">
+<div class="flex items-center gap-2 text-sm text-outline font-caption text-caption">
+<span class="text-custom-ink font-medium" id="breadcrumb-label">Select a section</span>
+</div>
+<button class="bg-white border border-custom-ink text-custom-ink px-4 py-1.5 rounded flex items-center gap-2 font-caption text-caption hover:bg-surface-container-low transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent" disabled id="ask-section-btn" type="button">
+<span class="material-symbols-outlined text-sm" data-icon="forum">forum</span>
+                    Ask about this section
+                </button>
+</div>
+<!-- Content Area -->
+<div class="max-w-[800px] mx-auto px-lg py-xl" id="section-content">
+<p class="text-on-surface-variant italic" id="section-content-empty">Select a section from the left, or search the Act above.</p>
+</div>
+</article>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-low w-full bottom-0 border-t border-outline-variant flat no shadows mt-auto">
+<div class="flex flex-col md:flex-row justify-between items-center max-w-max-width mx-auto px-gutter py-lg gap-md">
+<div class="font-label-mono text-label-mono uppercase tracking-widest text-on-surface">
+                © 2024 RTI Sahayak. Statutory Clarity &amp; Archival Utility.
+            </div>
+<nav class="flex gap-6 items-center">
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="/legal">Legal Disclaimer</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="/privacy">Privacy Policy</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="/support">Support</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="/contact">Contact Us</a>
+</nav>
+</div>
+</footer>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var sectionNav = document.getElementById('section-nav');
+  var sectionContent = document.getElementById('section-content');
+  var breadcrumbLabel = document.getElementById('breadcrumb-label');
+  var askBtn = document.getElementById('ask-section-btn');
+  var searchInput = document.getElementById('act-search-input');
+
+  var currentSection = null;
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function setActiveSectionLink(section) {
+    sectionNav.querySelectorAll('a[data-section]').forEach(function (a) {
+      var isActive = a.getAttribute('data-section') === section;
+      a.classList.toggle('text-custom-ink', isActive);
+      a.classList.toggle('bg-[#F5EADF]', isActive);
+      a.classList.toggle('border-custom-amber', isActive);
+      a.classList.toggle('font-bold', isActive);
+      a.classList.toggle('border-transparent', !isActive);
+      a.classList.toggle('text-outline', !isActive);
+    });
+  }
+
+  function loadSections() {
+    fetch('/api/act/sections')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        sectionNav.innerHTML = '';
+        data.sections.forEach(function (s) {
+          var a = document.createElement('a');
+          a.href = 'javascript:void(0)';
+          a.setAttribute('data-section', s.section);
+          a.className = 'px-md py-1.5 text-sm text-outline hover:text-custom-ink font-label-mono text-label-mono flex justify-between items-center gap-2 border-l-4 border-transparent';
+          a.innerHTML = '<span>' + escapeHtml(s.section) + '</span><span class="text-xs opacity-60">' + s.chunk_count + '</span>';
+          a.addEventListener('click', function () {
+            loadSection(s.section);
+          });
+          sectionNav.appendChild(a);
+        });
+      })
+      .catch(function (err) {
+        sectionNav.innerHTML = '<p class="px-md text-sm text-error">Could not load sections: ' + escapeHtml(err.message) + '</p>';
+      });
+  }
+
+  function loadSection(section) {
+    currentSection = section;
+    breadcrumbLabel.textContent = section;
+    askBtn.disabled = true;
+    setActiveSectionLink(section);
+    sectionContent.innerHTML = '<p class="text-on-surface-variant italic">Loading...</p>';
+
+    fetch('/api/act/section/' + encodeURIComponent(section))
+      .then(function (r) {
+        if (!r.ok) {
+          return r.json().then(function (b) { throw new Error(b.detail || ('Request failed with status ' + r.status)); });
+        }
+        return r.json();
+      })
+      .then(function (data) {
+        var html = '<div class="mb-lg"><h1 class="font-label-mono text-[32px] font-bold text-custom-ink">' + escapeHtml(data.section) + '</h1></div>';
+        html += '<div class="font-headline-lg text-body-lg text-custom-ink leading-relaxed statutory-line-browse">';
+        data.chunks.forEach(function (chunk) {
+          html += '<p class="mb-2 font-headline-md text-body-lg whitespace-pre-wrap">' + escapeHtml(chunk.text) + '</p>';
+          html += '<p class="mb-6 font-label-mono text-label-mono text-outline">p.' + escapeHtml(chunk.page) + ' &middot; ' + escapeHtml(chunk.source) + '</p>';
+        });
+        html += '</div>';
+        sectionContent.innerHTML = html;
+        askBtn.disabled = false;
+      })
+      .catch(function (err) {
+        sectionContent.innerHTML = '<p class="text-error">Could not load this section: ' + escapeHtml(err.message) + '</p>';
+      });
+  }
+
+  function runSearch(query) {
+    currentSection = null;
+    breadcrumbLabel.textContent = 'Search results for "' + query + '"';
+    askBtn.disabled = true;
+    sectionContent.innerHTML = '<p class="text-on-surface-variant italic">Searching...</p>';
+
+    fetch('/api/act/search?q=' + encodeURIComponent(query))
+      .then(function (r) {
+        if (!r.ok) {
+          return r.json().then(function (b) { throw new Error(b.detail || ('Request failed with status ' + r.status)); });
+        }
+        return r.json();
+      })
+      .then(function (data) {
+        if (data.results.length === 0) {
+          sectionContent.innerHTML = '<p class="text-on-surface-variant italic">No relevant sections found for &ldquo;' + escapeHtml(query) + '&rdquo;.</p>';
+          return;
+        }
+        var html = '<div class="space-y-md">';
+        data.results.forEach(function (r) {
+          var snippet = r.text.length > 300 ? r.text.slice(0, 300) + '...' : r.text;
+          html += '<div class="bg-white border border-custom-border rounded-xl p-md cursor-pointer hover:border-custom-ink transition-colors" data-section="' + escapeHtml(r.section) + '">';
+          html += '<div class="flex justify-between items-center mb-2">';
+          html += '<span class="font-label-mono text-label-mono font-bold text-custom-ink">' + escapeHtml(r.section) + '</span>';
+          html += '<span class="font-label-mono text-label-mono text-outline">p.' + escapeHtml(r.page) + ' &middot; distance ' + r.distance.toFixed(3) + '</span>';
+          html += '</div>';
+          html += '<p class="font-body-md text-sm text-custom-ink/80">' + escapeHtml(snippet) + '</p>';
+          html += '</div>';
+        });
+        html += '</div>';
+        sectionContent.innerHTML = html;
+        sectionContent.querySelectorAll('[data-section]').forEach(function (card) {
+          card.addEventListener('click', function () {
+            loadSection(card.getAttribute('data-section'));
+          });
+        });
+      })
+      .catch(function (err) {
+        sectionContent.innerHTML = '<p class="text-error">Search failed: ' + escapeHtml(err.message) + '</p>';
+      });
+  }
+
+  searchInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && searchInput.value.trim()) {
+      runSearch(searchInput.value.trim());
+    }
+  });
+
+  askBtn.addEventListener('click', function () {
+    if (!currentSection) {
+      return;
+    }
+    var context = 'About ' + currentSection + ' of the RTI Act, 2005: ';
+    window.location.href = '/draft?problem_description=' + encodeURIComponent(context);
+  });
+
+  var langPill = document.getElementById('lang-pill');
+  var langNote = document.getElementById('lang-note');
+  if (langPill && langNote) {
+    langPill.addEventListener('click', function () {
+      langNote.classList.toggle('hidden');
+    });
+  }
+
+  loadSections();
+})();
+</script>
+{% endblock %}

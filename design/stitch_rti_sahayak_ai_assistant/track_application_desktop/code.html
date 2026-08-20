@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RTI Sahayak - Track Application</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&amp;family=JetBrains+Mono:wght@500&amp;family=Source+Serif+4:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed": "#ffdcc4",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-highest": "#e1e3e1",
+                        "primary-container": "#0e4d45",
+                        "inverse-primary": "#98d2c7",
+                        "on-secondary-fixed": "#2f1500",
+                        "inverse-on-surface": "#f0f1ef",
+                        "on-error-container": "#93000a",
+                        "surface-dim": "#d9dad9",
+                        "surface": "#f8faf8",
+                        "surface-container-high": "#e7e8e7",
+                        "surface-container-low": "#f2f4f2",
+                        "primary-fixed": "#b4eee2",
+                        "outline": "#707976",
+                        "surface-container": "#edeeec",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#ffdbcf",
+                        "secondary-fixed-dim": "#ffb77f",
+                        "surface-bright": "#f8faf8",
+                        "tertiary-container": "#673827",
+                        "on-tertiary-container": "#e4a38c",
+                        "on-secondary-fixed-variant": "#6f3800",
+                        "background": "#f8faf8",
+                        "surface-variant": "#e1e3e1",
+                        "on-background": "#191c1b",
+                        "on-primary-container": "#84bdb2",
+                        "secondary": "#924c00",
+                        "surface-tint": "#2f685f",
+                        "on-surface-variant": "#404946",
+                        "on-secondary-container": "#6f3900",
+                        "on-error": "#ffffff",
+                        "outline-variant": "#bfc8c5",
+                        "on-surface": "#191c1b",
+                        "on-primary-fixed": "#00201c",
+                        "error-container": "#ffdad6",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed": "#341004",
+                        "secondary-container": "#fda053",
+                        "error": "#ba1a1a",
+                        "tertiary": "#4c2313",
+                        "tertiary-fixed-dim": "#fbb79f",
+                        "primary": "#00352f",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed-variant": "#124f47",
+                        "primary-fixed-dim": "#98d2c7",
+                        "on-tertiary-fixed-variant": "#6a3a29",
+                        "inverse-surface": "#2e3130"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "md": "24px",
+                        "sm": "12px",
+                        "gutter": "24px",
+                        "lg": "48px",
+                        "base": "8px",
+                        "xl": "80px",
+                        "xs": "4px",
+                        "max-width": "1200px"
+                    },
+                    "fontFamily": {
+                        "caption": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-mono": ["JetBrains Mono"],
+                        "headline-lg-mobile": ["\"Source Serif 4\""],
+                        "display-lg": ["\"Source Serif 4\""],
+                        "body-md": ["Inter"],
+                        "headline-lg": ["\"Source Serif 4\""],
+                        "headline-md": ["\"Source Serif 4\""],
+                        "body-hindi": ["Noto Sans"]
+                    },
+                    "fontSize": {
+                        "caption": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-mono": ["13px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "60px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "26px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-hindi": ["18px", { "lineHeight": "30px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #F7F4EE;
+        }
+        .flat-card {
+            background-color: #FFFFFF;
+            border: 1px solid #E3DDD2;
+            border-radius: 12px;
+            box-shadow: none;
+        }
+        .statutory-line {
+            border-left: 2px solid #0E4D45;
+        }
+        .btn-primary {
+            background-color: #C6742A;
+            color: #ffffff;
+            border-radius: 8px;
+        }
+        .btn-secondary {
+            border: 1px solid #12212E;
+            color: #12212E;
+            background-color: transparent;
+            border-radius: 8px;
+        }
+        .status-tag-amber {
+            background-color: #F7F4EE;
+            border: 1px solid #C6742A;
+            color: #C6742A;
+            border-radius: 9999px;
+            padding: 4px 12px;
+        }
+    </style>
+</head>
+<body class="text-on-background font-body-md antialiased flex flex-col min-h-screen">
+<!-- TopNavBar -->
+<nav class="bg-surface dark:bg-surface-dim docked full-width top-0 border-b border-outline-variant dark:border-outline flat no shadows sticky z-50">
+<div class="max-w-max-width mx-auto px-gutter flex justify-between items-center h-20 w-full">
+<div class="font-headline-lg text-headline-lg font-bold text-primary dark:text-primary-fixed">
+                RTI Sahayak
+            </div>
+<div class="hidden md:flex space-x-6 items-center">
+<a class="font-label-mono text-label-mono text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors cursor-pointer active:opacity-80 px-2 py-4" href="#">Ask</a>
+<a class="font-label-mono text-label-mono text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors cursor-pointer active:opacity-80 px-2 py-4" href="#">Draft Application</a>
+<a class="font-label-mono text-label-mono text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors cursor-pointer active:opacity-80 px-2 py-4" href="#">Browse the Act</a>
+<a class="font-label-mono text-label-mono text-secondary dark:text-secondary-fixed-dim border-b-2 border-secondary dark:border-secondary-fixed-dim pb-1 cursor-pointer active:opacity-80 px-2 py-4 mt-[10px]" href="#">Track</a>
+</div>
+<div class="flex space-x-4 items-center">
+<button class="font-label-mono text-label-mono text-primary cursor-pointer hover:opacity-80">Language</button>
+<div class="font-label-mono text-label-mono text-on-surface-variant">Status: Active</div>
+</div>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="flex-grow max-w-max-width mx-auto px-gutter py-lg w-full flex flex-col gap-lg">
+<!-- TOP CARD -->
+<section class="flat-card p-md md:p-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-md">
+<div>
+<h1 class="font-headline-lg text-headline-lg mb-2">Track Application</h1>
+<div class="font-label-mono text-label-mono text-on-surface-variant mb-xs">
+                    Application Ref: #RTI-2024-8842
+                </div>
+<div class="text-body-md text-on-surface">
+<span class="font-medium">Authority:</span> Ministry of Environment, Forest and Climate Change<br/>
+<span class="font-medium">Filed:</span> 12 October 2024
+                </div>
+</div>
+<div>
+<span class="status-tag-amber font-label-mono text-label-mono inline-flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-size: 16px;">pending</span>
+                    Awaiting reply
+                </span>
+</div>
+</section>
+<!-- CENTER TIMELINE -->
+<section class="flat-card p-md md:p-lg overflow-x-auto">
+<h2 class="font-headline-md text-headline-md mb-lg">Application Timeline</h2>
+<div class="min-w-[700px]">
+<div class="relative flex justify-between items-start">
+<!-- Connecting Line -->
+<div class="absolute top-[15px] left-0 right-0 h-[2px] bg-[#E3DDD2] z-0"></div>
+<!-- Milestone 1 -->
+<div class="relative z-10 flex flex-col items-center w-1/4 text-center px-2">
+<div class="w-8 h-8 rounded-full bg-[#1E7A5A] text-white flex items-center justify-center mb-sm">
+<span class="material-symbols-outlined" style="font-size: 20px;">check</span>
+</div>
+<div class="font-label-mono text-label-mono text-on-surface-variant mb-xs">Day 0</div>
+<div class="font-caption text-caption text-on-surface font-medium">Filed</div>
+</div>
+<!-- Milestone 2 -->
+<div class="relative z-10 flex flex-col items-center w-1/4 text-center px-2">
+<div class="w-8 h-8 rounded-full bg-[#C6742A] text-white flex items-center justify-center mb-sm shadow-[0_0_0_4px_#F7F4EE]">
+<span class="material-symbols-outlined" data-weight="fill" style="font-size: 20px;">schedule</span>
+</div>
+<div class="font-label-mono text-label-mono text-[#C6742A] mb-xs">Day 30 (11 days left)</div>
+<div class="font-caption text-caption text-on-surface font-medium mb-1">PIO reply due</div>
+<div class="text-sm text-on-surface-variant">48 hours if life or liberty is involved</div>
+</div>
+<!-- Milestone 3 -->
+<div class="relative z-10 flex flex-col items-center w-1/4 text-center px-2">
+<div class="w-8 h-8 rounded-full bg-[#E3DDD2] text-[#5A6672] flex items-center justify-center mb-sm">
+<span class="material-symbols-outlined" style="font-size: 20px;">gavel</span>
+</div>
+<div class="font-label-mono text-label-mono text-on-surface-variant mb-xs">Day 60</div>
+<div class="font-caption text-caption text-on-surface font-medium mb-1">First appeal window</div>
+<div class="text-sm text-on-surface-variant">Within 30 days of decision</div>
+</div>
+<!-- Milestone 4 -->
+<div class="relative z-10 flex flex-col items-center w-1/4 text-center px-2">
+<div class="w-8 h-8 rounded-full bg-[#E3DDD2] text-[#5A6672] flex items-center justify-center mb-sm">
+<span class="material-symbols-outlined" style="font-size: 20px;">account_balance</span>
+</div>
+<div class="font-label-mono text-label-mono text-on-surface-variant mb-xs">Day 150+</div>
+<div class="font-caption text-caption text-on-surface font-medium mb-1">Second appeal to CIC/SIC</div>
+<div class="text-sm text-on-surface-variant">Within 90 days</div>
+</div>
+</div>
+</div>
+</section>
+<!-- TWO-COLUMN BOTTOM AREA -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+<!-- LEFT (Activity Log) -->
+<section class="flat-card p-md md:p-lg md:col-span-2">
+<h3 class="font-headline-md text-headline-md mb-md">Activity Log</h3>
+<div class="flex flex-col gap-sm">
+<div class="flex items-start gap-md">
+<div class="font-label-mono text-label-mono text-on-surface-variant pt-1 w-24 shrink-0">Oct 13</div>
+<div class="statutory-line pl-sm py-1">
+<p class="text-body-md text-on-surface">Assigned to Public Information Officer</p>
+</div>
+</div>
+<div class="flex items-start gap-md">
+<div class="font-label-mono text-label-mono text-on-surface-variant pt-1 w-24 shrink-0">Oct 12</div>
+<div class="statutory-line pl-sm py-1">
+<p class="text-body-md text-on-surface">Application filed successfully</p>
+</div>
+</div>
+</div>
+</section>
+<!-- RIGHT (Help Card) -->
+<section class="flat-card p-md md:p-lg flex flex-col justify-between">
+<div>
+<h3 class="font-headline-md text-headline-md mb-sm text-[#12212E]">What if they don't reply?</h3>
+<p class="text-body-md text-on-surface mb-md">
+                        Under Section 7(2) of the RTI Act, if the PIO fails to provide a decision within the specified time limit, it shall be deemed a refusal. You are entitled to file a First Appeal.
+                    </p>
+</div>
+<button class="btn-secondary font-caption text-caption py-3 px-4 w-full flex justify-center items-center gap-2 hover:bg-[#F7F4EE] transition-colors border-[#C6742A] text-[#C6742A]">
+<span class="material-symbols-outlined">edit_document</span>
+                    Draft first appeal
+                </button>
+</section>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-low dark:bg-surface-container-lowest mt-auto border-t border-outline-variant dark:border-outline">
+<div class="max-w-max-width mx-auto px-gutter py-xl flex flex-col md:flex-row justify-between items-center w-full gap-lg md:gap-0">
+<div class="font-headline-md text-headline-md text-primary">
+                RTI Sahayak
+            </div>
+<div class="font-body-md text-body-md text-on-surface text-center md:text-left">
+                © 2024 RTI Sahayak. Official Public Service Portal.
+            </div>
+<div class="flex flex-wrap justify-center md:justify-end gap-x-6 gap-y-2">
+<a class="font-label-mono text-label-mono text-on-surface-variant dark:text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-all duration-200" href="#">Legal Disclaimer</a>
+<a class="font-label-mono text-label-mono text-on-surface-variant dark:text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-all duration-200" href="#">Privacy Policy</a>
+<a class="font-label-mono text-label-mono text-on-surface-variant dark:text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-all duration-200" href="#">Contact Support</a>
+<a class="font-label-mono text-label-mono text-on-surface-variant dark:text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-all duration-200" href="#">Terms of Service</a>
+</div>
+</div>
+</footer>
+</body></html>

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Draft Application - RTI Sahayak</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;family=Noto+Sans:wght@400&amp;family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-primary": "#98d2c7",
+                        "error-container": "#ffdad6",
+                        "surface-variant": "#e1e3e1",
+                        "inverse-surface": "#2e3130",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed-dim": "#fbb79f",
+                        "secondary-fixed": "#ffdcc4",
+                        "secondary": "#924c00",
+                        "tertiary-container": "#673827",
+                        "outline": "#707976",
+                        "surface-tint": "#2f685f",
+                        "primary-fixed": "#b4eee2",
+                        "on-primary-container": "#84bdb2",
+                        "secondary-container": "#fda053",
+                        "surface-container-low": "#f2f4f2",
+                        "outline-variant": "#bfc8c5",
+                        "inverse-on-surface": "#f0f1ef",
+                        "surface-container-high": "#e7e8e7",
+                        "on-error": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "surface-container": "#edeeec",
+                        "on-secondary-fixed-variant": "#6f3800",
+                        "on-tertiary-fixed-variant": "#6a3a29",
+                        "on-primary-fixed-variant": "#124f47",
+                        "on-tertiary-fixed": "#341004",
+                        "on-tertiary-container": "#e4a38c",
+                        "primary-container": "#0e4d45",
+                        "surface-dim": "#d9dad9",
+                        "primary": "#00352f",
+                        "on-primary-fixed": "#00201c",
+                        "surface-bright": "#f8faf8",
+                        "background": "#f8faf8",
+                        "surface-container-highest": "#e1e3e1",
+                        "secondary-fixed-dim": "#ffb77f",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "tertiary": "#4c2313",
+                        "on-surface-variant": "#404946",
+                        "on-secondary-container": "#6f3900",
+                        "on-surface": "#191c1b",
+                        "primary-fixed-dim": "#98d2c7",
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed": "#2f1500",
+                        "on-background": "#191c1b",
+                        "tertiary-fixed": "#ffdbcf",
+                        "surface": "#f8faf8"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "xs": "4px",
+                        "lg": "48px",
+                        "sm": "12px",
+                        "md": "24px",
+                        "xl": "80px",
+                        "max-width": "1200px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter", "sans-serif"],
+                        "headline-lg-mobile": ["\"Source Serif 4\"", "serif"],
+                        "headline-lg": ["\"Source Serif 4\"", "serif"],
+                        "label-mono": ["JetBrains Mono", "monospace"],
+                        "caption": ["Inter", "sans-serif"],
+                        "headline-md": ["\"Source Serif 4\"", "serif"],
+                        "body-hindi": ["Noto Sans", "sans-serif"],
+                        "body-lg": ["Inter", "sans-serif"],
+                        "display-lg": ["\"Source Serif 4\"", "serif"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", {"lineHeight": "26px", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                        "label-mono": ["13px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "caption": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-hindi": ["18px", {"lineHeight": "30px", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "display-lg": ["48px", {"lineHeight": "60px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #E3DDD2; border-radius: 10px; }
+        .form-input-flat {
+            @apply w-full bg-surface-container-lowest border border-outline-variant rounded-DEFAULT py-sm px-md font-body-md text-on-surface focus:outline-none focus:border-on-surface focus:ring-0 transition-colors;
+        }
+        .form-label-mono {
+            @apply block mb-xs font-label-mono text-label-mono text-on-surface-variant uppercase;
+        }
+        .paper-shadow {
+            box-shadow: 0 4px 20px rgba(18, 33, 46, 0.08);
+        }
+        .amber-button {
+            background-color: #C6742A;
+            color: #ffffff;
+        }
+        .amber-button:hover {
+            background-color: #a86224;
+        }
+        .secondary-button {
+            border: 1px solid #12212E;
+            color: #12212E;
+            background-color: transparent;
+        }
+        .secondary-button:hover {
+            background-color: #F7F4EE;
+        }
+    </style>
+</head>
+<body class="bg-[#F7F4EE] text-on-surface min-h-screen flex flex-col font-body-md antialiased">
+<!-- TopNavBar -->
+<nav class="bg-surface docked full-width top-0 border-b border-outline-variant z-50 relative bg-white">
+<div class="flex justify-between items-center px-gutter w-full max-w-max-width mx-auto h-16">
+<div class="flex items-center gap-md">
+<a class="font-headline-md text-headline-md font-bold text-primary" href="#">RTI Sahayak</a>
+<div class="hidden md:flex gap-md ml-lg h-full items-center">
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#">Ask</a>
+<a class="font-body-md text-body-md text-secondary font-bold border-b-2 border-secondary pb-1 h-full flex items-center pt-1 cursor-pointer transition-colors" href="#">Draft Application</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#">Browse the Act</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#">Track</a>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<span class="font-caption text-caption text-on-surface-variant hidden lg:block">Grounded in RTI Act, 2005</span>
+<button class="font-label-mono text-label-mono text-primary px-sm py-xs border border-outline-variant rounded hover:bg-surface-container-low transition-colors">
+                    English / हिंदी / मराठी
+                </button>
+</div>
+</div>
+</nav>
+<!-- Main Content Area - 50/50 Split -->
+<main class="flex-grow flex flex-col lg:flex-row w-full max-w-[1440px] mx-auto bg-[#F7F4EE]">
+<!-- LEFT COLUMN (Form) -->
+<div class="w-full lg:w-1/2 flex flex-col h-[calc(100vh-64px)] bg-white border-r border-outline-variant">
+<div class="flex-grow overflow-y-auto custom-scrollbar p-md lg:p-lg space-y-lg relative">
+<!-- Section 1: YOUR DETAILS -->
+<section class="space-y-md">
+<h2 class="font-label-mono text-label-mono text-on-surface-variant tracking-widest border-b border-outline-variant pb-xs">YOUR DETAILS</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<div class="md:col-span-2">
+<label class="form-label-mono" for="fullName">Full Name</label>
+<input class="form-input-flat" id="fullName" placeholder="e.g. Ramesh Kumar" type="text"/>
+</div>
+<div class="md:col-span-2">
+<label class="form-label-mono" for="address">Mailing Address</label>
+<textarea class="form-input-flat resize-none" id="address" placeholder="Complete address for correspondence" rows="2"></textarea>
+</div>
+<div>
+<label class="form-label-mono" for="phone">Phone Number</label>
+<input class="form-input-flat" id="phone" placeholder="+91" type="tel"/>
+</div>
+<div>
+<label class="form-label-mono" for="email">Email Address (Optional)</label>
+<input class="form-input-flat" id="email" placeholder="For digital updates" type="email"/>
+</div>
+</div>
+</section>
+<!-- Section 2: PUBLIC AUTHORITY -->
+<section class="space-y-md pt-md">
+<h2 class="font-label-mono text-label-mono text-on-surface-variant tracking-widest border-b border-outline-variant pb-xs">PUBLIC AUTHORITY</h2>
+<div class="space-y-md">
+<div class="relative">
+<label class="form-label-mono" for="department">Select Department / Public Authority</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant z-10" data-icon="search">search</span>
+<input class="form-input-flat pl-xl" id="department" placeholder="Search departments..." type="text"/>
+</div>
+</div>
+<div>
+<label class="form-label-mono" for="pio">Public Information Officer</label>
+<input class="form-input-flat" id="pio" placeholder="Designation of the PIO (if known)" type="text"/>
+</div>
+</div>
+</section>
+<!-- Section 3: WHAT YOU WANT TO KNOW -->
+<section class="space-y-md pt-md">
+<div class="flex justify-between items-baseline border-b border-outline-variant pb-xs">
+<h2 class="font-label-mono text-label-mono text-on-surface-variant tracking-widest">WHAT YOU WANT TO KNOW</h2>
+<span class="font-caption text-caption text-on-surface-variant">Max 500 words</span>
+</div>
+<p class="font-caption text-caption text-on-surface-variant italic">Ask for specific documents, records, or orders. Do not ask for opinions or reasons (e.g., "Why was my application rejected?").</p>
+<div class="flex flex-wrap gap-sm mb-sm">
+<div class="inline-flex items-center gap-xs px-sm py-xs bg-[#F7F4EE] border border-[#1E7A5A] rounded-full">
+<span class="material-symbols-outlined text-[14px] text-[#1E7A5A]" data-icon="check_circle">check_circle</span>
+<span class="font-label-mono text-label-mono text-[#1E7A5A]">Good: 'Certified copy of...'</span>
+</div>
+<div class="inline-flex items-center gap-xs px-sm py-xs bg-[#F7F4EE] border border-[#93000a] rounded-full">
+<span class="material-symbols-outlined text-[14px] text-[#93000a]" data-icon="cancel">cancel</span>
+<span class="font-label-mono text-label-mono text-[#93000a]">Bad: 'Why did the...'</span>
+</div>
+</div>
+<div class="relative">
+<!-- AI "Statutory Line" indicator -->
+<div class="absolute left-0 top-0 bottom-0 w-[2px] bg-primary-container rounded-l-DEFAULT"></div>
+<textarea class="form-input-flat pl-md resize-y" id="information" placeholder="1. I require a certified copy of the government order detailing the budget allocation for...
+2. Please provide the inspection reports for..." rows="6"></textarea>
+</div>
+</section>
+<!-- Section 4: FEE -->
+<section class="space-y-md pt-md pb-xl">
+<h2 class="font-label-mono text-label-mono text-on-surface-variant tracking-widest border-b border-outline-variant pb-xs">FEE PAYMENT</h2>
+<div class="space-y-sm">
+<label class="flex items-center gap-sm cursor-pointer p-sm border border-outline-variant rounded-DEFAULT hover:bg-surface-container-low transition-colors">
+<input checked="" class="text-primary focus:ring-primary h-4 w-4" name="fee" type="radio"/>
+<span class="font-body-md text-body-md">₹10 application fee (Payable via Postal Order/DD/Online)</span>
+</label>
+<label class="flex items-center gap-sm cursor-pointer p-sm border border-outline-variant rounded-DEFAULT hover:bg-surface-container-low transition-colors">
+<input class="text-primary focus:ring-primary h-4 w-4" name="fee" type="radio"/>
+<span class="font-body-md text-body-md">Below Poverty Line (BPL) — Exempt from fee (Must attach proof)</span>
+</label>
+</div>
+</section>
+</div>
+<!-- Sticky Form Footer -->
+<div class="bg-white border-t border-outline-variant p-md flex justify-between items-center shadow-[0_-4px_20px_rgba(18,33,46,0.05)] z-10">
+<button class="secondary-button font-label-mono text-label-mono px-md py-sm rounded transition-colors flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]" data-icon="save">save</span>
+                    Save Draft
+                </button>
+<button class="amber-button font-label-mono text-label-mono px-lg py-sm rounded transition-colors flex items-center gap-xs">
+                    Generate Application
+                    <span class="material-symbols-outlined text-[18px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- RIGHT COLUMN (Live Preview) -->
+<div class="w-full lg:w-1/2 flex flex-col h-[calc(100vh-64px)] bg-[#F7F4EE]">
+<!-- Preview Action Bar -->
+<div class="bg-[#F7F4EE] border-b border-outline-variant px-lg py-sm flex justify-between items-center z-10">
+<div class="flex bg-surface-container-high rounded-full p-xs">
+<button class="px-sm py-xs bg-white rounded-full font-label-mono text-label-mono text-on-surface shadow-sm text-xs">English</button>
+<button class="px-sm py-xs rounded-full font-label-mono text-label-mono text-on-surface-variant hover:text-on-surface text-xs transition-colors">हिंदी</button>
+</div>
+<div class="flex gap-sm">
+<button class="p-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded transition-colors" title="Copy Text">
+<span class="material-symbols-outlined text-[20px]" data-icon="content_copy">content_copy</span>
+</button>
+<button class="p-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded transition-colors" title="Download PDF">
+<span class="material-symbols-outlined text-[20px]" data-icon="download">download</span>
+</button>
+<button class="p-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded transition-colors" title="Print">
+<span class="material-symbols-outlined text-[20px]" data-icon="print">print</span>
+</button>
+</div>
+</div>
+<!-- The Document Canvas -->
+<div class="flex-grow overflow-y-auto custom-scrollbar p-md lg:p-lg flex justify-center">
+<!-- The Paper -->
+<div class="bg-white w-full max-w-[700px] min-h-[800px] p-xl paper-shadow rounded-sm relative">
+<!-- Form 1 Header -->
+<div class="text-center mb-lg border-b border-outline-variant pb-sm">
+<p class="font-headline-md text-headline-md font-bold mb-xs">FORM A</p>
+<p class="font-label-mono text-label-mono text-on-surface-variant uppercase">[See Rule 3(1)]</p>
+<p class="font-label-mono text-label-mono text-secondary mt-sm tracking-wide">APPLICATION UNDER SECTION 6(1) OF THE RIGHT TO INFORMATION ACT, 2005</p>
+</div>
+<div class="font-headline-lg-mobile text-body-lg space-y-lg leading-relaxed">
+<!-- To Section -->
+<div>
+<p>To,</p>
+<p class="font-bold mt-xs">The Public Information Officer,</p>
+<p class="text-on-surface-variant italic">[Department Name will appear here]</p>
+<p class="text-on-surface-variant italic">[Address will appear here]</p>
+</div>
+<!-- Subject -->
+<div class="flex gap-md">
+<span class="font-bold whitespace-nowrap">Subject:</span>
+<span class="border-b border-outline-variant flex-grow inline-block">Request for information under RTI Act, 2005.</span>
+</div>
+<!-- Applicant Details Table -->
+<div class="border border-outline-variant rounded-sm overflow-hidden">
+<table class="w-full text-left border-collapse">
+<tbody><tr class="border-b border-outline-variant">
+<th class="p-sm font-semibold border-r border-outline-variant w-1/3 bg-surface-bright">1. Full Name of Applicant</th>
+<td class="p-sm text-on-surface-variant italic">[Name will appear here]</td>
+</tr>
+<tr class="border-b border-outline-variant">
+<th class="p-sm font-semibold border-r border-outline-variant bg-surface-bright">2. Address</th>
+<td class="p-sm text-on-surface-variant italic">[Address will appear here]</td>
+</tr>
+<tr class="border-b border-outline-variant">
+<th class="p-sm font-semibold border-r border-outline-variant bg-surface-bright">3. Contact Details</th>
+<td class="p-sm text-on-surface-variant italic">[Phone/Email will appear here]</td>
+</tr>
+</tbody></table>
+</div>
+<!-- Particulars of Info -->
+<div>
+<p class="font-bold mb-sm">4. Particulars of information required:</p>
+<!-- Highlighted Preview Feature -->
+<div class="pl-md ml-xs border-l-2 border-secondary relative group cursor-help">
+<div class="bg-[#FFF8F0] px-sm py-xs rounded-r-sm inline-block w-full">
+<p class="text-on-surface italic opacity-70">1. Details of the information sought will be formatted here as a numbered list based on your input.</p>
+</div>
+<!-- Tooltip -->
+<div class="absolute left-full ml-sm top-1/2 -translate-y-1/2 w-48 bg-inverse-surface text-inverse-on-surface font-caption text-caption p-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
+                                    Auto-formatted from your input in Section 3.
+                                </div>
+</div>
+</div>
+<!-- Fee Details -->
+<div>
+<p class="font-bold mb-sm">5. Details of Fee Paid:</p>
+<p class="pl-md">A fee of ₹10/- is being paid via <span class="border-b border-outline border-dashed inline-block w-32"></span> (Postal Order / DD No. <span class="border-b border-outline border-dashed inline-block w-32"></span> dated <span class="border-b border-outline border-dashed inline-block w-24"></span>).</p>
+</div>
+<!-- Declaration -->
+<div class="pt-lg">
+<p class="text-sm">I state that the information sought does not fall within the restrictions contained in Section 8 and 9 of the Act and to the best of my knowledge it pertains to your office.</p>
+</div>
+<!-- Sign-off -->
+<div class="flex justify-between items-end pt-xl mt-xl border-t border-outline-variant border-dashed">
+<div>
+<p>Place: <span class="border-b border-outline border-dashed inline-block w-32"></span></p>
+<p class="mt-sm">Date: <span class="border-b border-outline border-dashed inline-block w-32"></span></p>
+</div>
+<div class="text-center">
+<div class="w-48 h-16 border-b border-outline border-dashed mb-xs"></div>
+<p class="font-semibold">(Signature of Applicant)</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-low full-width bottom-0 border-t border-outline-variant bg-[#f2f4f2]">
+<div class="w-full py-xl px-gutter max-w-max-width mx-auto flex flex-col md:flex-row justify-between items-center gap-base">
+<div class="text-center md:text-left space-y-sm">
+<p class="font-label-mono text-label-mono uppercase tracking-widest text-on-surface-variant font-bold">RTI Sahayak</p>
+<p class="font-caption text-caption text-on-surface-variant max-w-2xl">© 2024 RTI Sahayak. This AI assistant is an educational tool and does not constitute legal advice. All responses should be verified against the official Right to Information Act, 2005.</p>
+</div>
+<div class="flex flex-wrap justify-center md:justify-end gap-md">
+<a class="font-caption text-caption text-on-surface-variant hover:text-primary transition-opacity opacity-80 hover:opacity-100" href="#">Legal Disclaimer</a>
+<a class="font-caption text-caption text-on-surface-variant hover:text-primary transition-opacity opacity-80 hover:opacity-100" href="#">Privacy Policy</a>
+<a class="font-caption text-caption text-on-surface-variant hover:text-primary transition-opacity opacity-80 hover:opacity-100" href="#">Terms of Service</a>
+<a class="font-caption text-caption text-on-surface-variant hover:text-primary transition-opacity opacity-80 hover:opacity-100" href="#">Contact Support</a>
+</div>
+</div>
+</footer>
+</body></html>

@@ -1,0 +1,536 @@
+{% extends "base.html" %}
+
+{% block title %}Draft Application - RTI Sahayak{% endblock %}
+
+{% block head_extra %}
+<style>
+  /* Print button target: hide everything except the drafted letter itself -
+     no nav, form, action bar, source cards, or footer chrome. */
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    #preview-content, #preview-content * {
+      visibility: visible;
+    }
+    #preview-content {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 0;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block nav %}
+<!-- TopNavBar -->
+<nav class="bg-surface docked full-width top-0 border-b border-outline-variant z-50 relative bg-white">
+<div class="flex justify-between items-center px-gutter w-full max-w-max-width mx-auto h-16">
+<div class="flex items-center gap-md">
+<a class="font-headline-md text-headline-md font-bold text-primary" href="/">RTI Sahayak</a>
+<div class="hidden md:flex gap-md ml-lg h-full items-center">
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/ask">Ask</a>
+<a class="font-body-md text-body-md text-secondary font-bold border-b-2 border-secondary pb-1 h-full flex items-center pt-1 cursor-pointer transition-colors" href="/draft">Draft Application</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/browse">Browse the Act</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/track">Track</a>
+</div>
+</div>
+<div class="flex items-center gap-md relative">
+<span class="font-caption text-caption text-on-surface-variant hidden lg:block">Grounded in RTI Act, 2005</span>
+<button aria-label="System telemetry" class="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center w-8 h-8 rounded hover:bg-surface-container-low" id="telemetry-trigger" title="System telemetry" type="button">
+<span class="material-symbols-outlined text-[18px]" data-icon="monitoring">monitoring</span>
+</button>
+<button class="font-label-mono text-label-mono text-primary px-sm py-xs border border-outline-variant rounded hover:bg-surface-container-low transition-colors" id="lang-pill" type="button">
+                    English / हिंदी / मराठी
+                </button>
+<span class="hidden absolute top-full right-0 mt-xs w-64 bg-white border border-outline-variant rounded p-sm font-caption text-caption text-on-surface-variant shadow-[0_4px_20px_rgba(18,33,46,0.08)] z-50" id="lang-note">Multilingual drafting is in development.</span>
+</div>
+</div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- Main Content Area - 50/50 Split -->
+<main class="flex-grow flex flex-col lg:flex-row w-full max-w-[1440px] mx-auto bg-[#F7F4EE]">
+<!-- LEFT COLUMN (Form) -->
+<div class="w-full lg:w-1/2 flex flex-col h-[calc(100vh-64px)] bg-white border-r border-outline-variant">
+<div class="flex-grow overflow-y-auto custom-scrollbar p-md lg:p-lg space-y-lg relative">
+<!-- Section 1: YOUR DETAILS -->
+<section class="space-y-md">
+<h2 class="font-label-mono text-label-mono text-on-surface-variant tracking-widest border-b border-outline-variant pb-xs">YOUR DETAILS</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<div class="md:col-span-2">
+<label class="form-label-mono" for="fullName">Full Name</label>
+<input class="form-input-flat" id="fullName" name="full_name" placeholder="e.g. Ramesh Kumar" type="text"/>
+</div>
+<div class="md:col-span-2">
+<label class="form-label-mono" for="address">Mailing Address</label>
+<textarea class="form-input-flat resize-none" id="address" name="address" placeholder="Complete address for correspondence" rows="2"></textarea>
+</div>
+<div>
+<label class="form-label-mono" for="phone">Phone Number</label>
+<input class="form-input-flat" id="phone" name="phone" placeholder="+91" type="tel"/>
+</div>
+<div>
+<label class="form-label-mono" for="email">Email Address (Optional)</label>
+<input class="form-input-flat" id="email" name="email" placeholder="For digital updates" type="email"/>
+</div>
+<div>
+<label class="form-label-mono" for="locality">Locality / Ward / Area</label>
+<input class="form-input-flat" id="locality" name="locality" placeholder="e.g. Kothrud, Ward 12" type="text"/>
+</div>
+<div>
+<label class="form-label-mono" for="timeframe">Time Period</label>
+<input class="form-input-flat" id="timeframe" name="timeframe" placeholder="e.g. last 3 months" type="text"/>
+</div>
+</div>
+</section>
+<!-- Section 2: PUBLIC AUTHORITY -->
+<section class="space-y-md pt-md">
+<h2 class="font-label-mono text-label-mono text-on-surface-variant tracking-widest border-b border-outline-variant pb-xs">PUBLIC AUTHORITY</h2>
+<div class="space-y-md">
+<div class="relative">
+<label class="form-label-mono" for="department">Select Department / Public Authority</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant z-10" data-icon="search">search</span>
+<input class="form-input-flat pl-xl" id="department" name="public_authority" placeholder="Search departments..." type="text"/>
+</div>
+</div>
+<div>
+<label class="form-label-mono" for="pio">Public Information Officer (Optional)</label>
+<input class="form-input-flat" id="pio" name="pio" placeholder="Designation of the PIO (if known)" type="text"/>
+</div>
+</div>
+</section>
+<!-- Section 3: WHAT YOU WANT TO KNOW -->
+<section class="space-y-md pt-md">
+<div class="flex justify-between items-baseline border-b border-outline-variant pb-xs">
+<h2 class="font-label-mono text-label-mono text-on-surface-variant tracking-widest">WHAT YOU WANT TO KNOW</h2>
+<span class="font-caption text-caption text-on-surface-variant">Max 500 words</span>
+</div>
+<p class="font-caption text-caption text-on-surface-variant italic">Ask for specific documents, records, or orders. Do not ask for opinions or reasons (e.g., "Why was my application rejected?").</p>
+<div class="flex flex-wrap gap-sm mb-sm">
+<div class="inline-flex items-center gap-xs px-sm py-xs bg-[#F7F4EE] border border-[#1E7A5A] rounded-full">
+<span class="material-symbols-outlined text-[14px] text-[#1E7A5A]" data-icon="check_circle">check_circle</span>
+<span class="font-label-mono text-label-mono text-[#1E7A5A]">Good: 'Certified copy of...'</span>
+</div>
+<div class="inline-flex items-center gap-xs px-sm py-xs bg-[#F7F4EE] border border-[#93000a] rounded-full">
+<span class="material-symbols-outlined text-[14px] text-[#93000a]" data-icon="cancel">cancel</span>
+<span class="font-label-mono text-label-mono text-[#93000a]">Bad: 'Why did the...'</span>
+</div>
+</div>
+<div class="relative">
+<!-- AI "Statutory Line" indicator -->
+<div class="absolute left-0 top-0 bottom-0 w-[2px] bg-primary-container rounded-l-DEFAULT"></div>
+<textarea class="form-input-flat pl-md resize-y" id="information" name="problem_description" placeholder="1. I require a certified copy of the government order detailing the budget allocation for...
+2. Please provide the inspection reports for..." rows="6"></textarea>
+</div>
+</section>
+<!-- Section 4: FEE -->
+<section class="space-y-md pt-md pb-xl">
+<h2 class="font-label-mono text-label-mono text-on-surface-variant tracking-widest border-b border-outline-variant pb-xs">FEE PAYMENT</h2>
+<div class="space-y-sm">
+<label class="flex items-center gap-sm cursor-pointer p-sm border border-outline-variant rounded-DEFAULT hover:bg-surface-container-low transition-colors">
+<input checked="" class="text-primary focus:ring-primary h-4 w-4" name="is_bpl" type="radio" value="false"/>
+<span class="font-body-md text-body-md">₹10 application fee (Payable via Postal Order/DD/Online)</span>
+</label>
+<label class="flex items-center gap-sm cursor-pointer p-sm border border-outline-variant rounded-DEFAULT hover:bg-surface-container-low transition-colors">
+<input class="text-primary focus:ring-primary h-4 w-4" name="is_bpl" type="radio" value="true"/>
+<span class="font-body-md text-body-md">Below Poverty Line (BPL) — Exempt from fee (Must attach proof)</span>
+</label>
+</div>
+</section>
+</div>
+<!-- Sticky Form Footer -->
+<div class="bg-white border-t border-outline-variant p-md flex justify-between items-center shadow-[0_-4px_20px_rgba(18,33,46,0.05)] z-10">
+<a class="secondary-button font-label-mono text-label-mono px-md py-sm rounded transition-colors flex items-center gap-xs" href="/save-draft" rel="noopener" target="_blank">
+<span class="material-symbols-outlined text-[18px]" data-icon="save">save</span>
+                    Save Draft
+                </a>
+<button class="amber-button font-label-mono text-label-mono px-lg py-sm rounded transition-colors flex items-center gap-xs" id="generate-btn" type="button">
+                    Generate Application
+                    <span class="material-symbols-outlined text-[18px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- RIGHT COLUMN (Live Preview) -->
+<div class="w-full lg:w-1/2 flex flex-col h-[calc(100vh-64px)] bg-[#F7F4EE]">
+<!-- Preview Action Bar -->
+<div class="bg-[#F7F4EE] border-b border-outline-variant px-lg py-sm flex justify-between items-center z-10 relative">
+<div class="flex bg-surface-container-high rounded-full p-xs">
+<button class="px-sm py-xs bg-white rounded-full font-label-mono text-label-mono text-on-surface shadow-sm text-xs" id="preview-lang-english" type="button">English</button>
+<button class="px-sm py-xs rounded-full font-label-mono text-label-mono text-on-surface-variant hover:text-on-surface text-xs transition-colors" id="preview-lang-pill" type="button">हिंदी</button>
+</div>
+<span class="hidden absolute top-full left-lg mt-xs w-64 bg-white border border-outline-variant rounded p-sm font-caption text-caption text-on-surface-variant shadow-[0_4px_20px_rgba(18,33,46,0.08)] z-50" id="preview-lang-note">Multilingual drafting is in development.</span>
+<div class="flex gap-sm items-center">
+<span class="hidden font-label-mono text-label-mono text-secondary px-sm py-xs border border-outline-variant rounded-full" id="provider-chip"></span>
+<button class="p-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent" disabled id="copy-text-btn" title="Copy Text" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="content_copy">content_copy</span>
+</button>
+<button class="p-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent" disabled id="download-pdf-btn" title="Download PDF" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="download">download</span>
+</button>
+<button class="p-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent" disabled id="print-btn" title="Print" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="print">print</span>
+</button>
+</div>
+</div>
+<!-- The Document Canvas -->
+<div class="flex-grow overflow-y-auto custom-scrollbar p-md lg:p-lg flex flex-col items-center gap-md">
+<!-- Validation Warnings: issues found in the drafted letter that need review before submitting -->
+<div class="hidden w-full max-w-[700px] border border-warning bg-[#FDF6EC] rounded-sm p-sm shrink-0" id="draft-warnings">
+<div class="flex items-center gap-xs font-label-mono text-label-mono text-warning tracking-widest uppercase mb-xs">
+<span class="material-symbols-outlined text-[16px]" data-icon="warning">warning</span>
+Review before submitting
+</div>
+<ul class="list-disc list-inside font-caption text-caption text-on-surface-variant space-y-xs" id="draft-warnings-list"></ul>
+</div>
+<!-- The Paper -->
+<div class="bg-white w-full max-w-[700px] min-h-[800px] p-xl paper-shadow rounded-sm relative shrink-0">
+<div class="font-headline-lg-mobile text-body-lg text-on-surface-variant italic text-center py-xl" id="preview-empty">
+Fill in the form and click "Generate Application" to see your drafted RTI application here.
+</div>
+<div class="hidden text-center py-xl" id="preview-loading">
+<p class="font-label-mono text-label-mono text-on-surface-variant">Drafting your application...</p>
+</div>
+<div class="hidden font-body-md text-body-md text-[#93000a] text-center py-xl" id="preview-error"></div>
+{% include "partials/no_grounding.html" %}
+<div class="hidden font-headline-lg-mobile text-body-lg leading-relaxed whitespace-pre-wrap" id="preview-content"></div>
+</div>
+<!-- Source Cards: grounding evidence for the draft above -->
+<div class="w-full max-w-[700px] space-y-sm shrink-0" id="source-cards"></div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-low full-width bottom-0 border-t border-outline-variant bg-[#f2f4f2]">
+<div class="w-full py-xl px-gutter max-w-max-width mx-auto flex flex-col md:flex-row justify-between items-center gap-base">
+<div class="text-center md:text-left space-y-sm">
+<p class="font-label-mono text-label-mono uppercase tracking-widest text-on-surface-variant font-bold">RTI Sahayak</p>
+<p class="font-caption text-caption text-on-surface-variant max-w-2xl">© 2024 RTI Sahayak. This AI assistant is an educational tool and does not constitute legal advice. All responses should be verified against the official Right to Information Act, 2005.</p>
+</div>
+<div class="flex flex-wrap justify-center md:justify-end gap-md">
+<a class="font-caption text-caption text-on-surface-variant hover:text-primary transition-opacity opacity-80 hover:opacity-100" href="/legal">Legal Disclaimer</a>
+<a class="font-caption text-caption text-on-surface-variant hover:text-primary transition-opacity opacity-80 hover:opacity-100" href="/privacy">Privacy Policy</a>
+<a class="font-caption text-caption text-on-surface-variant hover:text-primary transition-opacity opacity-80 hover:opacity-100" href="/terms">Terms of Service</a>
+<a class="font-caption text-caption text-on-surface-variant hover:text-primary transition-opacity opacity-80 hover:opacity-100" href="/support">Contact Support</a>
+</div>
+</div>
+</footer>
+{% include "partials/telemetry_modal.html" %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var generateBtn = document.getElementById('generate-btn');
+  var downloadBtn = document.getElementById('download-pdf-btn');
+  var copyTextBtn = document.getElementById('copy-text-btn');
+  var printBtn = document.getElementById('print-btn');
+  var langPill = document.getElementById('lang-pill');
+  var langNote = document.getElementById('lang-note');
+  var previewLangEnglish = document.getElementById('preview-lang-english');
+  var previewLangPill = document.getElementById('preview-lang-pill');
+  var previewLangNote = document.getElementById('preview-lang-note');
+  var providerChip = document.getElementById('provider-chip');
+  var previewEmpty = document.getElementById('preview-empty');
+  var previewLoading = document.getElementById('preview-loading');
+  var previewError = document.getElementById('preview-error');
+  var noGrounding = document.getElementById('no-grounding');
+  var noGroundingQuery = document.getElementById('no-grounding-query');
+  var noGroundingRephraseBtn = document.getElementById('no-grounding-rephrase');
+  var previewContent = document.getElementById('preview-content');
+  var sourceCards = document.getElementById('source-cards');
+  var draftWarnings = document.getElementById('draft-warnings');
+  var draftWarningsList = document.getElementById('draft-warnings-list');
+  // The PDF download and any future "copy text" action must send the raw
+  // letter text, not previewContent.textContent - once citation chips are
+  // injected as <span> elements, textContent would splice their labels
+  // (e.g. "Section 6") into the middle of the sentence.
+  var lastApplicationText = '';
+
+  // The home screen's ask input and suggestion chips link here with the
+  // typed/clicked text in ?problem_description= - pre-fill the field so the
+  // citizen doesn't have to retype what they already said.
+  (function prefillFromQuery() {
+    var params = new URLSearchParams(window.location.search);
+    var prefill = params.get('problem_description');
+    if (prefill) {
+      var field = document.querySelector('[name="problem_description"]');
+      if (field) {
+        field.value = prefill;
+      }
+    }
+  })();
+
+  function showState(state) {
+    previewEmpty.classList.add('hidden');
+    previewLoading.classList.add('hidden');
+    previewError.classList.add('hidden');
+    noGrounding.classList.add('hidden');
+    previewContent.classList.add('hidden');
+    if (state === 'empty') previewEmpty.classList.remove('hidden');
+    if (state === 'loading') previewLoading.classList.remove('hidden');
+    if (state === 'error') previewError.classList.remove('hidden');
+    if (state === 'no-grounding') noGrounding.classList.remove('hidden');
+    if (state === 'content') previewContent.classList.remove('hidden');
+  }
+
+  function fieldValue(name) {
+    var el = document.querySelector('[name="' + name + '"]');
+    return el ? el.value.trim() : '';
+  }
+
+  function renderChunks(chunks) {
+    sourceCards.innerHTML = '';
+    if (!chunks || chunks.length === 0) {
+      return;
+    }
+    chunks.forEach(function (chunk, index) {
+      var card = document.createElement('div');
+      card.id = 'source-card-' + index;
+      card.className = 'bg-white border border-outline-variant rounded-sm p-sm transition-shadow';
+
+      var meta = document.createElement('p');
+      meta.className = 'font-label-mono text-label-mono text-secondary';
+      meta.textContent = chunk.section + ' · p.' + chunk.page + ' · distance ' + chunk.distance.toFixed(3);
+
+      var snippet = document.createElement('p');
+      snippet.className = 'font-caption text-caption text-on-surface-variant mt-xs';
+      snippet.textContent = chunk.text.length > 200 ? chunk.text.slice(0, 200) + '...' : chunk.text;
+
+      card.appendChild(meta);
+      card.appendChild(snippet);
+      sourceCards.appendChild(card);
+    });
+  }
+
+  function renderWarnings(warnings) {
+    draftWarningsList.innerHTML = '';
+    if (!warnings || warnings.length === 0) {
+      draftWarnings.classList.add('hidden');
+      return;
+    }
+    warnings.forEach(function (warning) {
+      var item = document.createElement('li');
+      item.textContent = warning;
+      draftWarningsList.appendChild(item);
+    });
+    draftWarnings.classList.remove('hidden');
+  }
+
+  function highlightSourceCard(chunkIndex) {
+    var prev = sourceCards.querySelector('.cite-highlight');
+    if (prev) {
+      prev.classList.remove('cite-highlight', 'ring-2', 'ring-primary');
+    }
+    var card = document.getElementById('source-card-' + chunkIndex);
+    if (!card) {
+      return;
+    }
+    card.classList.add('cite-highlight', 'ring-2', 'ring-primary');
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // Splice a .cite chip after each clause whose exact text is found in the
+  // letter, linking it back to the grounding chunk that justified it.
+  // Exact string match only - a clause that isn't found verbatim (e.g. if
+  // the wording ever drifts) is skipped silently rather than guessed at.
+  function renderApplicationText(text, clauses) {
+    lastApplicationText = text;
+
+    var matches = [];
+    (clauses || []).forEach(function (clause) {
+      var idx = text.indexOf(clause.text);
+      if (idx === -1) {
+        return;
+      }
+      matches.push({ start: idx, end: idx + clause.text.length, section: clause.section, chunkIndex: clause.chunk_index });
+    });
+    matches.sort(function (a, b) { return a.start - b.start; });
+
+    if (matches.length === 0) {
+      previewContent.textContent = text;
+      return;
+    }
+
+    var html = '';
+    var cursor = 0;
+    matches.forEach(function (m) {
+      if (m.start < cursor) {
+        return;
+      }
+      html += escapeHtml(text.slice(cursor, m.start));
+      html += escapeHtml(text.slice(m.start, m.end));
+      html += '<span class="cite" data-chunk-index="' + m.chunkIndex + '" role="button" tabindex="0">' + escapeHtml(m.section) + '</span>';
+      cursor = m.end;
+    });
+    html += escapeHtml(text.slice(cursor));
+    previewContent.innerHTML = html;
+  }
+
+  previewContent.addEventListener('click', function (e) {
+    var chip = e.target.closest('.cite');
+    if (!chip) {
+      return;
+    }
+    highlightSourceCard(chip.getAttribute('data-chunk-index'));
+  });
+
+  generateBtn.addEventListener('click', function () {
+    var isBplInput = document.querySelector('[name="is_bpl"]:checked');
+    var payload = {
+      full_name: fieldValue('full_name'),
+      address: fieldValue('address'),
+      phone: fieldValue('phone'),
+      email: fieldValue('email') || null,
+      public_authority: fieldValue('public_authority') || null,
+      problem_description: fieldValue('problem_description'),
+      locality: fieldValue('locality') || null,
+      timeframe: fieldValue('timeframe') || null,
+      is_bpl: isBplInput ? isBplInput.value === 'true' : false,
+      pio: fieldValue('pio')
+    };
+
+    showState('loading');
+    sourceCards.innerHTML = '';
+    renderWarnings([]);
+    downloadBtn.disabled = true;
+    copyTextBtn.disabled = true;
+    printBtn.disabled = true;
+    providerChip.classList.add('hidden');
+
+    fetch('/api/draft', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(function (response) {
+        if (!response.ok) {
+          return response.json().then(function (body) {
+            throw new Error(body.error || ('Request failed with status ' + response.status));
+          });
+        }
+        return response.json();
+      })
+      .then(function (data) {
+        if (data.status === 'insufficient_grounding') {
+          noGroundingQuery.textContent = '“' + payload.problem_description + '”';
+          showState('no-grounding');
+          return;
+        }
+
+        renderChunks(data.chunks);
+        renderApplicationText(data.application_text, data.clauses);
+        renderWarnings(data.warnings);
+        showState('content');
+
+        downloadBtn.disabled = false;
+        copyTextBtn.disabled = false;
+        printBtn.disabled = false;
+        if (data.meta && data.meta.provider) {
+          providerChip.textContent = 'Served by ' + data.meta.provider;
+          providerChip.classList.remove('hidden');
+        }
+      })
+      .catch(function (err) {
+        previewError.textContent = 'Could not draft the application: ' + err.message;
+        showState('error');
+      });
+  });
+
+  downloadBtn.addEventListener('click', function () {
+    if (downloadBtn.disabled) {
+      return;
+    }
+    fetch('/api/draft/pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ application_text: lastApplicationText })
+    })
+      .then(function (response) {
+        if (!response.ok) {
+          return response.json().then(function (body) {
+            throw new Error(body.error || ('Request failed with status ' + response.status));
+          });
+        }
+        return response.blob();
+      })
+      .then(function (blob) {
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = 'RTI-Application.pdf';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      })
+      .catch(function (err) {
+        previewError.textContent = 'Could not download the PDF: ' + err.message;
+        showState('error');
+      });
+  });
+
+  noGroundingRephraseBtn.addEventListener('click', function () {
+    showState('empty');
+    var field = document.querySelector('[name="problem_description"]');
+    if (field) {
+      field.focus();
+      field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+
+  copyTextBtn.addEventListener('click', function () {
+    if (copyTextBtn.disabled || !lastApplicationText) {
+      return;
+    }
+    navigator.clipboard.writeText(lastApplicationText).then(function () {
+      var icon = copyTextBtn.querySelector('.material-symbols-outlined');
+      var originalIcon = icon.textContent;
+      var originalTitle = copyTextBtn.title;
+      icon.textContent = 'check';
+      copyTextBtn.title = 'Copied!';
+      setTimeout(function () {
+        icon.textContent = originalIcon;
+        copyTextBtn.title = originalTitle;
+      }, 1500);
+    }).catch(function (err) {
+      previewError.textContent = 'Could not copy the text: ' + err.message;
+      showState('error');
+    });
+  });
+
+  printBtn.addEventListener('click', function () {
+    if (printBtn.disabled) {
+      return;
+    }
+    window.print();
+  });
+
+  if (langPill && langNote) {
+    langPill.addEventListener('click', function () {
+      langNote.classList.toggle('hidden');
+    });
+  }
+  if (previewLangPill && previewLangNote) {
+    previewLangPill.addEventListener('click', function () {
+      previewLangNote.classList.toggle('hidden');
+    });
+  }
+  // English is already the working, active language - clicking it just
+  // dismisses the हिंदी "in development" note rather than doing nothing.
+  if (previewLangEnglish && previewLangNote) {
+    previewLangEnglish.addEventListener('click', function () {
+      previewLangNote.classList.add('hidden');
+    });
+  }
+})();
+</script>
+{% endblock %}

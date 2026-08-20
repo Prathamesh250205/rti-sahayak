@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Design system check - RTI Sahayak{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center gap-8 max-w-3xl mx-auto py-16 px-4">
+  <h1 class="font-['Source_Serif_4'] text-4xl">Design system check</h1>
+
+  <div class="flex flex-wrap justify-center gap-6">
+    <div class="flex flex-col items-center gap-2">
+      <div class="w-24 h-24 rounded-lg bg-primary"></div>
+      <span class="text-xs">bg-primary</span>
+    </div>
+    <div class="flex flex-col items-center gap-2">
+      <div class="w-24 h-24 rounded-lg bg-primary-container"></div>
+      <span class="text-xs">bg-primary-container</span>
+    </div>
+    <div class="flex flex-col items-center gap-2">
+      <div class="w-24 h-24 rounded-lg bg-secondary"></div>
+      <span class="text-xs">bg-secondary</span>
+    </div>
+    <div class="flex flex-col items-center gap-2">
+      <div class="w-24 h-24 rounded-lg bg-secondary-container"></div>
+      <span class="text-xs">bg-secondary-container</span>
+    </div>
+    <div class="flex flex-col items-center gap-2">
+      <div class="w-24 h-24 rounded-lg bg-surface-container"></div>
+      <span class="text-xs">bg-surface-container</span>
+    </div>
+    <div class="flex flex-col items-center gap-2">
+      <div class="w-24 h-24 rounded-lg bg-outline"></div>
+      <span class="text-xs">bg-outline</span>
+    </div>
+  </div>
+
+  <p class="font-['Inter']">This paragraph is set in Inter, the body typeface.</p>
+  <p class="font-['JetBrains_Mono']">This paragraph is set in JetBrains Mono, the label/citation typeface.</p>
+
+  <p lang="hi">सूचना का अधिकार अधिनियम, 2005</p>
+
+  <div class="flex gap-4">
+    <span class="material-symbols-outlined">description</span>
+    <span class="material-symbols-outlined">gavel</span>
+    <span class="material-symbols-outlined">download</span>
+  </div>
+
+  <span class="cite">S. 6(1)</span>
+</div>
+{% endblock %}

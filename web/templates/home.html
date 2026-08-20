@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}RTI Sahayak - Home{% endblock %}
+
+{% block nav %}
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-inverse-surface border-b border-outline-variant dark:border-outline sticky top-0 z-50">
+<div class="flex justify-between items-center px-gutter w-full max-w-max-width mx-auto h-16">
+<div class="flex items-center gap-md transition-all duration-200">
+<a class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed" href="/">RTI Sahayak</a>
+</div>
+<nav class="hidden md:flex items-center gap-lg h-full" id="main-nav-links">
+<a class="text-secondary dark:text-secondary-fixed-dim font-bold border-b-2 border-secondary pb-1 h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm" href="/ask">Ask</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm" href="/draft">Draft Application</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm" href="/browse">Browse the Act</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm" href="/track">Track</a>
+</nav>
+<div class="hidden md:flex items-center gap-md font-body-md text-body-md text-primary dark:text-primary-fixed relative">
+<span class="cursor-pointer transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm py-xs rounded" id="lang-pill">English / हिंदी / मराठी</span>
+<span class="hidden absolute top-full right-0 mt-xs w-64 bg-white border border-outline-variant rounded p-sm font-caption text-caption text-on-surface-variant shadow-[0_4px_20px_rgba(18,33,46,0.08)] z-50" id="lang-note">Multilingual drafting is in development.</span>
+<span class="text-on-surface-variant px-sm py-xs">Grounded in RTI Act, 2005</span>
+</div>
+<button aria-label="Open menu" class="md:hidden text-primary" id="mobile-menu-btn" type="button">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+<nav class="hidden flex-col md:hidden border-t border-outline-variant bg-surface dark:bg-inverse-surface" id="mobile-nav-links">
+<a class="block px-gutter py-sm text-secondary font-bold" href="/ask">Ask</a>
+<a class="block px-gutter py-sm text-on-surface-variant" href="/draft">Draft Application</a>
+<a class="block px-gutter py-sm text-on-surface-variant" href="/browse">Browse the Act</a>
+<a class="block px-gutter py-sm text-on-surface-variant" href="/track">Track</a>
+</nav>
+</header>
+{% endblock %}
+
+{% block content %}
+<!-- Main Content -->
+<main class="flex-grow flex flex-col items-center justify-center px-gutter py-xl max-w-max-width mx-auto w-full gap-lg">
+<!-- Hero Section -->
+<section class="text-center max-w-3xl mx-auto space-y-md">
+<h1 class="font-display-lg text-display-lg text-rti-text">Ask anything about your right to information</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Every answer quotes the exact section of the Act. No guesses.</p>
+</section>
+<!-- Search/Ask Interface -->
+<section class="w-full max-w-3xl mx-auto space-y-md">
+<div class="relative flex items-center bg-white rounded-lg border border-rti-border focus-within:border-rti-text transition-colors ai-input-shadow p-sm">
+<span aria-hidden="true" class="material-symbols-outlined text-outline ml-sm">mic</span>
+<input class="w-full bg-transparent border-none outline-none font-body-md text-body-md px-md py-sm text-rti-text placeholder:text-outline focus:ring-0" id="ask-input" placeholder="e.g. How long does a PIO have to reply?" type="text"/>
+<button class="bg-rti-amber text-white font-caption text-caption rounded-lg px-md py-sm hover:opacity-90 transition-opacity whitespace-nowrap" id="ask-button" type="button">Ask</button>
+</div>
+<!-- Suggestions -->
+<div class="flex flex-wrap gap-base justify-center mt-md">
+<button class="suggestion-chip bg-rti-bg border border-rti-amber rounded-full px-md py-xs font-label-mono text-label-mono text-rti-amber hover:bg-white transition-colors" type="button">What is the application fee?</button>
+<button class="suggestion-chip bg-rti-bg border border-rti-amber rounded-full px-md py-xs font-label-mono text-label-mono text-rti-amber hover:bg-white transition-colors" type="button">Which information is exempt?</button>
+<button class="suggestion-chip bg-rti-bg border border-rti-amber rounded-full px-md py-xs font-label-mono text-label-mono text-rti-amber hover:bg-white transition-colors" type="button">How do I file a first appeal?</button>
+<button class="suggestion-chip bg-rti-bg border border-rti-amber rounded-full px-md py-xs font-label-mono text-label-mono text-rti-amber hover:bg-white transition-colors" type="button">Who is a Public Information Officer?</button>
+</div>
+</section>
+<!-- Trust Strip -->
+<section class="w-full max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-gutter mt-xl">
+<div class="bg-white border border-rti-border rounded-xl p-md flex flex-col items-center text-center gap-sm">
+<span aria-hidden="true" class="material-symbols-outlined text-rti-amber text-4xl">menu_book</span>
+<p class="font-body-md text-body-md text-rti-text font-medium">Section-level citations</p>
+</div>
+<div class="bg-white border border-rti-border rounded-xl p-md flex flex-col items-center text-center gap-sm">
+<span aria-hidden="true" class="material-symbols-outlined text-rti-amber text-4xl">translate</span>
+<p class="font-body-md text-body-md text-rti-text font-medium">Answers in 3 languages</p>
+</div>
+<div class="bg-white border border-rti-border rounded-xl p-md flex flex-col items-center text-center gap-sm">
+<span aria-hidden="true" class="material-symbols-outlined text-rti-amber text-4xl">edit_document</span>
+<p class="font-body-md text-body-md text-rti-text font-medium">Draft &amp; track your RTI in minutes</p>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-low dark:bg-surface-container-lowest border-t border-outline-variant dark:border-outline mt-auto">
+<div class="w-full py-xl px-gutter max-w-max-width mx-auto flex flex-col md:flex-row justify-between items-center gap-base">
+<div class="flex flex-col gap-xs">
+<span class="font-label-mono text-label-mono uppercase tracking-widest text-on-surface-variant dark:text-on-surface-variant">RTI Sahayak</span>
+<p class="font-caption text-caption text-on-surface-variant dark:text-on-surface-variant max-w-2xl opacity-80">
+                    © 2024 RTI Sahayak. Informational guidance based on the RTI Act, 2005. Not legal advice. This AI assistant is an educational tool and does not constitute legal advice. All responses should be verified against the official Right to Information Act, 2005.
+                </p>
+</div>
+<div class="flex flex-wrap gap-md font-caption text-caption">
+<a class="text-on-surface-variant dark:text-on-surface-variant opacity-80 hover:opacity-100 hover:text-primary dark:hover:text-primary-fixed transition-all" href="/legal">Legal Disclaimer</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant opacity-80 hover:opacity-100 hover:text-primary dark:hover:text-primary-fixed transition-all" href="/privacy">Privacy Policy</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant opacity-80 hover:opacity-100 hover:text-primary dark:hover:text-primary-fixed transition-all" href="/terms">Terms of Service</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant opacity-80 hover:opacity-100 hover:text-primary dark:hover:text-primary-fixed transition-all" href="/support">Contact Support</a>
+</div>
+</div>
+</footer>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var askInput = document.getElementById('ask-input');
+  var askButton = document.getElementById('ask-button');
+
+  function goToDraft(text) {
+    var trimmed = (text || '').trim();
+    var url = '/draft';
+    if (trimmed) {
+      url += '?problem_description=' + encodeURIComponent(trimmed);
+    }
+    window.location.href = url;
+  }
+
+  askButton.addEventListener('click', function () {
+    goToDraft(askInput.value);
+  });
+  askInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      goToDraft(askInput.value);
+    }
+  });
+
+  document.querySelectorAll('.suggestion-chip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      goToDraft(chip.textContent);
+    });
+  });
+
+  var langPill = document.getElementById('lang-pill');
+  var langNote = document.getElementById('lang-note');
+  if (langPill && langNote) {
+    langPill.addEventListener('click', function () {
+      langNote.classList.toggle('hidden');
+    });
+  }
+
+  var mobileMenuBtn = document.getElementById('mobile-menu-btn');
+  var mobileNavLinks = document.getElementById('mobile-nav-links');
+  if (mobileMenuBtn && mobileNavLinks) {
+    mobileMenuBtn.addEventListener('click', function () {
+      mobileNavLinks.classList.toggle('hidden');
+      mobileNavLinks.classList.toggle('flex');
+    });
+  }
+})();
+</script>
+{% endblock %}

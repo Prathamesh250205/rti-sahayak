@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RTI AI - Answer Screen</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;family=Noto+Sans:wght@400&amp;family=Source+Serif+4:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "surface-variant": "#e1e3e1",
+                "on-primary": "#ffffff",
+                "on-error-container": "#93000a",
+                "error-container": "#ffdad6",
+                "on-secondary-container": "#6f3900",
+                "on-primary-fixed-variant": "#124f47",
+                "tertiary-fixed": "#ffdbcf",
+                "on-background": "#191c1b",
+                "surface-bright": "#f8faf8",
+                "surface-container": "#edeeec",
+                "secondary-container": "#fda053",
+                "primary-container": "#0e4d45",
+                "surface-tint": "#2f685f",
+                "primary-fixed-dim": "#98d2c7",
+                "on-tertiary-fixed-variant": "#6a3a29",
+                "inverse-primary": "#98d2c7",
+                "on-tertiary": "#ffffff",
+                "background": "#f8faf8",
+                "on-primary-fixed": "#00201c",
+                "on-tertiary-fixed": "#341004",
+                "surface": "#f8faf8",
+                "tertiary": "#4c2313",
+                "surface-container-low": "#f2f4f2",
+                "on-tertiary-container": "#e4a38c",
+                "error": "#ba1a1a",
+                "inverse-surface": "#2e3130",
+                "surface-container-high": "#e7e8e7",
+                "surface-container-lowest": "#ffffff",
+                "on-error": "#ffffff",
+                "on-surface-variant": "#404946",
+                "inverse-on-surface": "#f0f1ef",
+                "tertiary-container": "#673827",
+                "on-primary-container": "#84bdb2",
+                "outline-variant": "#bfc8c5",
+                "surface-dim": "#d9dad9",
+                "primary": "#00352f",
+                "secondary-fixed-dim": "#ffb77f",
+                "on-secondary-fixed-variant": "#6f3800",
+                "secondary-fixed": "#ffdcc4",
+                "tertiary-fixed-dim": "#fbb79f",
+                "on-surface": "#191c1b",
+                "on-secondary": "#ffffff",
+                "on-secondary-fixed": "#2f1500",
+                "primary-fixed": "#b4eee2",
+                "secondary": "#924c00",
+                "surface-container-highest": "#e1e3e1",
+                "outline": "#707976"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+        },
+        "spacing": {
+                "md": "24px",
+                "lg": "48px",
+                "base": "8px",
+                "sm": "12px",
+                "max-width": "1200px",
+                "gutter": "24px",
+                "xl": "80px",
+                "xs": "4px"
+        },
+        "fontFamily": {
+                "headline-md": [
+                        "\"Source Serif 4\""
+                ],
+                "label-mono": [
+                        "JetBrains Mono"
+                ],
+                "body-lg": [
+                        "Inter"
+                ],
+                "body-hindi": [
+                        "Noto Sans"
+                ],
+                "display-lg": [
+                        "\"Source Serif 4\""
+                ],
+                "headline-lg": [
+                        "\"Source Serif 4\""
+                ],
+                "body-md": [
+                        "Inter"
+                ],
+                "caption": [
+                        "Inter"
+                ],
+                "headline-lg-mobile": [
+                        "\"Source Serif 4\""
+                ]
+        },
+        "fontSize": {
+                "headline-md": [
+                        "24px",
+                        {
+                                "lineHeight": "32px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "label-mono": [
+                        "13px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "500"
+                        }
+                ],
+                "body-lg": [
+                        "18px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "body-hindi": [
+                        "18px",
+                        {
+                                "lineHeight": "30px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "display-lg": [
+                        "48px",
+                        {
+                                "lineHeight": "60px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "700"
+                        }
+                ],
+                "headline-lg": [
+                        "32px",
+                        {
+                                "lineHeight": "40px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "body-md": [
+                        "16px",
+                        {
+                                "lineHeight": "26px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "caption": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "fontWeight": "500"
+                        }
+                ],
+                "headline-lg-mobile": [
+                        "28px",
+                        {
+                                "lineHeight": "36px",
+                                "fontWeight": "600"
+                        }
+                ]
+        }
+    }
+  }
+</script>
+<style>
+    body { background-color: #F7F4EE; }
+    .amber-bg { background-color: #C6742A; }
+    .amber-text { color: #C6742A; }
+    .amber-border { border-color: #C6742A; }
+    .statutory-border { border-left-color: #0E4D45; }
+    .cursor-blink { animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+</style>
+</head>
+<body class="text-on-surface antialiased min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<nav class="bg-surface dark:bg-inverse-surface border-b border-outline-variant dark:border-outline docked full-width top-0 z-50">
+<div class="flex justify-between items-center w-full px-md max-w-max-width mx-auto h-[72px]">
+<div class="font-headline-lg text-headline-lg font-bold text-primary dark:text-primary-fixed">RTI AI</div>
+<div class="hidden md:flex gap-6 h-full items-center">
+<a class="text-primary dark:text-primary-fixed border-b-2 border-secondary font-bold pb-1 h-full flex items-center mt-[2px] opacity-80 transition-opacity duration-150" href="#">Ask</a>
+<a class="text-on-surface-variant dark:text-surface-variant font-medium hover:text-secondary dark:hover:text-secondary-fixed-dim transition-colors h-full flex items-center" href="#">Draft Application</a>
+<a class="text-on-surface-variant dark:text-surface-variant font-medium hover:text-secondary dark:hover:text-secondary-fixed-dim transition-colors h-full flex items-center" href="#">Browse the Act</a>
+<a class="text-on-surface-variant dark:text-surface-variant font-medium hover:text-secondary dark:hover:text-secondary-fixed-dim transition-colors h-full flex items-center" href="#">Track</a>
+</div>
+<div class="flex items-center">
+<span class="material-symbols-outlined text-primary cursor-pointer hover:text-secondary transition-colors" data-icon="language">language</span>
+</div>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="flex-grow w-full max-w-max-width mx-auto px-md py-lg">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Left Column: Answer -->
+<div class="col-span-1 md:col-span-8 flex flex-col gap-lg pb-32">
+<article class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 md:p-8 relative">
+<!-- Metadata -->
+<div class="flex items-center justify-between mb-6 border-b border-outline-variant pb-4">
+<div class="flex items-center gap-3">
+<span class="font-label-mono text-label-mono text-on-surface-variant">Answered in 1.8s</span>
+<span class="font-label-mono text-label-mono bg-surface-container-low text-on-surface px-2 py-1 rounded border border-outline-variant">Gemini Flash</span>
+</div>
+<div class="flex gap-2 text-on-surface-variant">
+<button class="hover:text-primary transition-colors flex items-center justify-center p-1" title="Copy">
+<span class="material-symbols-outlined text-[20px]" data-icon="content_copy">content_copy</span>
+</button>
+<button class="hover:text-primary transition-colors flex items-center justify-center p-1" title="Share">
+<span class="material-symbols-outlined text-[20px]" data-icon="share">share</span>
+</button>
+</div>
+</div>
+<h1 class="font-headline-lg text-headline-lg mb-6">How long does a PIO have to reply to my application?</h1>
+<div class="font-body-lg text-body-lg text-on-surface space-y-4">
+<p>
+                        Under the Right to Information Act, a Public Information Officer (PIO) is generally required to provide the requested information within <strong>30 days</strong> of receiving your application <span class="inline-flex items-center px-2 py-0.5 rounded-full border amber-border bg-[#F7F4EE] amber-text font-label-mono text-[11px] leading-tight ml-1">[S. 7(1)]</span>. This timeframe begins from the date the PIO actually receives the request, not the date you mailed it.
+                    </p>
+<p>
+                        If your request concerns the life or liberty of a person, the timeline is strictly compressed. In such critical cases, the PIO must respond within <strong>48 hours</strong> of receipt <span class="inline-flex items-center px-2 py-0.5 rounded-full border amber-border bg-[#F7F4EE] amber-text font-label-mono text-[11px] leading-tight ml-1">[S. 7(1)]</span>. Additionally, if the information requested involves payment of further fees representing the cost of providing the information, the period between dispatching the intimation for further fees and payment of fees is excluded from the 30-day calculation <span class="inline-flex items-center px-2 py-0.5 rounded-full border amber-border bg-[#F7F4EE] amber-text font-label-mono text-[11px] leading-tight ml-1">[S. 7(3)(a)]</span>.
+                    </p>
+<!-- Quote Block -->
+<div class="my-6 bg-[#F7F4EE] border-l-2 statutory-border p-4 pr-6">
+<div class="font-label-mono text-label-mono text-on-surface-variant mb-2 uppercase tracking-wide">Section 7(1)</div>
+<p class="font-headline-md text-headline-md text-on-surface">
+                            "...the Central Public Information Officer or State Public Information Officer, as the case may be, on receipt of a request under section 6 shall, as expeditiously as possible, and in any case within thirty days of the receipt of the request, either provide the information on payment of such fee as may be prescribed or reject the request for any of the reasons specified in sections 8 and 9:"
+                        </p>
+</div>
+<!-- Streaming State -->
+<p>
+                        Failure to provide the information within these stipulated timelines is deemed as a refusal of the request <span class="inline-flex items-center px-2 py-0.5 rounded-full border amber-border bg-[#F7F4EE] amber-text font-label-mono text-[11px] leading-tight ml-1">[S. 7(2)]</span>. In such instances, the applicant is entitled to file a First Appeal<span class="inline-block w-1.5 h-4 bg-on-surface ml-1 align-middle cursor-blink"></span>
+</p>
+</div>
+</article>
+<!-- Next Steps -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6">
+<h3 class="font-headline-md text-[20px] mb-4">Next steps</h3>
+<div class="flex flex-wrap gap-3">
+<button class="amber-bg text-white px-4 py-2 rounded font-body-md font-medium hover:opacity-90 transition-opacity">
+                        Draft this RTI application
+                    </button>
+<button class="border border-[#12212E] text-[#12212E] bg-transparent hover:bg-surface transition-colors px-4 py-2 rounded font-body-md font-medium">
+                        See fees &amp; timelines
+                    </button>
+<button class="border border-[#12212E] text-[#12212E] bg-transparent hover:bg-surface transition-colors px-4 py-2 rounded font-body-md font-medium">
+                        Find the right PIO
+                    </button>
+</div>
+</div>
+<!-- Pinned Input (Simulated) -->
+<div class="fixed bottom-0 left-0 w-full md:w-[calc(66.666%-24px)] md:ml-[calc(max(0px,(100vw-1200px)/2)+24px)] p-4 bg-surface/90 backdrop-blur-md border-t border-outline-variant md:border-none md:bg-transparent md:backdrop-blur-none z-40 pb-lg">
+<div class="relative max-w-3xl mx-auto shadow-[0_4px_20px_rgba(18,33,46,0.08)] rounded-xl">
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl py-4 pl-4 pr-12 focus:border-[#12212E] focus:ring-0 font-body-md text-on-surface placeholder:text-on-surface-variant transition-colors" placeholder="Ask a follow-up..." type="text"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="send">send</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Right Column: Sources -->
+<aside class="col-span-1 md:col-span-4 self-start sticky top-[96px] flex flex-col gap-4">
+<div class="flex items-center justify-between border-b border-outline-variant pb-2">
+<h2 class="font-headline-md text-headline-md">Sources used</h2>
+<span class="bg-surface-container border border-outline-variant font-label-mono text-[12px] px-2 py-1 rounded text-on-surface-variant">3 sections</span>
+</div>
+<!-- Source Cards -->
+<div class="flex flex-col gap-3">
+<!-- Source 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-mono text-label-mono text-on-surface-variant">Chapter II</span>
+<div class="flex items-center gap-1 text-[12px] font-label-mono text-on-surface-variant bg-surface px-1.5 py-0.5 rounded border border-outline-variant">
+<div class="w-1.5 h-1.5 rounded-full bg-[#1E7A5A]"></div>
+                            85%
+                        </div>
+</div>
+<h4 class="font-headline-md text-[18px] mb-1">Section 7(1)</h4>
+<h5 class="font-body-md text-on-surface-variant mb-3 font-medium">Disposal of request</h5>
+<p class="font-body-md text-sm text-on-surface-variant line-clamp-2 mb-3">
+                        Duties of PIO on receipt of a request; timelines for providing information or rejection.
+                    </p>
+<a class="amber-text font-body-md text-sm font-medium hover:underline flex items-center gap-1" href="#">
+                        View full section <span class="material-symbols-outlined text-[16px]" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</div>
+<!-- Source 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-mono text-label-mono text-on-surface-variant">Chapter II</span>
+<div class="flex items-center gap-1 text-[12px] font-label-mono text-on-surface-variant bg-surface px-1.5 py-0.5 rounded border border-outline-variant">
+<div class="w-1.5 h-1.5 rounded-full bg-[#C6742A]"></div>
+                            72%
+                        </div>
+</div>
+<h4 class="font-headline-md text-[18px] mb-1">Section 7(5)</h4>
+<h5 class="font-body-md text-on-surface-variant mb-3 font-medium">Disposal of request</h5>
+<p class="font-body-md text-sm text-on-surface-variant line-clamp-2 mb-3">
+                        Fee calculation logic and conditions where fees are waived (e.g. Below Poverty Line).
+                    </p>
+<a class="amber-text font-body-md text-sm font-medium hover:underline flex items-center gap-1" href="#">
+                        View full section <span class="material-symbols-outlined text-[16px]" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</div>
+<!-- Skeleton Source 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 animate-pulse">
+<div class="flex justify-between items-start mb-3">
+<div class="h-4 bg-surface-variant rounded w-20"></div>
+<div class="h-5 bg-surface-variant rounded w-12"></div>
+</div>
+<div class="h-6 bg-surface-variant rounded w-32 mb-2"></div>
+<div class="h-5 bg-surface-variant rounded w-48 mb-4"></div>
+<div class="space-y-2 mb-4">
+<div class="h-4 bg-surface-variant rounded w-full"></div>
+<div class="h-4 bg-surface-variant rounded w-3/4"></div>
+</div>
+<div class="h-4 bg-surface-variant rounded w-24 mt-2"></div>
+</div>
+</div>
+<div class="text-center mt-2">
+<span class="font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Retrieved 12 chunks · reranked to 3</span>
+</div>
+</aside>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-low dark:bg-surface-dim border-t border-outline-variant dark:border-outline full-width bottom-0 mt-auto z-10 relative">
+<div class="flex flex-col md:flex-row justify-between items-center w-full py-lg px-md max-w-max-width mx-auto gap-md">
+<div class="flex flex-col gap-2 items-center md:items-start">
+<div class="font-headline-md text-headline-md text-on-surface">RTI AI</div>
+<p class="font-body-md text-body-md text-on-surface-variant text-center md:text-left max-w-md">© 2024 Statutory AI. This assistant provides guidance based on the RTI Act; it is not legal counsel.</p>
+</div>
+<div class="flex flex-wrap justify-center gap-4 md:gap-6 font-label-mono text-label-mono">
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors" href="#">Legal Disclaimer</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors" href="#">Support</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors" href="#">Archival Guidelines</a>
+</div>
+</div>
+</footer>
+</body></html>

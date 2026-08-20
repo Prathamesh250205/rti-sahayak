@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>RTI Sahayak - Home (Mobile)</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;family=Noto+Sans:wght@400&amp;family=Source+Serif+4:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-surface-variant": "#404946",
+                    "on-primary-fixed": "#00201c",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-fixed": "#341004",
+                    "inverse-surface": "#2e3130",
+                    "on-surface": "#191c1b",
+                    "primary-fixed": "#b4eee2",
+                    "on-secondary-container": "#6f3900",
+                    "on-primary-fixed-variant": "#124f47",
+                    "outline-variant": "#bfc8c5",
+                    "surface": "#f8faf8",
+                    "on-tertiary": "#ffffff",
+                    "background": "#f8faf8",
+                    "inverse-primary": "#98d2c7",
+                    "secondary-fixed": "#ffdcc4",
+                    "tertiary-fixed-dim": "#fbb79f",
+                    "error": "#ba1a1a",
+                    "on-primary-container": "#84bdb2",
+                    "on-primary": "#ffffff",
+                    "tertiary-container": "#673827",
+                    "on-secondary-fixed-variant": "#6f3800",
+                    "primary": "#00352f",
+                    "surface-container-low": "#f2f4f2",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-variant": "#e1e3e1",
+                    "on-background": "#191c1b",
+                    "surface-bright": "#f8faf8",
+                    "tertiary": "#4c2313",
+                    "on-tertiary-fixed-variant": "#6a3a29",
+                    "surface-dim": "#d9dad9",
+                    "on-secondary-fixed": "#2f1500",
+                    "on-error": "#ffffff",
+                    "secondary": "#924c00",
+                    "outline": "#707976",
+                    "on-error-container": "#93000a",
+                    "primary-fixed-dim": "#98d2c7",
+                    "tertiary-fixed": "#ffdbcf",
+                    "surface-container": "#edeeec",
+                    "surface-container-high": "#e7e8e7",
+                    "inverse-on-surface": "#f0f1ef",
+                    "surface-tint": "#2f685f",
+                    "on-tertiary-container": "#e4a38c",
+                    "primary-container": "#0e4d45",
+                    "on-secondary": "#ffffff",
+                    "surface-container-highest": "#e1e3e1",
+                    "secondary-container": "#fda053",
+                    "secondary-fixed-dim": "#ffb77f"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "lg": "48px",
+                    "gutter": "24px",
+                    "sm": "12px",
+                    "xs": "4px",
+                    "max-width": "1200px",
+                    "base": "8px",
+                    "md": "24px",
+                    "xl": "80px"
+            },
+            "fontFamily": {
+                    "display-lg": [
+                            "\"Source Serif 4\""
+                    ],
+                    "body-md": [
+                            "Inter"
+                    ],
+                    "caption": [
+                            "Inter"
+                    ],
+                    "body-hindi": [
+                            "Noto Sans"
+                    ],
+                    "headline-lg": [
+                            "\"Source Serif 4\""
+                    ],
+                    "headline-md": [
+                            "\"Source Serif 4\""
+                    ],
+                    "body-lg": [
+                            "Inter"
+                    ],
+                    "label-mono": [
+                            "JetBrains Mono"
+                    ],
+                    "headline-lg-mobile": [
+                            "\"Source Serif 4\""
+                    ]
+            },
+            "fontSize": {
+                    "display-lg": [
+                            "48px",
+                            {
+                                    "lineHeight": "60px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "body-md": [
+                            "16px",
+                            {
+                                    "lineHeight": "26px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "caption": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "body-hindi": [
+                            "18px",
+                            {
+                                    "lineHeight": "30px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-lg": [
+                            "32px",
+                            {
+                                    "lineHeight": "40px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "body-lg": [
+                            "18px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "label-mono": [
+                            "13px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.05em",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "headline-lg-mobile": [
+                            "28px",
+                            {
+                                    "lineHeight": "36px",
+                                    "fontWeight": "600"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        /* Custom Styles mapped from requirements */
+        body {
+            background-color: #F7F4EE; /* Warm paper palette */
+            color: #191c1b;
+        }
+        
+        .card-flat {
+            background-color: #FFFFFF;
+            border: 1px solid #E3DDD2;
+            border-radius: 12px;
+            box-shadow: none;
+        }
+        
+        .shadow-ambient {
+            box-shadow: 0 4px 20px rgba(18, 33, 46, 0.08);
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Interactive Elements */
+        .btn-primary {
+            background-color: #C6742A;
+            color: #FFFFFF;
+            border-radius: 8px;
+            border: none;
+            transition: all 0.2s;
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            color: #12212E;
+            border: 1px solid #12212E;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .input-base {
+            background-color: #FFFFFF;
+            border: 1px solid #E3DDD2;
+            border-radius: 8px;
+        }
+        .input-base:focus {
+            border-color: #12212E;
+            outline: none;
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md max-w-[390px] mx-auto min-h-screen flex flex-col relative overflow-x-hidden">
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-inverse-surface border-b border-outline-variant dark:border-outline flat no shadows sticky top-0 z-50">
+<div class="flex justify-between items-center px-4 w-full h-16">
+<!-- Brand -->
+<div class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">
+                RTI Sahayak
+            </div>
+<!-- Mobile Actions -->
+<div class="flex items-center gap-3">
+<button class="font-label-mono text-label-mono text-on-surface-variant px-2 py-1 border border-outline-variant rounded min-h-[44px] min-w-[44px] flex items-center justify-center">
+                    EN
+                </button>
+<button class="min-h-[44px] min-w-[44px] flex items-center justify-center text-on-surface-variant cursor-pointer transition-all duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow flex flex-col px-4 pt-10 pb-20 gap-8">
+<!-- Hero Section -->
+<section class="flex flex-col items-center text-center gap-4 mt-4">
+<div class="font-label-mono text-label-mono text-on-surface-variant uppercase tracking-widest border border-outline-variant px-3 py-1 rounded-full">
+                Grounded in RTI Act, 2005
+            </div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary">
+                Navigate the Right to Information
+            </h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-[300px]">
+                Ask questions, draft official applications, and understand your rights under Indian Law.
+            </p>
+</section>
+<!-- Search/Ask Interface -->
+<section class="w-full flex flex-col gap-3 relative z-10 mt-2">
+<div class="relative w-full rounded-[12px] shadow-ambient bg-white border border-[#E3DDD2] overflow-hidden flex flex-col">
+<textarea class="w-full min-h-[100px] p-4 resize-none border-none focus:ring-0 text-on-surface font-body-md bg-transparent placeholder:text-outline" placeholder="Ask a question or describe what you need to draft..."></textarea>
+<div class="flex justify-between items-center p-2 border-t border-[#E3DDD2] bg-surface-bright">
+<button class="min-h-[44px] min-w-[44px] flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">attach_file</span>
+</button>
+<button class="btn-primary min-h-[44px] px-6 font-caption text-caption flex items-center gap-2">
+<span>Ask</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Suggestions -->
+<div class="w-full overflow-x-auto hide-scrollbar pt-2">
+<div class="flex flex-nowrap gap-2 w-max pb-2">
+<button class="font-label-mono text-label-mono text-on-surface-variant px-4 py-2 border border-[#E3DDD2] rounded-full bg-surface-bright hover:bg-surface-container-low transition-colors whitespace-nowrap min-h-[44px]">
+                        Draft an Application
+                    </button>
+<button class="font-label-mono text-label-mono text-on-surface-variant px-4 py-2 border border-[#E3DDD2] rounded-full bg-surface-bright hover:bg-surface-container-low transition-colors whitespace-nowrap min-h-[44px]">
+                        Find PIO Details
+                    </button>
+<button class="font-label-mono text-label-mono text-on-surface-variant px-4 py-2 border border-[#E3DDD2] rounded-full bg-surface-bright hover:bg-surface-container-low transition-colors whitespace-nowrap min-h-[44px]">
+                        Appeal Process
+                    </button>
+</div>
+</div>
+</section>
+<!-- Trust Strip / Features -->
+<section class="flex flex-col gap-4 mt-4">
+<!-- Card 1 -->
+<div class="card-flat p-5 flex items-start gap-4">
+<div class="w-12 h-12 flex-shrink-0 rounded-lg bg-surface-container flex items-center justify-center">
+<img alt="Citations Icon" class="w-8 h-8 object-contain" src="https://lh3.googleusercontent.com/aida/AP1WRLs91LHoz2ztkj9kb3ITNathIjRIyMzsEccrgRcvGOyfLpg8WCQYbLCfni-gFz-JbBC3mhPSRQWigYe-H4_FrZQtZiAI857ouYN2eaSqHE3UYvYs5XK6FgE2CJVLZycCClotupzFPC5eFhPZ-IC9lIHYN-wo25GS-rz7h-qS9A5YEqyzsMSortTaoKmSa_pwwbTAYAVgRbLJtwb1l3Dc5NFS2hzCcpAvrwZftiqCjaFt7bIiRXJr4C8_HnY"/>
+</div>
+<div class="flex flex-col">
+<h3 class="font-body-md text-body-md font-semibold text-primary">Accurate Citations</h3>
+<p class="font-caption text-caption text-on-surface-variant mt-1">Responses are verified against the official RTI Act sections.</p>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="card-flat p-5 flex items-start gap-4">
+<div class="w-12 h-12 flex-shrink-0 rounded-lg bg-surface-container flex items-center justify-center">
+<img alt="Drafting Icon" class="w-8 h-8 object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Vu7UkK3FAZSorO8BQm78YzZO71qQKXfQZkDYf0njdgvR7DXQ5yoApG5nhtiAH0USy2pLWK-Aho2izQ8PsB6Uw4b1W2d8yHFR0wsWtKtRThgcl5_hA8RH6y_N1fRwAURvSsvtJ2Fbsx_4vKLBvIoJ7LaXwD5oHZJhlBa15ctGMZNpRQ6JqkbR8damgo00llg8Ezue-fltkmSreAWS46qWRqiCyfi36BV1gB3hftUvQMfFwZPC7fYifS-4c"/>
+</div>
+<div class="flex flex-col">
+<h3 class="font-body-md text-body-md font-semibold text-primary">Guided Drafting</h3>
+<p class="font-caption text-caption text-on-surface-variant mt-1">Step-by-step assistance to format official requests correctly.</p>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="card-flat p-5 flex items-start gap-4">
+<div class="w-12 h-12 flex-shrink-0 rounded-lg bg-surface-container flex items-center justify-center">
+<img alt="Languages Icon" class="w-8 h-8 object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Vhglrg87hIYANXq1as1TKDeEx-wHeETfRwPc1zLQFKTG_zPkDgyzu1U3DUhyoSHmlc0CcQaaKOuym4-DHELYkkEQ616apCqNi-CmHTRE4Z_MTuoZ6sQM3OUAu5ccYy9Xqz5TRZr3hrDTrV78qqOrfuXwkYQM2i-4wfHVsvrcqMbU-O8PlcCk_lyXV74-E39LzMXhnw30EjTQAhKXIGPttoKTS3p0rkgPT6SnceKVvEmf26cDS8ibQzGD4"/>
+</div>
+<div class="flex flex-col">
+<h3 class="font-body-md text-body-md font-semibold text-primary">Multi-Lingual</h3>
+<p class="font-caption text-caption text-on-surface-variant mt-1">Available in English, Hindi, and Marathi.</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-low dark:bg-surface-container-lowest border-t border-outline-variant dark:border-outline full-width bottom-0 mt-auto">
+<div class="w-full py-8 px-4 flex flex-col justify-between items-center gap-6">
+<div class="font-label-mono text-label-mono uppercase tracking-widest text-on-surface-variant mb-2">
+                RTI Sahayak
+            </div>
+<p class="font-caption text-caption text-on-surface-variant dark:text-on-surface-variant text-center opacity-80 hover:opacity-100 transition-opacity">
+                © 2024 RTI Sahayak. This AI assistant is an educational tool and does not constitute legal advice. All responses should be verified against the official Right to Information Act, 2005.
+            </p>
+<div class="flex flex-wrap justify-center gap-x-6 gap-y-4">
+<a class="font-caption text-caption text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed opacity-80 hover:opacity-100 transition-opacity min-h-[44px] flex items-center" href="#">Legal Disclaimer</a>
+<a class="font-caption text-caption text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed opacity-80 hover:opacity-100 transition-opacity min-h-[44px] flex items-center" href="#">Privacy Policy</a>
+<a class="font-caption text-caption text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed opacity-80 hover:opacity-100 transition-opacity min-h-[44px] flex items-center" href="#">Terms of Service</a>
+</div>
+</div>
+</footer>
+</body></html>

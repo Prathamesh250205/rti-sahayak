@@ -1,0 +1,18 @@
+[theme]
+primaryColor = "#1B3A5C"
+backgroundColor = "#FAF7F2"
+secondaryBackgroundColor = "#EDE7DD"
+textColor = "#25272B"
+font = "sans serif"
+
+[server]
+headless = true
+# transformers (a sentence-transformers dependency) has thousands of submodules;
+# Streamlit's file watcher re-scans all loaded modules' paths on every session,
+# which is measurably slow with this dependency tree. Disabling it means code
+# edits need a manual restart (streamlit run app.py again) instead of auto-reload —
+# worth it for demo reliability; flip back to "auto" if you want hot-reload while developing.
+fileWatcherType = "none"
+
+[client]
+toolbarMode = "minimal"

@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+
+/* Component classes that use @apply - these are compile-time directives and
+   only work when run through the Tailwind compiler, unlike the plain-CSS
+   component classes in web/templates/base.html's inline <style>. Ported
+   from draft_application_desktop's <head><style> block (see base.html for
+   the rest of that screen's component classes and where they came from). */
+@layer components {
+  .form-input-flat {
+    @apply w-full bg-surface-container-lowest border border-outline-variant rounded-DEFAULT py-sm px-md font-body-md text-on-surface focus:outline-none focus:border-on-surface focus:ring-0 transition-colors;
+  }
+  .form-label-mono {
+    @apply block mb-xs font-label-mono text-label-mono text-on-surface-variant uppercase;
+  }
+}
+
+@tailwind utilities;

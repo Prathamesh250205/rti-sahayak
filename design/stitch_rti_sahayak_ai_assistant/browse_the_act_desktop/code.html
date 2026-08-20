@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Browse the Act - RTI Sahayak</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;family=Source+Serif+4:opsz,wght@8..60,400;600;700&amp;family=Noto+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#f2f4f2",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed": "#341004",
+                        "on-background": "#191c1b",
+                        "on-secondary-fixed": "#2f1500",
+                        "secondary-container": "#fda053",
+                        "on-surface-variant": "#404946",
+                        "inverse-on-surface": "#f0f1ef",
+                        "surface-variant": "#e1e3e1",
+                        "on-tertiary": "#ffffff",
+                        "on-surface": "#191c1b",
+                        "error-container": "#ffdad6",
+                        "inverse-primary": "#98d2c7",
+                        "surface-container-highest": "#e1e3e1",
+                        "surface-container-high": "#e7e8e7",
+                        "tertiary-container": "#673827",
+                        "tertiary-fixed": "#ffdbcf",
+                        "on-tertiary-container": "#e4a38c",
+                        "surface-tint": "#2f685f",
+                        "surface-dim": "#d9dad9",
+                        "outline-variant": "#bfc8c5",
+                        "secondary-fixed-dim": "#ffb77f",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#0e4d45",
+                        "on-secondary-fixed-variant": "#6f3800",
+                        "surface": "#f8faf8",
+                        "primary-fixed-dim": "#98d2c7",
+                        "secondary-fixed": "#ffdcc4",
+                        "inverse-surface": "#2e3130",
+                        "secondary": "#924c00",
+                        "surface-container": "#edeeec",
+                        "on-secondary-container": "#6f3900",
+                        "on-tertiary-fixed-variant": "#6a3a29",
+                        "primary": "#00352f",
+                        "error": "#ba1a1a",
+                        "outline": "#707976",
+                        "background": "#f8faf8",
+                        "tertiary-fixed-dim": "#fbb79f",
+                        "on-primary-fixed-variant": "#124f47",
+                        "on-error": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#00201c",
+                        "surface-bright": "#f8faf8",
+                        "on-primary-container": "#84bdb2",
+                        "primary-fixed": "#b4eee2",
+                        "tertiary": "#4c2313",
+                        "on-error-container": "#93000a",
+                        "custom-paper": "#F7F4EE",
+                        "custom-ink": "#12212E",
+                        "custom-amber": "#C6742A",
+                        "custom-border": "#E3DDD2",
+                        "custom-statutory": "#0E4D45"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "md": "24px",
+                        "lg": "48px",
+                        "max-width": "1200px",
+                        "gutter": "24px",
+                        "sm": "12px",
+                        "xs": "4px",
+                        "xl": "80px",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "body-hindi": ["Noto Sans"],
+                        "headline-md": ["\"Source Serif 4\""],
+                        "headline-lg": ["\"Source Serif 4\""],
+                        "display-lg": ["\"Source Serif 4\""],
+                        "label-mono": ["JetBrains Mono"],
+                        "caption": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg-mobile": ["\"Source Serif 4\""],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-hindi": ["18px", {"lineHeight": "30px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                        "display-lg": ["48px", {"lineHeight": "60px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-mono": ["13px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "caption": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "26px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #F7F4EE; color: #12212E; }
+        .statutory-line { border-left: 2px solid #0E4D45; padding-left: 16px; margin-left: 4px; }
+        .paper-shadow { box-shadow: 0 4px 20px rgba(18, 33, 46, 0.08); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-body-md text-body-md antialiased">
+<!-- TopNavBar -->
+<header class="bg-surface w-full top-0 border-b border-outline-variant flat no shadows">
+<div class="flex justify-between items-center max-w-max-width mx-auto px-gutter py-sm">
+<div class="font-headline-md text-headline-md font-bold text-primary flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="account_balance">account_balance</span>
+                RTI Sahayak
+            </div>
+<nav class="hidden md:flex gap-6 items-center">
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-body-md text-body-md" href="#">Ask</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-body-md text-body-md" href="#">Draft Application</a>
+<a class="text-secondary border-b-2 border-secondary pb-1 font-body-md text-body-md" href="#">Browse the Act</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-body-md text-body-md" href="#">Track</a>
+</nav>
+<div class="flex items-center gap-4">
+<div class="relative hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm" data-icon="search">search</span>
+<input class="pl-10 pr-4 py-2 border border-custom-border rounded bg-white text-custom-ink focus:border-custom-ink focus:ring-0 w-80 font-body-md text-sm placeholder:text-outline-variant transition-colors" placeholder="Search the Act — try 'third party' or 'section 8'" type="text"/>
+</div>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors hidden sm:flex">
+<span class="material-symbols-outlined" data-icon="language">language</span>
+</button>
+<button class="bg-custom-amber text-white px-4 py-2 rounded font-caption text-caption hover:opacity-90 transition-opacity">Login</button>
+</div>
+</div>
+</header>
+<!-- Main Layout -->
+<main class="flex-1 flex max-w-[1400px] w-full mx-auto">
+<!-- Left Pane: Chapter Tree -->
+<aside class="w-[280px] shrink-0 border-r border-custom-border bg-white hidden lg:flex flex-col py-md overflow-y-auto" style="height: calc(100vh - 65px);">
+<div class="px-md mb-4">
+<h2 class="font-label-mono text-label-mono text-outline uppercase tracking-widest">Table of Contents</h2>
+</div>
+<nav class="flex flex-col">
+<!-- Chapter I -->
+<div class="px-md py-2 hover:bg-custom-paper cursor-pointer flex items-center justify-between text-custom-ink">
+<span class="font-body-md text-sm font-medium">Chapter I — Preliminary</span>
+<span class="material-symbols-outlined text-sm" data-icon="expand_more">expand_more</span>
+</div>
+<!-- Chapter II Expanded -->
+<div class="bg-custom-paper/50 flex flex-col">
+<div class="px-md py-2 flex items-center justify-between text-custom-ink font-medium border-l-2 border-transparent">
+<span class="font-body-md text-sm">Chapter II — Right to Information and Obligations of Public Authorities</span>
+<span class="material-symbols-outlined text-sm" data-icon="expand_less">expand_less</span>
+</div>
+<div class="flex flex-col py-1">
+<a class="px-md pl-[40px] py-1.5 text-sm text-outline hover:text-custom-ink font-label-mono text-label-mono" href="#">Sec 3. Right to information</a>
+<a class="px-md pl-[40px] py-1.5 text-sm text-outline hover:text-custom-ink font-label-mono text-label-mono" href="#">Sec 4. Obligations of public auth...</a>
+<a class="px-md pl-[40px] py-1.5 text-sm text-outline hover:text-custom-ink font-label-mono text-label-mono" href="#">Sec 5. Designation of PIOs</a>
+<a class="px-md pl-[40px] py-1.5 text-sm text-outline hover:text-custom-ink font-label-mono text-label-mono" href="#">Sec 6. Request for obtaining info</a>
+<!-- Active Section -->
+<a class="px-md pl-[40px] py-1.5 text-sm text-custom-ink bg-[#F5EADF] border-l-4 border-custom-amber font-label-mono text-label-mono font-bold" href="#">Sec 7. Disposal of request</a>
+<a class="px-md pl-[40px] py-1.5 text-sm text-outline hover:text-custom-ink font-label-mono text-label-mono" href="#">Sec 8. Exemption from disclosure</a>
+<a class="px-md pl-[40px] py-1.5 text-sm text-outline hover:text-custom-ink font-label-mono text-label-mono" href="#">Sec 9. Grounds for rejection</a>
+<a class="px-md pl-[40px] py-1.5 text-sm text-outline hover:text-custom-ink font-label-mono text-label-mono" href="#">Sec 10. Severability</a>
+<a class="px-md pl-[40px] py-1.5 text-sm text-outline hover:text-custom-ink font-label-mono text-label-mono" href="#">Sec 11. Third party information</a>
+</div>
+</div>
+<!-- Chapter III -->
+<div class="px-md py-2 hover:bg-custom-paper cursor-pointer flex items-center justify-between text-custom-ink">
+<span class="font-body-md text-sm font-medium">Chapter III — The Central Information Commission</span>
+<span class="material-symbols-outlined text-sm" data-icon="expand_more">expand_more</span>
+</div>
+</nav>
+</aside>
+<!-- Center Pane: Statutory Text -->
+<article class="flex-1 bg-[#F7F4EE] overflow-y-auto relative" style="height: calc(100vh - 65px);">
+<!-- Sticky Sub-header -->
+<div class="sticky top-0 bg-[#F7F4EE]/95 backdrop-blur z-10 border-b border-custom-border px-lg py-sm flex justify-between items-center">
+<div class="flex items-center gap-2 text-sm text-outline font-caption text-caption">
+<span class="hover:text-custom-ink cursor-pointer">Chapter II</span>
+<span class="material-symbols-outlined text-xs" data-icon="chevron_right">chevron_right</span>
+<span class="text-custom-ink font-medium">Section 7</span>
+</div>
+<button class="bg-white border border-custom-ink text-custom-ink px-4 py-1.5 rounded flex items-center gap-2 font-caption text-caption hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="forum">forum</span>
+                    Ask about this section
+                </button>
+</div>
+<!-- Content Area -->
+<div class="max-w-[800px] mx-auto px-lg py-xl">
+<div class="mb-lg">
+<h1 class="font-label-mono text-[32px] font-bold text-custom-ink mb-2">7(1)</h1>
+<h2 class="font-headline-md text-headline-md text-custom-ink/80 italic">Disposal of request</h2>
+</div>
+<div class="font-headline-lg text-body-lg text-custom-ink leading-relaxed statutory-line">
+<p class="mb-6 font-headline-md text-body-lg">
+                        Subject to the proviso to sub-section (2) of section 5 or the proviso to sub-section (3) of section 6, the Central Public Information Officer or State Public Information Officer, as the case may be, on receipt of a request under section 6 shall, as expeditiously as possible, and in any case within thirty days of the receipt of the request, either provide the information on payment of such fee as may be prescribed or reject the request for any of the reasons specified in sections 8 and 9:
+                    </p>
+<p class="mb-4 pl-lg text-custom-ink/90 font-headline-md text-[17px]">
+                        Provided that where the information sought for concerns the life or liberty of a person, the same shall be provided within forty-eight hours of the receipt of the request.
+                    </p>
+</div>
+<div class="mt-xl border-t border-custom-border pt-lg flex items-center gap-4 opacity-60">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span class="font-caption text-caption text-sm">Last amended: 2019</span>
+</div>
+</div>
+</article>
+<!-- Right Pane: Context & Tools -->
+<aside class="w-[320px] shrink-0 border-l border-custom-border bg-white hidden xl:block overflow-y-auto px-md py-lg" style="height: calc(100vh - 65px);">
+<!-- AI Summary Card -->
+<div class="bg-white border border-custom-border rounded-xl p-md mb-lg">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2 text-custom-amber">
+<span class="material-symbols-outlined text-[20px]" data-icon="auto_awesome">auto_awesome</span>
+<h3 class="font-caption text-caption font-bold">Plain-Language Summary</h3>
+</div>
+<span class="bg-[#F7F4EE] text-custom-ink text-[10px] font-label-mono px-2 py-0.5 rounded border border-custom-border">GENERATED</span>
+</div>
+<p class="font-body-md text-sm text-custom-ink/80 leading-relaxed mb-4">
+                    The PIO must respond to your RTI application within <strong>30 days</strong>. They can either provide the information (after you pay any required fees) or reject it using specific exemptions in Sections 8 or 9. 
+                    <br/><br/>
+<strong>Exception:</strong> If the information involves someone's life or liberty, they must respond within <strong>48 hours</strong>.
+                </p>
+<div class="flex gap-2">
+<span class="bg-[#F7F4EE] border border-custom-amber text-custom-amber font-label-mono text-[11px] px-2 py-1 rounded-full">TIME LIMIT</span>
+<span class="bg-[#F7F4EE] border border-custom-amber text-custom-amber font-label-mono text-[11px] px-2 py-1 rounded-full">LIFE OR LIBERTY</span>
+</div>
+</div>
+<!-- Related Sections Card -->
+<div class="bg-white border border-custom-border rounded-xl p-md">
+<h3 class="font-caption text-caption font-bold text-custom-ink mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="link">link</span>
+                    Related Sections
+                </h3>
+<ul class="flex flex-col gap-3">
+<li>
+<a class="group block p-2 -mx-2 rounded hover:bg-[#F7F4EE] transition-colors" href="#">
+<div class="font-label-mono text-sm font-bold text-custom-ink group-hover:text-custom-amber transition-colors mb-1">Section 8</div>
+<div class="font-caption text-xs text-outline leading-tight">Exemption from disclosure of information (Grounds for rejection)</div>
+</a>
+</li>
+<li class="border-t border-custom-border/50 pt-3">
+<a class="group block p-2 -mx-2 rounded hover:bg-[#F7F4EE] transition-colors" href="#">
+<div class="font-label-mono text-sm font-bold text-custom-ink group-hover:text-custom-amber transition-colors mb-1">Section 9</div>
+<div class="font-caption text-xs text-outline leading-tight">Grounds for rejection to access in certain cases</div>
+</a>
+</li>
+<li class="border-t border-custom-border/50 pt-3">
+<a class="group block p-2 -mx-2 rounded hover:bg-[#F7F4EE] transition-colors" href="#">
+<div class="font-label-mono text-sm font-bold text-custom-ink group-hover:text-custom-amber transition-colors mb-1">Section 19</div>
+<div class="font-caption text-xs text-outline leading-tight">Appeal process if request is rejected or ignored</div>
+</a>
+</li>
+</ul>
+</div>
+</aside>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-low w-full bottom-0 border-t border-outline-variant flat no shadows mt-auto">
+<div class="flex flex-col md:flex-row justify-between items-center max-w-max-width mx-auto px-gutter py-lg gap-md">
+<div class="font-label-mono text-label-mono uppercase tracking-widest text-on-surface">
+                © 2024 RTI Sahayak. Statutory Clarity &amp; Archival Utility.
+            </div>
+<nav class="flex gap-6 items-center">
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="#">Legal Disclaimer</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="#">Support</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="#">Contact Us</a>
+</nav>
+</div>
+</footer>
+</body></html>

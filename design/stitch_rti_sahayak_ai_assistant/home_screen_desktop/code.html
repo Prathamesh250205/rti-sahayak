@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RTI Sahayak - Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&amp;family=JetBrains+Mono:wght@500&amp;family=Noto+Sans:wght@400&amp;family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#404946",
+                        "on-primary-fixed": "#00201c",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed": "#341004",
+                        "inverse-surface": "#2e3130",
+                        "on-surface": "#191c1b",
+                        "primary-fixed": "#b4eee2",
+                        "on-secondary-container": "#6f3900",
+                        "on-primary-fixed-variant": "#124f47",
+                        "outline-variant": "#bfc8c5",
+                        "surface": "#f8faf8",
+                        "on-tertiary": "#ffffff",
+                        "background": "#f8faf8",
+                        "inverse-primary": "#98d2c7",
+                        "secondary-fixed": "#ffdcc4",
+                        "tertiary-fixed-dim": "#fbb79f",
+                        "error": "#ba1a1a",
+                        "on-primary-container": "#84bdb2",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#673827",
+                        "on-secondary-fixed-variant": "#6f3800",
+                        "primary": "#00352f",
+                        "surface-container-low": "#f2f4f2",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-variant": "#e1e3e1",
+                        "on-background": "#191c1b",
+                        "surface-bright": "#f8faf8",
+                        "tertiary": "#4c2313",
+                        "on-tertiary-fixed-variant": "#6a3a29",
+                        "surface-dim": "#d9dad9",
+                        "on-secondary-fixed": "#2f1500",
+                        "on-error": "#ffffff",
+                        "secondary": "#924c00",
+                        "outline": "#707976",
+                        "on-error-container": "#93000a",
+                        "primary-fixed-dim": "#98d2c7",
+                        "tertiary-fixed": "#ffdbcf",
+                        "surface-container": "#edeeec",
+                        "surface-container-high": "#e7e8e7",
+                        "inverse-on-surface": "#f0f1ef",
+                        "surface-tint": "#2f685f",
+                        "on-tertiary-container": "#e4a38c",
+                        "primary-container": "#0e4d45",
+                        "on-secondary": "#ffffff",
+                        "surface-container-highest": "#e1e3e1",
+                        "secondary-container": "#fda053",
+                        "secondary-fixed-dim": "#ffb77f",
+                        "rti-amber": "#C6742A",
+                        "rti-bg": "#F7F4EE",
+                        "rti-border": "#E3DDD2",
+                        "rti-text": "#12212E"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "lg": "48px",
+                        "gutter": "24px",
+                        "sm": "12px",
+                        "xs": "4px",
+                        "max-width": "1200px",
+                        "base": "8px",
+                        "md": "24px",
+                        "xl": "80px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["\"Source Serif 4\""],
+                        "body-md": ["Inter"],
+                        "caption": ["Inter"],
+                        "body-hindi": ["Noto Sans"],
+                        "headline-lg": ["\"Source Serif 4\""],
+                        "headline-md": ["\"Source Serif 4\""],
+                        "body-lg": ["Inter"],
+                        "label-mono": ["JetBrains Mono"],
+                        "headline-lg-mobile": ["\"Source Serif 4\""]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", { "lineHeight": "60px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "26px", "fontWeight": "400" }],
+                        "caption": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "body-hindi": ["18px", { "lineHeight": "30px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-mono": ["13px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #F7F4EE;
+            color: #12212E;
+        }
+        .ai-input-shadow {
+            box-shadow: 0 4px 20px rgba(18, 33, 46, 0.08);
+        }
+    </style>
+</head>
+<body class="font-body-md antialiased min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-inverse-surface border-b border-outline-variant dark:border-outline sticky top-0 z-50">
+<div class="flex justify-between items-center px-gutter w-full max-w-max-width mx-auto h-16">
+<div class="flex items-center gap-md cursor-pointer transition-all duration-200">
+<img alt="RTI Sahayak Logo" class="h-8 w-8 object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBll_nakw2IcVsQFedrxiRD27p6s0vgtlitXQUvqBfUf6OzTONeX_m9KfxjNExIEtWaq3jXvHWhKh4J4z6rTMRaLzV-vfk7G1DbSRjnMak99GUD20QlMGPKQIbzUlTHB_MXyIbsFtsAvZylv1gRT_B9SrVyXaRInvyiUEo7AdEzPQkEO9lu_dwhCiS_NhUKftw8jVDEkfkWPAiY5FbMY7VIMvPAb7YdNEN9WkC4K5go6JUXYY1wqHs0"/>
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">RTI Sahayak</span>
+</div>
+<nav class="hidden md:flex items-center gap-lg h-full">
+<a class="text-secondary dark:text-secondary-fixed-dim font-bold border-b-2 border-secondary pb-1 h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm" href="#">Ask</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm" href="#">Draft Application</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm" href="#">Browse the Act</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm" href="#">Track</a>
+</nav>
+<div class="hidden md:flex items-center gap-md font-body-md text-body-md text-primary dark:text-primary-fixed">
+<span class="cursor-pointer transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm py-xs rounded">English / हिंदी / मराठी</span>
+<span class="text-on-surface-variant cursor-pointer transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm py-xs rounded">Grounded in RTI Act, 2005</span>
+</div>
+<button class="md:hidden text-primary">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-grow flex flex-col items-center justify-center px-gutter py-xl max-w-max-width mx-auto w-full gap-lg">
+<!-- Hero Section -->
+<section class="text-center max-w-3xl mx-auto space-y-md">
+<h1 class="font-display-lg text-display-lg text-rti-text">Ask anything about your right to information</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Every answer quotes the exact section of the Act. No guesses.</p>
+</section>
+<!-- Search/Ask Interface -->
+<section class="w-full max-w-3xl mx-auto space-y-md">
+<div class="relative flex items-center bg-white rounded-lg border border-rti-border focus-within:border-rti-text transition-colors ai-input-shadow p-sm">
+<span aria-hidden="true" class="material-symbols-outlined text-outline ml-sm">mic</span>
+<input class="w-full bg-transparent border-none outline-none font-body-md text-body-md px-md py-sm text-rti-text placeholder:text-outline focus:ring-0" placeholder="e.g. How long does a PIO have to reply?" type="text"/>
+<button class="bg-rti-amber text-white font-caption text-caption rounded-lg px-md py-sm hover:opacity-90 transition-opacity whitespace-nowrap">Ask</button>
+</div>
+<!-- Suggestions -->
+<div class="flex flex-wrap gap-base justify-center mt-md">
+<button class="bg-rti-bg border border-rti-amber rounded-full px-md py-xs font-label-mono text-label-mono text-rti-amber hover:bg-white transition-colors">What is the application fee?</button>
+<button class="bg-rti-bg border border-rti-amber rounded-full px-md py-xs font-label-mono text-label-mono text-rti-amber hover:bg-white transition-colors">Which information is exempt?</button>
+<button class="bg-rti-bg border border-rti-amber rounded-full px-md py-xs font-label-mono text-label-mono text-rti-amber hover:bg-white transition-colors">How do I file a first appeal?</button>
+<button class="bg-rti-bg border border-rti-amber rounded-full px-md py-xs font-label-mono text-label-mono text-rti-amber hover:bg-white transition-colors">Who is a Public Information Officer?</button>
+</div>
+</section>
+<!-- Trust Strip -->
+<section class="w-full max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-gutter mt-xl">
+<div class="bg-white border border-rti-border rounded-xl p-md flex flex-col items-center text-center gap-sm">
+<span aria-hidden="true" class="material-symbols-outlined text-rti-amber text-4xl">menu_book</span>
+<p class="font-body-md text-body-md text-rti-text font-medium">Section-level citations</p>
+</div>
+<div class="bg-white border border-rti-border rounded-xl p-md flex flex-col items-center text-center gap-sm">
+<span aria-hidden="true" class="material-symbols-outlined text-rti-amber text-4xl">translate</span>
+<p class="font-body-md text-body-md text-rti-text font-medium">Answers in 3 languages</p>
+</div>
+<div class="bg-white border border-rti-border rounded-xl p-md flex flex-col items-center text-center gap-sm">
+<span aria-hidden="true" class="material-symbols-outlined text-rti-amber text-4xl">edit_document</span>
+<p class="font-body-md text-body-md text-rti-text font-medium">Draft &amp; track your RTI in minutes</p>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-low dark:bg-surface-container-lowest border-t border-outline-variant dark:border-outline mt-auto">
+<div class="w-full py-xl px-gutter max-w-max-width mx-auto flex flex-col md:flex-row justify-between items-center gap-base">
+<div class="flex flex-col gap-xs">
+<span class="font-label-mono text-label-mono uppercase tracking-widest text-on-surface-variant dark:text-on-surface-variant">RTI Sahayak</span>
+<p class="font-caption text-caption text-on-surface-variant dark:text-on-surface-variant max-w-2xl opacity-80">
+                    © 2024 RTI Sahayak. Informational guidance based on the RTI Act, 2005. Not legal advice. This AI assistant is an educational tool and does not constitute legal advice. All responses should be verified against the official Right to Information Act, 2005.
+                </p>
+</div>
+<div class="flex flex-wrap gap-md font-caption text-caption">
+<a class="text-on-surface-variant dark:text-on-surface-variant opacity-80 hover:opacity-100 hover:text-primary dark:hover:text-primary-fixed transition-all" href="#">Legal Disclaimer</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant opacity-80 hover:opacity-100 hover:text-primary dark:hover:text-primary-fixed transition-all" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant opacity-80 hover:opacity-100 hover:text-primary dark:hover:text-primary-fixed transition-all" href="#">Terms of Service</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant opacity-80 hover:opacity-100 hover:text-primary dark:hover:text-primary-fixed transition-all" href="#">Contact Support</a>
+</div>
+</div>
+</footer>
+</body></html>
