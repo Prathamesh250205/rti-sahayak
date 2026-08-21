@@ -248,18 +248,22 @@ empty `/browse` page or a wall of refusals. A startup check independently logs a
 carries the pre-fix `"unknown"` front-matter label.
 
 `LLM_PROVIDER_CHAIN` is set directly as a plain (non-secret) value in `render.yaml` itself,
-currently `anthropic,groq,gemini` — see the comment above it in that file for why, and
-revert it once Groq/Gemini free-tier quota has recovered. `ANTHROPIC_API_KEY` is a real
-secret and must be set in Render's dashboard like `GROQ_API_KEY`/`GEMINI_API_KEY` already
-are (`sync: false` in `render.yaml` — this repo declares that the key is required but never
-carries its value).
+currently `groq,anthropic,gemini` — deliberately *not* anthropic-first, unlike the local
+`.env` override used during the Gate 13 investigation below. This is a public deployment:
+anthropic-first would mean every visitor's request bills the deployment owner, all the
+time, not just during a quota crunch. Groq's free tier (1,000 requests/day, resets daily)
+is plenty for a demo; Anthropic sits second so a Groq throttle always has somewhere to
+land instead of becoming a visible failure, without being the provider paying for every
+normal request. `ANTHROPIC_API_KEY` is a real secret and must be set in Render's dashboard
+like `GROQ_API_KEY`/`GEMINI_API_KEY` already are (`sync: false` in `render.yaml` — this
+repo declares that the key is required but never carries its value).
 
 ## Scope
 
 | | |
 |---|---|
 | **Implemented** | Conversational intake (Streamlit) and one-shot web form (FastAPI); two-check grounded letter drafting with clause-level citations (see above); standalone **Ask** (`/ask`) - retrieval-gated Q&A over the Act with inline `[N]`-marker citations, refuses honestly when nothing retrieves; **multilingual drafting** (English/Hindi/Marathi) - letter boilerplate is statically translated (not LLM-translated, to avoid mistranslating legally-load-bearing text), `information_sought`/`reason` are generated in the selected language, department names are deliberately left untranslated; **Track** (`/track`) - statutory deadline tracker grounded in retrieved Act text (see below); **Save Draft** - save the filled form and a generated letter, citation chips intact, to this browser; PDF export; Browse the Act (real section list + search over the corpus); a static `/demo` sample application that works with neither Chroma nor the LLM available; system telemetry panel; a 3-provider LLM fallback chain (see Architecture); per-IP rate limiting on `/api/draft` and `/api/ask`; real content pages for the legal disclaimer, privacy policy, terms of service, and support. |
-| **Regression-verified** | A single combined run against a live server (`tools/gate12_verification.py`), paced to stay under provider rate limits: `tools/scope_regression_suite.py` 10/10, `tools/ask_regression_suite.py` 4/4, and the 4-homepage-example × 3-language matrix 12/12 - **26/26 overall**, zero `scope_check_failed` (0/19 checkable rows), and every "ok" row resolved to a real department name in all three languages, never the `Unknown` sentinel. Re-verified after switching to an Anthropic-first provider chain and after every Gate 13-15 change; see Known limitations for a real scope-classification difference this surfaced between providers. |
+| **Regression-verified** | A single combined run against a live server (`tools/gate12_verification.py`), paced to stay under provider rate limits: `tools/scope_regression_suite.py` 10/10, `tools/ask_regression_suite.py` 4/4, and the 4-homepage-example × 3-language matrix 12/12 - **26/26 overall**, zero `scope_check_failed` (0/19 checkable rows), and every "ok" row resolved to a real department name in all three languages, never the `Unknown` sentinel. Re-verified locally after every Gate 13-16 change, and against the deployed instance on its actual `groq,anthropic,gemini` config - see Known limitations for a real scope-classification difference the anthropic-first *investigation* surfaced between providers, and Deployment for why the deployed chain isn't anthropic-first. |
 | **Not implemented** | **Login** was considered and deliberately dropped rather than shipped as a stub - see Track and Save Draft (localStorage only) below for the reasoning. |
 
 ## Known limitations
