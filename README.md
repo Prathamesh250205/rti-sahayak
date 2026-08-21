@@ -28,9 +28,10 @@ to the Act section that justifies it) and the retrieved source passages shown be
 ## Architecture
 
 ```
-agent/    intake slot-filling (agent/intake.py) and letter drafting/composition
+agent/    intake slot-filling (agent/intake.py), letter drafting/composition
           (agent/drafter.py) - the LLM scope classification and procedural
-          clause-provenance logic both live here
+          clause-provenance logic both live here - and statutory deadline
+          grounding for Track (agent/deadlines.py)
 rag/      corpus ingestion (rag/ingest.py) and retrieval (rag/retriever.py) -
           the Chroma vector store and its embedding function
 llm/      provider-agnostic LLM client (llm/client.py) - a configurable, ordered
@@ -38,8 +39,9 @@ llm/      provider-agnostic LLM client (llm/client.py) - a configurable, ordered
           automatic retry on the next provider in the chain if one fails
 export/   PDF generation (export/pdf_writer.py) - renders the final letter text,
           nothing else
-web/      FastAPI app: routes (web/main.py), the /api/draft and /api/act
-          endpoints (web/api/), Jinja2 templates, per-IP rate limiting
+web/      FastAPI app: routes (web/main.py), the /api/draft, /api/ask, /api/act,
+          and /api/track/deadline-rules endpoints (web/api/), Jinja2 templates,
+          per-IP rate limiting
 app.py    Streamlit conversational-intake interface over the same
           agent/llm/rag/export pipeline as web/ - see Known limitations for
           how it differs from the FastAPI app
@@ -138,6 +140,51 @@ text could never have separated, because both sit in the same topic neighborhood
 the check by *what kind of question it answers*, rather than tuning one threshold harder,
 is what made that distinction possible.
 
+## Track and Save Draft (localStorage only)
+
+Both `/track` (statutory deadline tracking) and Save Draft (on `/draft`) persist entirely
+in the browser's `localStorage` - there is no server-side account, database, or per-user
+storage anywhere in this app. This is a deliberate constraint, not a missing feature:
+Render's free-tier filesystem is ephemeral across deploys and restarts, so anything the
+server itself wrote to disk would be silently lost; doing this properly server-side would
+mean standing up a real database and an account system, which neither feature actually
+needs to be useful. Both pages disclose this plainly in the UI (a warning banner, not a
+buried caveat) - clearing browser data, switching browsers, or using a different device
+loses what's stored.
+
+**Track** grounds all 5 deadlines it computes directly against the retrieved RTI Act
+corpus, the same "verify before citing" discipline `agent/drafter.py` already used for the
+letter's procedural clauses: Section 7(1)'s 30-day response, the 7(1) proviso's 48-hour
+life/liberty deadline, Section 7(6)'s fee waiver on a missed deadline, Section 19(1)'s
+30-day first appeal, and Section 19(3)'s 90-day second appeal (`agent/deadlines.py`). Each
+rule is retrieved and keyword-verified independently; a rule that can't be verified is
+omitted with a visible warning rather than shown anyway. The second appeal's true 90-day
+window legally runs from when the *first appeal's own decision* was due (Section 19(6)),
+which depends on when that appeal was actually filed - a date the tracker's form doesn't
+collect - so rather than chaining a plausible-but-unsupported date from the original filing
+date, it's shown as a cited, informational recourse note with no computed date once the
+first-appeal deadline has also passed.
+
+**Save Draft** persists the filled form and, if one was generated, the full letter
+(application text, citation clauses, source chunks, warnings) under a derived title and
+timestamp. Reloading a saved draft repopulates every form field and restores the letter
+byte-identical, with citation chips and source cards intact - not regenerated, the exact
+same response replayed through the same rendering code that first drew the chips.
+
+Track and Save Draft intentionally use separate `localStorage` keys rather than sharing
+storage: a saved draft (an in-progress form plus an unsent letter) and a tracked filing (an
+already-submitted application's statutory deadlines) differ enough in shape and lifecycle
+that sharing would only add coupling between two features that otherwise have nothing to
+do with each other.
+
+**Login was considered and dropped**, not shipped as a stub. Everything an account would
+plausibly have been for - saving progress, tracking deadlines - is already covered by
+Track and Save Draft without one, and a real account system would need the same
+server-side database this project deliberately avoided above. The `/login` route (and the
+separate, now-superseded `/save-draft` stub route) were removed along with the
+now-unreferenced "coming soon" page they rendered; neither had any inbound link from the
+app by the time they were removed.
+
 ## Setup
 
 Verified end-to-end via a clean clone into a fresh directory, fresh venv, and a fresh
@@ -200,13 +247,20 @@ empty `/browse` page or a wall of refusals. A startup check independently logs a
 `[startup] ERROR` line to Render's logs if the collection is empty or if any chunk still
 carries the pre-fix `"unknown"` front-matter label.
 
+`LLM_PROVIDER_CHAIN` is set directly as a plain (non-secret) value in `render.yaml` itself,
+currently `anthropic,groq,gemini` — see the comment above it in that file for why, and
+revert it once Groq/Gemini free-tier quota has recovered. `ANTHROPIC_API_KEY` is a real
+secret and must be set in Render's dashboard like `GROQ_API_KEY`/`GEMINI_API_KEY` already
+are (`sync: false` in `render.yaml` — this repo declares that the key is required but never
+carries its value).
+
 ## Scope
 
 | | |
 |---|---|
-| **Implemented** | Conversational intake (Streamlit) and one-shot web form (FastAPI); two-check grounded letter drafting with clause-level citations (see above); standalone **Ask** (`/ask`) - retrieval-gated Q&A over the Act with inline `[N]`-marker citations, refuses honestly when nothing retrieves; **multilingual drafting** (English/Hindi/Marathi) - letter boilerplate is statically translated (not LLM-translated, to avoid mistranslating legally-load-bearing text), `information_sought`/`reason` are generated in the selected language, department names are deliberately left untranslated; PDF export; Browse the Act (real section list + search over the corpus); a static `/demo` sample application that works with neither Chroma nor the LLM available; system telemetry panel; a 3-provider LLM fallback chain (see Architecture); per-IP rate limiting on `/api/draft` and `/api/ask`; real content pages for the legal disclaimer, privacy policy, terms of service, and support. |
-| **Regression-verified** | A single combined run against a live server (`tools/gate12_verification.py`), paced to stay under provider rate limits: `tools/scope_regression_suite.py` 10/10, `tools/ask_regression_suite.py` 4/4, and the 4-homepage-example × 3-language matrix 12/12 - **26/26 overall**, zero `scope_check_failed` (0/19 checkable rows), and every "ok" row resolved to a real department name in all three languages, never the `Unknown` sentinel. Multilingual drafting (Gate 12) is end-to-end verified, not just unit-verified. |
-| **Not implemented** | **Track** (filing status and statutory deadline tracking), **Save Draft**, and **Login** are all honestly labeled "Coming in v2" stubs, not built — clicking them does not fake functionality. |
+| **Implemented** | Conversational intake (Streamlit) and one-shot web form (FastAPI); two-check grounded letter drafting with clause-level citations (see above); standalone **Ask** (`/ask`) - retrieval-gated Q&A over the Act with inline `[N]`-marker citations, refuses honestly when nothing retrieves; **multilingual drafting** (English/Hindi/Marathi) - letter boilerplate is statically translated (not LLM-translated, to avoid mistranslating legally-load-bearing text), `information_sought`/`reason` are generated in the selected language, department names are deliberately left untranslated; **Track** (`/track`) - statutory deadline tracker grounded in retrieved Act text (see below); **Save Draft** - save the filled form and a generated letter, citation chips intact, to this browser; PDF export; Browse the Act (real section list + search over the corpus); a static `/demo` sample application that works with neither Chroma nor the LLM available; system telemetry panel; a 3-provider LLM fallback chain (see Architecture); per-IP rate limiting on `/api/draft` and `/api/ask`; real content pages for the legal disclaimer, privacy policy, terms of service, and support. |
+| **Regression-verified** | A single combined run against a live server (`tools/gate12_verification.py`), paced to stay under provider rate limits: `tools/scope_regression_suite.py` 10/10, `tools/ask_regression_suite.py` 4/4, and the 4-homepage-example × 3-language matrix 12/12 - **26/26 overall**, zero `scope_check_failed` (0/19 checkable rows), and every "ok" row resolved to a real department name in all three languages, never the `Unknown` sentinel. Re-verified after switching to an Anthropic-first provider chain and after every Gate 13-15 change; see Known limitations for a real scope-classification difference this surfaced between providers. |
+| **Not implemented** | **Login** was considered and deliberately dropped rather than shipped as a stub - see Track and Save Draft (localStorage only) below for the reasoning. |
 
 ## Known limitations
 
@@ -280,6 +334,22 @@ carries the pre-fix `"unknown"` front-matter label.
   budget on a request that's already losing, and 1 caps worst-case cost per logical call
   at 2 real requests instead of 3. `ANTHROPIC_MAX_RETRIES` (default 1) follows the same
   reasoning for the Anthropic provider.
+- **A real scope-classification behavioral difference between providers, not a flaky
+  boundary case.** Switching to an Anthropic-first chain (Gate 13, above) dropped the
+  regression suite's deliberately-adjacent income-tax pair from 26/26 to 25/26: Anthropic
+  classified *"certified copy of my income tax return filed for AY 2023-24"* as out of
+  scope, reasoning it was "a personal document," not a public-authority record. Run 10x
+  against a forced single-provider chain to characterize it rather than guessing from one
+  failure: Anthropic missed it **10/10**, consistently, not stochastically; Groq got it
+  right on every call that wasn't rate-limited (**5/5**). That ruled out "the prompt is
+  just ambiguous here" - Groq's clean 5/5 showed the prompt was gettable, just not by
+  Anthropic's specific reasoning. The gap: the classifier prompt let "it's the citizen's
+  own document" read as excluding a record from being a public-authority record, which
+  Section 6 doesn't support - it grants any citizen the right to request any information
+  held by a public authority, including records about themselves. Added an explicit clause
+  to `understand_request()`'s prompt (`agent/drafter.py`) stating this; re-verified 10/10
+  on the fixed case and 5/5 on its true-negative twin (*"how do I file my income tax
+  return"*) with no over-broadening, then the full 26-case suite passed 26/26 again.
 - Groq rate-limit header logging (`x-ratelimit-remaining-requests`/`-tokens`) is
   implemented but gated behind `GROQ_LOG_RATE_LIMITS` (default off, opt-in only) rather
   than always on. It requires switching from `client.chat.completions.create()` (used,

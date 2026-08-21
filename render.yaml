@@ -11,7 +11,19 @@ services:
         value: "3.12"
       - key: LLM_PROVIDER
         sync: false
+      # Gate 13: Groq and Gemini were both exhausted during testing, forcing
+      # every request through the full 3-hop fallback chain - see the Gate
+      # 13 latency measurement (README) for the before/after numbers.
+      # Anthropic-first turns that into a 1-hop normal case. Not a secret
+      # (provider names only), so it's a plain value here rather than
+      # sync: false - revert to groq,gemini,anthropic once both have
+      # recovered their free-tier quota (Gemini's quota resets daily; Groq's
+      # throttle is shorter-lived).
+      - key: LLM_PROVIDER_CHAIN
+        value: anthropic,groq,gemini
       - key: GROQ_API_KEY
         sync: false
       - key: GEMINI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
         sync: false
