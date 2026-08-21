@@ -5,17 +5,25 @@ POST /api/draft endpoint - not retrieve() or understand_request() in
 isolation - and reports pass/fail against each case's expected status.
 
 Usage:
-    python -m tools.scope_regression_suite [base_url]
+    python -m tools.scope_regression_suite [base_url] [delay_seconds]
 
 base_url defaults to http://127.0.0.1:8000 (a locally running server).
 Pass a deployed URL to run the same suite against production, e.g.:
     python -m tools.scope_regression_suite https://rti-sahayak.onrender.com
+
+delay_seconds (default 6.0) is a pause before each case after the first -
+Gate 12e's diagnosis was that this suite's failures were a per-minute
+provider throttle, not a code defect: 10 cases (each 1-2 LLM calls) fired in
+under two minutes was enough to trip it. Slowing the suite down is the fix,
+not retrying faster.
 """
 import json
 import sys
+import time
 import urllib.request
 
 DEFAULT_BASE_URL = "http://127.0.0.1:8000"
+DEFAULT_DELAY_SECONDS = 6.0
 
 # Each case's expected_status is what /api/draft should return for a
 # well-formed request. "ok" means CHECK B judged it in-scope and a letter
@@ -109,12 +117,16 @@ def run_case(base_url: str, case: dict) -> dict:
     return data
 
 
-def main():
-    base_url = sys.argv[1].rstrip("/") if len(sys.argv) > 1 else DEFAULT_BASE_URL
-    print(f"Running scope regression suite against {base_url}\n")
-
+def run_suite(base_url: str, delay_seconds: float) -> list[dict]:
+    """Run FIXTURE against base_url and return the raw row list - split out
+    from main() so other scripts (e.g. a combined verification report) can
+    call this directly and get structured data back, not just printed text.
+    """
     rows = []
-    for case in FIXTURE:
+    for i, case in enumerate(FIXTURE):
+        if i > 0 and delay_seconds > 0:
+            time.sleep(delay_seconds)
+
         data = run_case(base_url, case)
         if "error" in data:
             rows.append(
@@ -123,6 +135,9 @@ def main():
                     "expected": case["expected_status"],
                     "actual": "REQUEST_ERROR",
                     "passed": False,
+                    "scope_check_failed": None,
+                    "authority": None,
+                    "info_sought_count": None,
                     "detail": data["error"],
                 }
             )
@@ -130,13 +145,32 @@ def main():
 
         actual_status = data.get("status", "<missing>")
         passed = actual_status == case["expected_status"]
+        scope_check_failed = None
+        authority = None
+        info_sought_count = None
 
         if actual_status == "out_of_scope":
             detail = (data.get("meta") or {}).get("scope_reason", "<no reason returned>")
         elif actual_status == "ok":
+            # scope_check_failed distinguishes a genuine in_scope=True verdict
+            # from CHECK B's classification call having failed outright (see
+            # web/api/draft.py: in_scope is None -> fail-open -> "ok" anyway,
+            # with this exact warning attached). Without this, an "ok" row
+            # looks identical whether the model actually judged it in-scope
+            # or the classifier never got an answer at all - the distinction
+            # this fixture exists to catch. info_sought_count is a second,
+            # independent tell: the None/fail-open path always returns an
+            # empty information_sought list, since UnderstandResult.__new__
+            # for that branch has nothing else to work with.
+            warnings_list = data.get("warnings") or []
+            scope_check_failed = any("scope screening was unavailable" in w for w in warnings_list)
+            authority = data.get("department_guess", "")
+            info_sought_count = len(data.get("information_sought") or [])
             detail = (
                 f"chunks_used={data.get('meta', {}).get('chunks_used')} "
-                f"department_guess={data.get('department_guess', '')[:60]!r}"
+                f"department_guess={authority[:60]!r} "
+                f"info_sought_count={info_sought_count} "
+                f"scope_check_failed={scope_check_failed}"
             )
         else:
             detail = json.dumps(data)[:200]
@@ -147,10 +181,16 @@ def main():
                 "expected": case["expected_status"],
                 "actual": actual_status,
                 "passed": passed,
+                "scope_check_failed": scope_check_failed,
+                "authority": authority,
+                "info_sought_count": info_sought_count,
                 "detail": detail,
             }
         )
+    return rows
 
+
+def print_report(rows: list[dict]) -> int:
     print(f"{'PASS/FAIL':<9} {'EXPECTED':<13} {'ACTUAL':<17} LABEL / DETAIL")
     print("-" * 100)
     n_passed = 0
@@ -162,6 +202,16 @@ def main():
 
     print()
     print(f"{n_passed}/{len(rows)} passed")
+    return n_passed
+
+
+def main():
+    base_url = sys.argv[1].rstrip("/") if len(sys.argv) > 1 else DEFAULT_BASE_URL
+    delay_seconds = float(sys.argv[2]) if len(sys.argv) > 2 else DEFAULT_DELAY_SECONDS
+    print(f"Running scope regression suite against {base_url} (delay={delay_seconds}s)\n")
+
+    rows = run_suite(base_url, delay_seconds)
+    n_passed = print_report(rows)
 
     if n_passed != len(rows):
         sys.exit(1)

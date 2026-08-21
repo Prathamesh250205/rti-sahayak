@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}Ask - RTI Sahayak{% endblock %}
+
+{% block nav %}
+<!-- TopNavBar - same structure as draft.html's. -->
+<nav class="bg-surface docked full-width top-0 border-b border-outline-variant z-50 relative bg-white">
+<div class="flex justify-between items-center px-gutter w-full max-w-max-width mx-auto h-16">
+<div class="flex items-center gap-md">
+<a class="font-headline-md text-headline-md font-bold text-primary" href="/">RTI Sahayak</a>
+<div class="hidden md:flex gap-md ml-lg h-full items-center">
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/" data-i18n="nav.home">Home</a>
+<a class="font-body-md text-body-md text-secondary font-bold border-b-2 border-secondary pb-1 h-full flex items-center pt-1 cursor-pointer transition-colors" href="/ask" data-i18n="nav.ask">Ask</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/draft" data-i18n="nav.draft">Draft Application</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/browse" data-i18n="nav.browse">Browse the Act</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/track"><span data-i18n="nav.track">Track</span><sup class="ml-0.5 font-label-mono text-[9px] uppercase text-outline">v2</sup></a>
+</div>
+</div>
+<div class="flex items-center gap-md relative">
+<span class="font-caption text-caption text-on-surface-variant hidden lg:block" data-i18n="nav.tagline">Grounded in RTI Act, 2005</span>
+<button class="font-label-mono text-label-mono text-primary px-sm py-xs border border-outline-variant rounded hover:bg-surface-container-low transition-colors" id="lang-pill" type="button">English / हिंदी / मराठी</button>
+<span class="hidden absolute top-full right-0 mt-xs w-64 bg-white border border-outline-variant rounded p-sm font-caption text-caption text-on-surface-variant shadow-[0_4px_20px_rgba(18,33,46,0.08)] z-50" id="lang-note"></span>
+</div>
+</div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<main class="flex-grow flex flex-col items-center px-gutter py-lg gap-md max-w-[900px] w-full mx-auto">
+<section class="w-full max-w-3xl mx-auto text-center space-y-sm">
+<h1 class="font-headline-lg text-headline-lg text-rti-text" data-i18n="ask.heading">Ask about the RTI Act, 2005</h1>
+<p class="font-body-md text-body-md text-on-surface-variant" data-i18n="ask.subtext">Answers come only from the Act's own text, with a section citation for every claim. If nothing in the Act answers your question, this says so instead of guessing.</p>
+</section>
+
+<div class="w-full max-w-[700px] flex items-center gap-sm">
+<input class="w-full bg-white border border-rti-border rounded-lg px-md py-sm font-body-md text-body-md text-rti-text focus:border-rti-text transition-colors outline-none" id="question-input" placeholder="e.g. How many days does a PIO have to respond?" data-i18n-placeholder="ask.input_placeholder" type="text"/>
+<button class="amber-button font-label-mono text-label-mono px-lg py-sm rounded transition-colors flex items-center gap-xs shrink-0" id="ask-submit-btn" type="button" data-i18n="ask.button">Ask</button>
+</div>
+
+<div class="w-full flex flex-col items-center gap-md">
+<div class="hidden font-headline-lg-mobile text-body-lg text-on-surface-variant italic text-center py-xl" id="ask-empty" data-i18n="ask.empty_state">
+Ask a question about the RTI Act's procedure, rights, or exemptions.
+</div>
+<div class="hidden text-center py-xl" id="ask-loading">
+<p class="font-label-mono text-label-mono text-on-surface-variant">Searching the Act...</p>
+</div>
+<div class="hidden font-body-md text-body-md text-[#93000a] text-center py-xl" id="ask-error"></div>
+<div class="hidden text-left w-full max-w-[700px]" id="ask-no-answer">
+<div class="bg-surface-container-lowest border border-warning rounded-card p-md flex flex-col gap-sm">
+<div class="flex items-center gap-sm text-warning">
+<span class="material-symbols-outlined" data-icon="warning">warning</span>
+<h2 class="font-headline-md text-headline-md">Nothing in the Act answers this</h2>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">No part of the RTI Act, 2005 retrieved for this question scored close enough to answer from. This isn't a guess held back — there's genuinely nothing in the corpus to cite, so nothing is shown rather than answered from general knowledge.</p>
+</div>
+</div>
+<!-- The Paper -->
+<div class="hidden bg-white w-full max-w-[700px] min-h-[200px] p-xl paper-shadow rounded-sm relative shrink-0" id="ask-answer-paper">
+<div class="font-headline-lg-mobile text-body-lg leading-relaxed whitespace-pre-wrap" id="answer-content"></div>
+</div>
+<!-- Source Cards -->
+<div class="w-full max-w-[700px] space-y-sm shrink-0" id="source-cards"></div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-low w-full bottom-0 border-t border-outline-variant flat no shadows mt-auto">
+<div class="flex flex-col md:flex-row justify-between items-center max-w-max-width mx-auto px-gutter py-lg gap-md">
+<p class="font-caption text-caption text-on-surface-variant max-w-2xl">© {{ current_year }} RTI Sahayak. This AI assistant is an educational tool and does not constitute legal advice. All responses should be verified against the official Right to Information Act, 2005.</p>
+<nav class="flex gap-6 items-center">
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="/legal">Legal Disclaimer</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="/privacy">Privacy Policy</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="/terms">Terms of Service</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="/support">Contact Support</a>
+</nav>
+</div>
+</footer>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var questionInput = document.getElementById('question-input');
+  var submitBtn = document.getElementById('ask-submit-btn');
+  var emptyState = document.getElementById('ask-empty');
+  var loadingState = document.getElementById('ask-loading');
+  var errorState = document.getElementById('ask-error');
+  var noAnswerState = document.getElementById('ask-no-answer');
+  var answerPaper = document.getElementById('ask-answer-paper');
+  var answerContent = document.getElementById('answer-content');
+  var sourceCards = document.getElementById('source-cards');
+  var langPill = document.getElementById('lang-pill');
+  var langNote = document.getElementById('lang-note');
+  if (langPill && langNote) {
+    langPill.addEventListener('click', function () {
+      langNote.classList.toggle('hidden');
+    });
+  }
+
+  function showState(state) {
+    emptyState.classList.add('hidden');
+    loadingState.classList.add('hidden');
+    errorState.classList.add('hidden');
+    noAnswerState.classList.add('hidden');
+    answerPaper.classList.add('hidden');
+    if (state === 'empty') emptyState.classList.remove('hidden');
+    if (state === 'loading') loadingState.classList.remove('hidden');
+    if (state === 'error') errorState.classList.remove('hidden');
+    if (state === 'no-answer') noAnswerState.classList.remove('hidden');
+    if (state === 'content') answerPaper.classList.remove('hidden');
+  }
+
+  showState('empty');
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function renderChunks(chunks) {
+    sourceCards.innerHTML = '';
+    (chunks || []).forEach(function (chunk, index) {
+      var card = document.createElement('div');
+      card.id = 'source-card-' + index;
+      card.className = 'bg-white border border-outline-variant rounded-sm p-sm transition-shadow';
+
+      var meta = document.createElement('p');
+      meta.className = 'font-label-mono text-label-mono text-secondary';
+      meta.textContent = chunk.section + ' · p.' + chunk.page + ' · distance ' + chunk.distance.toFixed(3);
+
+      var snippet = document.createElement('p');
+      snippet.className = 'font-caption text-caption text-on-surface-variant mt-xs';
+      snippet.textContent = chunk.text.length > 200 ? chunk.text.slice(0, 200) + '...' : chunk.text;
+
+      card.appendChild(meta);
+      card.appendChild(snippet);
+      sourceCards.appendChild(card);
+    });
+  }
+
+  function highlightSourceCard(chunkIndex) {
+    var prev = sourceCards.querySelector('.cite-highlight');
+    if (prev) {
+      prev.classList.remove('cite-highlight', 'ring-2', 'ring-primary');
+    }
+    var card = document.getElementById('source-card-' + chunkIndex);
+    if (!card) {
+      return;
+    }
+    card.classList.add('cite-highlight', 'ring-2', 'ring-primary');
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  // Replace each inline [N] marker (see agent/qa.py) with a clickable
+  // section chip. Citations arrive from the backend in the same left-to-
+  // right order they appear in the text, so each is located by searching
+  // forward from where the previous one ended - marker text like "[2]" can
+  // legitimately repeat (the same excerpt cited twice), and a plain
+  // indexOf() would always resolve to the first occurrence, mislocating
+  // every later one.
+  function renderAnswer(text, citations) {
+    var matches = [];
+    var searchFrom = 0;
+    (citations || []).forEach(function (c) {
+      var idx = text.indexOf(c.text, searchFrom);
+      if (idx === -1) {
+        return;
+      }
+      matches.push({ start: idx, end: idx + c.text.length, section: c.section, chunkIndex: c.chunk_index });
+      searchFrom = idx + c.text.length;
+    });
+
+    if (matches.length === 0) {
+      answerContent.textContent = text;
+      return;
+    }
+
+    var html = '';
+    var cursor = 0;
+    matches.forEach(function (m) {
+      if (m.start < cursor) {
+        return;
+      }
+      html += escapeHtml(text.slice(cursor, m.start));
+      html += '<span class="cite" data-chunk-index="' + m.chunkIndex + '" role="button" tabindex="0">' + escapeHtml(m.section) + '</span>';
+      cursor = m.end;
+    });
+    html += escapeHtml(text.slice(cursor));
+    answerContent.innerHTML = html;
+  }
+
+  answerContent.addEventListener('click', function (e) {
+    var chip = e.target.closest('.cite');
+    if (!chip) {
+      return;
+    }
+    highlightSourceCard(chip.getAttribute('data-chunk-index'));
+  });
+
+  function submitQuestion() {
+    var question = questionInput.value.trim();
+    if (!question) {
+      return;
+    }
+
+    showState('loading');
+    sourceCards.innerHTML = '';
+
+    fetch('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: question })
+    })
+      .then(function (response) {
+        if (!response.ok) {
+          return response.json().then(function (body) {
+            var err = new Error(body.error || body.detail || ('Request failed with status ' + response.status));
+            err.status = response.status;
+            throw err;
+          });
+        }
+        return response.json();
+      })
+      .then(function (data) {
+        if (data.status === 'insufficient_grounding') {
+          showState('no-answer');
+          return;
+        }
+        renderChunks(data.chunks);
+        renderAnswer(data.answer, data.citations);
+        showState('content');
+      })
+      .catch(function (err) {
+        errorState.textContent = err.status === 429 ? err.message : 'Could not get an answer: ' + err.message;
+        showState('error');
+      });
+  }
+
+  submitBtn.addEventListener('click', submitQuestion);
+  questionInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      submitQuestion();
+    }
+  });
+})();
+</script>
+{% endblock %}

@@ -107,15 +107,15 @@ def handle_user_message(text: str):
         try:
             with st.status("Reading your problem...", expanded=True) as status:
                 status.write("Identifying what to ask for and the likely authority...")
-                stream_area = st.empty()
-                streamed = []
 
-                def _on_chunk(chunk: str):
-                    streamed.append(chunk)
-                    stream_area.caption("".join(streamed))
-
-                information_sought, likely_authority = understand_request(text, on_chunk=_on_chunk)
-                stream_area.empty()
+                # Gate 12d: this call used to stream token-by-token into a
+                # live caption here - it's been switched to a buffered call
+                # so a mid-response provider failure can safely discard and
+                # retry on the other provider instead of leaving a
+                # classification silently degraded (see agent.drafter.
+                # understand_request's docstring). The tradeoff is losing
+                # the live-typing effect in exchange for that reliability.
+                information_sought, likely_authority = understand_request(text)
                 st.session_state.information_sought = information_sought
                 st.session_state.likely_authority = likely_authority
                 st.session_state.last_provider = llm_client.LAST_PROVIDER_USED

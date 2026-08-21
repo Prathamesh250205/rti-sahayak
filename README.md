@@ -178,8 +178,9 @@ carries the pre-fix `"unknown"` front-matter label.
 
 | | |
 |---|---|
-| **Implemented** | Conversational intake (Streamlit) and one-shot web form (FastAPI); two-check grounded letter drafting with clause-level citations (see above); PDF export; Browse the Act (real section list + search over the corpus); a static `/demo` sample application that works with neither Chroma nor the LLM available; system telemetry panel; Groq/Gemini provider fallback; per-IP rate limiting on `/api/draft`; real content pages for the legal disclaimer, privacy policy, terms of service, and support. |
-| **Not implemented** | **Ask** (standalone Q&A over the Act), **Track** (filing status and statutory deadline tracking), **Save Draft**, and **Login** are all honestly labeled "Coming in v2" stubs, not built — clicking them does not fake functionality. **Multilingual drafting** (हिंदी / मराठी) shows an inline "in development" note where clicked — no translation happens. |
+| **Implemented** | Conversational intake (Streamlit) and one-shot web form (FastAPI); two-check grounded letter drafting with clause-level citations (see above); standalone **Ask** (`/ask`) - retrieval-gated Q&A over the Act with inline `[N]`-marker citations, refuses honestly when nothing retrieves; **multilingual drafting** (English/Hindi/Marathi) - letter boilerplate is statically translated (not LLM-translated, to avoid mistranslating legally-load-bearing text), `information_sought`/`reason` are generated in the selected language, department names are deliberately left untranslated; PDF export; Browse the Act (real section list + search over the corpus); a static `/demo` sample application that works with neither Chroma nor the LLM available; system telemetry panel; Groq/Gemini provider fallback; per-IP rate limiting on `/api/draft` and `/api/ask`; real content pages for the legal disclaimer, privacy policy, terms of service, and support. |
+| **Implemented, not fully regression-verified** | Multilingual drafting is unit-verified (template rendering in all 3 languages, `understand_request()`'s language-aware prompt, and — the risky part — CHECK B's scope classifier tested directly against genuinely Hindi/Marathi *input* text, all confirmed correct) but has **not** completed a clean end-to-end run of `tools/scope_regression_suite.py`/`tools/ask_regression_suite.py` against a live server - every attempt this session hit provider quota exhaustion (see Known limitations) before finishing cleanly. Treat as implemented-but-unverified-at-the-integration-level, not confirmed-working, until a full suite run succeeds. |
+| **Not implemented** | **Track** (filing status and statutory deadline tracking), **Save Draft**, and **Login** are all honestly labeled "Coming in v2" stubs, not built — clicking them does not fake functionality. |
 
 ## Known limitations
 
@@ -206,4 +207,22 @@ carries the pre-fix `"unknown"` front-matter label.
   practice, but it's a real characteristic of the model, not handled defensively in code.
 - Gemini's free tier is a hard 20 requests/day on this project's key, observed directly
   during testing (both a 5/minute and a 20/day limit) - Groq is the configured primary for
-  exactly this reason, with Gemini as fallback only.
+  exactly this reason, with Gemini as fallback only. **This means Gemini is not a real
+  safety net for a multi-request testing session or a demo with more than ~20 total
+  LLM calls that day** - once it's exhausted, a Groq rate-limit (which recovers within
+  a minute) becomes a hard failure instead of a transparent fallback, for the rest of
+  that day. Confirmed directly: a regression run paced to stay under Groq's per-minute
+  limit still failed most of its cases once Gemini's daily quota had already been used
+  up earlier in the same session.
+- `understand_request()` previously called the streaming `generate_stream()` purely for
+  a cosmetic live-typing effect in the Streamlit app, despite buffering the whole
+  response before parsing it as JSON anyway. That meant a Groq failure *after* it had
+  already started streaming some tokens could not safely fall back to Gemini (restarting
+  mid-stream would have duplicated text on screen) - so `generate_stream()` correctly,
+  but silently, gave up. The result: CHECK B's classification failing under provider
+  load produced a normal-looking `200 OK` response with `"Unknown — could not determine
+  automatically"` as the authority and nothing in any log to explain why. Fixed by
+  switching `understand_request()` to the buffered `generate()` (which was already safe
+  to restart, and which `agent/qa.py` already used) and adding explicit logging to every
+  failure path in both callers. `generate_stream()` itself is untouched and currently has
+  no callers in this app - kept as a primitive for any future genuinely-live-rendered use.

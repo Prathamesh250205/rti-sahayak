@@ -16,12 +16,12 @@ citations itself — in testing, a single freeform drafting prompt still
 occasionally misattributed a fact to the wrong section, which the safety
 requirement above does not allow.
 """
+import sys
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Callable
 
 from agent.intake import IntakeState
-from llm.client import LLMError, generate_stream, parse_json_object
+from llm.client import LLMError, generate, parse_json_object
 from rag.retriever import RetrievedChunk, RetrieverError, retrieve
 
 # Canonical procedural questions every RTI application needs grounding for,
@@ -30,6 +30,157 @@ GROUNDING_QUERIES = [
     "time limit within which a public authority must respond to a request for information",
     "manner and format of making a request for information along with fee",
 ]
+
+# The one sentinel value understand_request() returns for likely_authority
+# whenever it couldn't work one out - whether because the LLM call failed
+# outright, its response didn't parse, or (rarer, and not a failure at all)
+# a successful response just left "likely_authority" empty. compose_letter()
+# and _format_letter() both check for this exact string (Gate 12f) so an
+# unresolved authority is never silently addressed as if "Unknown - could
+# not determine automatically" were a real department's name.
+UNKNOWN_AUTHORITY = "Unknown — could not determine automatically"
+
+# Static, hand-written translations of the letter's fixed boilerplate - not
+# LLM-generated at request time. The English clauses below are individually
+# fact-checked against retrieved grounding text (see build_procedural_clauses)
+# before being included; letting an LLM re-translate them per-request would
+# reopen exactly the misattribution risk that design was built to close (see
+# module docstring). Section numbers are kept in Arabic numerals in every
+# language (matching real-world Hindi/Marathi RTI application convention) so
+# _validate_application_text's "6(1)" check works unchanged across languages.
+#
+# Confidence note (for whoever reviews this): Hindi legal/administrative
+# register here is high-confidence - RTI applications are routinely filed in
+# Hindi and this terminology is standard. Marathi is good but slightly less
+# battle-tested by me than Hindi; worth a native-speaker sanity check before
+# relying on it for a real filing, same spirit as the app's existing
+# "verify against the official Act" disclaimer.
+SUPPORTED_LANGUAGES = ("en", "hi", "mr")
+
+LETTER_STRINGS = {
+    "en": {
+        "to": "To,",
+        "pio_title": "The Public Information Officer,",
+        "subject": "Subject: Request for information under the Right to Information Act, 2005",
+        "salutation": "Sir/Madam,",
+        "opening": (
+            "I, {full_name}, residing at {address}, am a citizen of India. I hereby request the "
+            "following information concerning {locality} for the period {timeframe}, under Section "
+            "6(1) of the Right to Information Act, 2005."
+        ),
+        "clause_fee": (
+            "This application is made in writing under Section 6(1) of the Right to Information "
+            "Act, 2005, and is accompanied by the prescribed application fee."
+        ),
+        "clause_timeline": (
+            "As per Section 7(1) of the Act, I request that the above information be furnished "
+            "within thirty days of receipt of this application."
+        ),
+        "clause_bpl_exempt": (
+            "The applicant belongs to a family living below the poverty line and, under the "
+            "proviso to Section 7(5) of the Right to Information Act, 2005, is exempt from "
+            "payment of the application fee; proof of BPL status is enclosed."
+        ),
+        "particulars_heading": "Particulars of information sought:",
+        "particulars_fallback": "(Could not automatically determine specific particulars — please add manually.)",
+        "declaration": (
+            "I declare that I am a citizen of India and that the information sought does not, to "
+            "the best of my knowledge, fall under any of the exemptions in the Act."
+        ),
+        "closing": "Yours faithfully,",
+        "date_label": "Date:",
+        "phone_label": "Phone:",
+        "email_label": "Email:",
+        "locality_fallback": "the matter described below",
+        "timeframe_fallback": "specified below",
+        "verify_note": (
+            "\n(Best guess — please confirm the correct Public Information Officer and mailing "
+            "address before submitting.)"
+        ),
+        "authority_unresolved": "[COULD NOT BE AUTOMATICALLY DETERMINED - FILL IN THE CORRECT PUBLIC AUTHORITY BEFORE SUBMITTING]",
+    },
+    "hi": {
+        "to": "सेवा में,",
+        "pio_title": "लोक सूचना अधिकारी,",
+        "subject": "विषय: सूचना का अधिकार अधिनियम, 2005 के अंतर्गत सूचना हेतु आवेदन",
+        "salutation": "महोदय/महोदया,",
+        "opening": (
+            "मैं, {full_name}, निवासी {address}, भारत का नागरिक हूँ। मैं सूचना का अधिकार अधिनियम, "
+            "2005 की धारा 6(1) के अंतर्गत {locality} से संबंधित निम्नलिखित सूचना {timeframe} की "
+            "अवधि हेतु प्राप्त करना चाहता/चाहती हूँ।"
+        ),
+        "clause_fee": (
+            "यह आवेदन सूचना का अधिकार अधिनियम, 2005 की धारा 6(1) के अंतर्गत लिखित रूप में प्रस्तुत "
+            "किया जा रहा है तथा इसके साथ निर्धारित आवेदन शुल्क संलग्न है।"
+        ),
+        "clause_timeline": (
+            "अधिनियम की धारा 7(1) के अनुसार, मैं अनुरोध करता/करती हूँ कि उपरोक्त सूचना इस आवेदन की "
+            "प्राप्ति के तीस दिनों के भीतर उपलब्ध कराई जाए।"
+        ),
+        "clause_bpl_exempt": (
+            "आवेदक गरीबी रेखा से नीचे (बीपीएल) रहने वाले परिवार से संबंधित है तथा सूचना का अधिकार "
+            "अधिनियम, 2005 की धारा 7(5) के परंतुक के अंतर्गत आवेदन शुल्क के भुगतान से छूट प्राप्त है; "
+            "बीपीएल स्थिति का प्रमाण संलग्न है।"
+        ),
+        "particulars_heading": "मांगी गई सूचना का विवरण:",
+        "particulars_fallback": "(विशिष्ट विवरण स्वतः निर्धारित नहीं किया जा सका — कृपया स्वयं जोड़ें।)",
+        "declaration": (
+            "मैं घोषणा करता/करती हूँ कि मैं भारत का नागरिक हूँ तथा मेरी जानकारी के अनुसार मांगी गई "
+            "सूचना अधिनियम के अंतर्गत किसी भी छूट प्राप्त श्रेणी में नहीं आती है।"
+        ),
+        "closing": "भवदीय,",
+        "date_label": "दिनांक:",
+        "phone_label": "फोन:",
+        "email_label": "ईमेल:",
+        "locality_fallback": "नीचे वर्णित विषय",
+        "timeframe_fallback": "नीचे उल्लिखित अवधि",
+        "verify_note": (
+            "\n(अनुमानित जानकारी — कृपया प्रस्तुत करने से पहले सही लोक सूचना अधिकारी एवं डाक पता "
+            "सुनिश्चित करें।)"
+        ),
+        "authority_unresolved": "[स्वतः निर्धारित नहीं किया जा सका - प्रस्तुत करने से पहले सही लोक प्राधिकरण भरें]",
+    },
+    "mr": {
+        "to": "प्रति,",
+        "pio_title": "जन माहिती अधिकारी,",
+        "subject": "विषय: माहितीचा अधिकार अधिनियम, 2005 अंतर्गत माहितीसाठी अर्ज",
+        "salutation": "महोदय/महोदया,",
+        "opening": (
+            "मी, {full_name}, राहणार {address}, भारताचा नागरिक आहे. मी माहितीचा अधिकार अधिनियम, "
+            "2005 च्या कलम 6(1) अंतर्गत {locality} संबंधित खालील माहिती {timeframe} या कालावधीसाठी "
+            "मागत आहे."
+        ),
+        "clause_fee": (
+            "हा अर्ज माहितीचा अधिकार अधिनियम, 2005 च्या कलम 6(1) अंतर्गत लेखी स्वरूपात सादर करण्यात "
+            "येत आहे व त्यासोबत विहित अर्ज शुल्क जोडलेले आहे."
+        ),
+        "clause_timeline": (
+            "अधिनियमाच्या कलम 7(1) नुसार, मी विनंती करतो/करते की वरील माहिती हा अर्ज "
+            "मिळाल्यापासून तीस दिवसांच्या आत पुरवण्यात यावी."
+        ),
+        "clause_bpl_exempt": (
+            "अर्जदार दारिद्र्यरेषेखालील (बीपीएल) कुटुंबातील असून, माहितीचा अधिकार अधिनियम, 2005 च्या "
+            "कलम 7(5) च्या परंतुकानुसार अर्ज शुल्क भरण्यापासून सूट देण्यात आली आहे; बीपीएल स्थितीचा "
+            "पुरावा सोबत जोडला आहे."
+        ),
+        "particulars_heading": "मागितलेल्या माहितीचा तपशील:",
+        "particulars_fallback": "(विशिष्ट तपशील आपोआप निश्चित करता आला नाही — कृपया स्वतः जोडा.)",
+        "declaration": (
+            "मी घोषित करतो/करते की मी भारताचा नागरिक आहे आणि माझ्या माहितीनुसार मागितलेली माहिती "
+            "अधिनियमांतर्गत कोणत्याही सवलतीच्या वर्गवारीत येत नाही."
+        ),
+        "closing": "आपला विश्वासू,",
+        "date_label": "दिनांक:",
+        "phone_label": "फोन:",
+        "email_label": "ईमेल:",
+        "locality_fallback": "खाली वर्णन केलेला विषय",
+        "timeframe_fallback": "खाली नमूद केलेला कालावधी",
+        "verify_note": (
+            "\n(अंदाजे माहिती — कृपया सादर करण्यापूर्वी योग्य जन माहिती अधिकारी व पत्ता निश्चित करा.)"
+        ),
+        "authority_unresolved": "[आपोआप निश्चित करता आले नाही - सादर करण्यापूर्वी योग्य सार्वजनिक प्राधिकरण भरा]",
+    },
+}
 
 # 500 was measured to truncate the JSON completion mid-string on ~10% of
 # calls (verbose 5-item lists ran past the cap before the closing brackets)
@@ -89,12 +240,15 @@ class UnderstandResult(tuple):
         return obj
 
 
+_LANGUAGE_NAMES = {"en": "English", "hi": "Hindi", "mr": "Marathi"}
+
+
 def understand_request(
     problem_description: str,
     locality: str = "",
     timeframe: str = "",
     user_supplied_authority: str = "",
-    on_chunk: Callable[[str], None] | None = None,
+    language: str = "en",
 ) -> UnderstandResult:
     """Return (information_sought items, likely public authority guess), plus
     the CHECK B scope verdict on the result's .in_scope/.scope_reason.
@@ -117,10 +271,41 @@ def understand_request(
     records request" answer otherwise, and those must not be confused with
     each other (see UnderstandResult.in_scope).
 
-    Streams the underlying LLM call so callers (the UI) can show live
-    progress via on_chunk - e.g. rendering it into an st.status() panel -
-    instead of blocking behind an opaque spinner for the full response.
+    Buffers the full LLM response before parsing (Gate 12d) - this call was
+    previously streamed so callers could show live token-by-token progress,
+    but that's what made a mid-response provider failure unrecoverable: once
+    a chunk has been shown to a user, restarting on the fallback provider
+    would duplicate text on screen, so llm.client.generate_stream() must
+    give up and re-raise silently in that case rather than retry - and
+    "silently" is exactly the problem Gate 12's regression run exposed (a
+    classification failure landing as a normal-looking "ok" response with
+    "Unknown - could not determine automatically" as the authority, with
+    nothing in any log to explain why). Nothing here actually needed live
+    streaming - the response is parsed as one JSON object at the end
+    regardless - so it now uses llm.client.generate(), which can safely
+    discard a failed attempt and retry on the other provider before
+    anything is returned to the caller, and unconditionally logs any
+    failure it hits along the way (see the except blocks below).
+
+    language ("en"/"hi"/"mr") only affects "information_sought" and "reason" -
+    the free-text content this call actually generates. "likely_authority" is
+    deliberately left in whatever form the model naturally produces (Indian
+    public authorities are conventionally addressed by their official name
+    even inside Hindi/Marathi correspondence - translating "Pune Municipal
+    Corporation" into Marathi would risk it no longer matching the authority's
+    actual registered name). "in_scope" itself is a boolean and classification
+    quality must not depend on the requested output language - problem_description
+    arrives in whatever language the citizen typed, independent of this
+    parameter; see the module's scope-robustness testing for that check.
     """
+    language = language if language in _LANGUAGE_NAMES else "en"
+    language_instruction = (
+        f'Write "information_sought" and "reason" in {_LANGUAGE_NAMES[language]}. Leave '
+        '"likely_authority" as you would naturally produce it (do not force-translate '
+        "official department names).\n\n"
+        if language != "en"
+        else ""
+    )
     known_details = (
         f'The applicant has already specified the locality as "{locality}" and the time period as '
         f'"{timeframe}" — use these concrete details instead of placeholders like [road name].\n\n'
@@ -148,25 +333,26 @@ def understand_request(
         "[Municipal Corporation]' rather than just 'Government'). Leave this \"\" if not in scope.\n\n"
         f'Citizen\'s problem: "{problem_description}"\n\n'
         f"{known_details}"
+        f"{language_instruction}"
         'Respond with ONLY a JSON object: {"in_scope": true or false, "reason": "...", '
         '"information_sought": ["...", "..."], "likely_authority": "..."}'
     )
     def _call() -> str:
-        chunks = []
-        for chunk in generate_stream(
+        return generate(
             prompt,
             system="You perform civic-domain reasoning and respond with JSON only.",
             max_tokens=UNDERSTAND_MAX_TOKENS,
-        ):
-            chunks.append(chunk)
-            if on_chunk:
-                on_chunk(chunk)
-        return "".join(chunks)
+        )
 
     try:
         response = _call()
-    except LLMError:
-        computed_guess = "Unknown — could not determine automatically"
+    except LLMError as e:
+        # Gate 12d: this is CHECK B's classification call failing outright
+        # (both providers) - the caller fails open (see UnderstandResult.
+        # in_scope's docs), which is correct, but only if it's visible. This
+        # print is that visibility; it was previously missing entirely.
+        print(f"[drafter] understand_request: LLM call failed, scope check unavailable: {e}", file=sys.stderr)
+        computed_guess = UNKNOWN_AUTHORITY
         fallback_authority = user_supplied_authority.strip() or computed_guess
         return UnderstandResult([], fallback_authority, computed_guess, None, "")
 
@@ -182,20 +368,26 @@ def understand_request(
         try:
             response = _call()
             parsed = parse_json_object(response)
-        except LLMError:
-            pass  # retry failed too - fall through to today's warning path unchanged
+        except LLMError as e:
+            print(f"[drafter] understand_request: retry after truncated response also failed: {e}", file=sys.stderr)
+            # fall through to today's warning path unchanged
 
     if not parsed:
         # No usable response even after a retry - this is a classification
         # FAILURE, not a verdict. in_scope=None, never True/False, so the
         # caller can't mistake "we don't know" for "we checked and it's
         # out of scope".
-        computed_guess = "Unknown — could not determine automatically"
+        print(
+            "[drafter] understand_request: could not obtain a usable classification "
+            "(unparseable response, even after retry) - scope check unavailable",
+            file=sys.stderr,
+        )
+        computed_guess = UNKNOWN_AUTHORITY
         fallback_authority = user_supplied_authority.strip() or computed_guess
         return UnderstandResult([], fallback_authority, computed_guess, None, "")
 
     information_sought = parsed.get("information_sought") or []
-    computed_guess = str(parsed.get("likely_authority") or "Unknown — could not determine automatically")
+    computed_guess = str(parsed.get("likely_authority") or UNKNOWN_AUTHORITY)
     if not isinstance(information_sought, list):
         information_sought = []
     information_sought = [str(i) for i in information_sought if str(i).strip()]
@@ -265,6 +457,7 @@ def _best_matching_chunk_index(
 
 def build_procedural_clauses(
     chunks: list[RetrievedChunk],
+    language: str = "en",
 ) -> tuple[list[str], list[str], list[dict]]:
     """Return (verified boilerplate clauses, warnings for anything that couldn't
     be verified, clause->chunk provenance links).
@@ -276,7 +469,13 @@ def build_procedural_clauses(
     (by index into `chunks`) that actually contains its keywords, when one
     exists; a clause whose evidence is split across multiple chunks (so no
     single chunk justifies it) is included in the letter but omitted here.
+
+    The verification keywords below are always checked against the corpus's
+    own (English-only) text regardless of `language` - only the rendered
+    clause string (from LETTER_STRINGS) changes. Translation never affects
+    what counts as verified.
     """
+    strings = LETTER_STRINGS.get(language, LETTER_STRINGS["en"])
     clauses = []
     warnings = []
     links = []
@@ -284,10 +483,7 @@ def build_procedural_clauses(
     sec6_indices = _section_indices("Section 6", chunks)
     sec6 = _section_text("Section 6", chunks)
     if "writing" in sec6 and "fee" in sec6:
-        clause_text = (
-            "This application is made in writing under Section 6(1) of the Right to Information "
-            "Act, 2005, and is accompanied by the prescribed application fee."
-        )
+        clause_text = strings["clause_fee"]
         clauses.append(clause_text)
         match_idx = _best_matching_chunk_index(sec6_indices, chunks, ["writing", "fee"])
         if match_idx is not None:
@@ -301,10 +497,7 @@ def build_procedural_clauses(
     sec7_indices = _section_indices("Section 7", chunks)
     sec7 = _section_text("Section 7", chunks)
     if "thirty days" in sec7:
-        clause_text = (
-            "As per Section 7(1) of the Act, I request that the above information be furnished "
-            "within thirty days of receipt of this application."
-        )
+        clause_text = strings["clause_timeline"]
         clauses.append(clause_text)
         match_idx = _best_matching_chunk_index(sec7_indices, chunks, ["thirty days"])
         if match_idx is not None:
@@ -324,15 +517,27 @@ def _format_letter(
     procedural_clauses: list[str],
     information_sought: list[str],
     slots: dict[str, str],
+    language: str = "en",
 ) -> str:
-    verify_note = (
-        ""
-        if department_verified
-        else "\n(Best guess — please confirm the correct Public Information Officer and mailing address before submitting.)"
-    )
+    strings = LETTER_STRINGS.get(language, LETTER_STRINGS["en"])
+
+    # Gate 12f: an unresolved authority must never be addressed as if
+    # UNKNOWN_AUTHORITY's sentinel text were an actual department name - a
+    # citizen skimming the letter could easily miss that it isn't real and
+    # submit it as-is. The bracketed placeholder below is deliberately loud
+    # and imperative; it replaces (not appends to) the normal best-guess
+    # note, since stacking both would bury the one thing that actually
+    # matters here under two differently-worded messages.
+    if department_guess == UNKNOWN_AUTHORITY:
+        department_line = strings["authority_unresolved"]
+        verify_note = ""
+    else:
+        department_line = department_guess
+        verify_note = "" if department_verified else strings["verify_note"]
+
     particulars = "\n".join(f"{i}. {item}" for i, item in enumerate(information_sought, start=1))
     if not particulars:
-        particulars = "(Could not automatically determine specific particulars — please add manually.)"
+        particulars = strings["particulars_fallback"]
 
     # BPL applicants are exempt from the fee under the proviso to Section 7(5)
     # of the Act - swap the standard fee clause for the exemption claim rather
@@ -345,15 +550,8 @@ def _format_letter(
     is_bpl = slots.get("is_bpl", "").strip().lower() == "true"
     rendered_clauses = list(procedural_clauses)
     if is_bpl:
-        fee_clause = (
-            "This application is made in writing under Section 6(1) of the Right to Information "
-            "Act, 2005, and is accompanied by the prescribed application fee."
-        )
-        bpl_clause = (
-            "The applicant belongs to a family living below the poverty line and, under the "
-            "proviso to Section 7(5) of the Right to Information Act, 2005, is exempt from "
-            "payment of the application fee; proof of BPL status is enclosed."
-        )
+        fee_clause = strings["clause_fee"]
+        bpl_clause = strings["clause_bpl_exempt"]
         if fee_clause in rendered_clauses:
             rendered_clauses = [bpl_clause if c == fee_clause else c for c in rendered_clauses]
         else:
@@ -375,37 +573,40 @@ def _format_letter(
     email = slots.get("email", "").strip()
     contact_block = ""
     if phone:
-        contact_block += f"\nPhone: {phone}"
+        contact_block += f"\n{strings['phone_label']} {phone}"
     if email:
-        contact_block += f"\nEmail: {email}"
+        contact_block += f"\n{strings['email_label']} {email}"
 
-    return f"""To,
-The Public Information Officer,{pio_block}
-{department_guess}{verify_note}
+    opening = strings["opening"].format(
+        full_name=slots.get("full_name", ""),
+        address=slots.get("address", ""),
+        locality=slots.get("locality") or strings["locality_fallback"],
+        timeframe=slots.get("timeframe") or strings["timeframe_fallback"],
+    )
 
-Subject: Request for information under the Right to Information Act, 2005
+    return f"""{strings['to']}
+{strings['pio_title']}{pio_block}
+{department_line}{verify_note}
 
-Sir/Madam,
+{strings['subject']}
 
-I, {slots.get('full_name', '')}, residing at {slots.get('address', '')}, am a citizen of India. \
-I hereby request the following information concerning {slots.get('locality', 'the matter described below')} \
-for the period {slots.get('timeframe', 'specified below')}, under Section 6(1) of the Right to \
-Information Act, 2005.
+{strings['salutation']}
+
+{opening}
 
 {clause_block}
 
-Particulars of information sought:
+{strings['particulars_heading']}
 
 {particulars}
 
-I declare that I am a citizen of India and that the information sought does not, to the best of my \
-knowledge, fall under any of the exemptions in the Act.
+{strings['declaration']}
 
-Yours faithfully,
+{strings['closing']}
 
 _________________________
 {slots.get('full_name', '')}{contact_block}
-Date: {date.today().strftime('%d %B %Y')}"""
+{strings['date_label']} {date.today().strftime('%d %B %Y')}"""
 
 
 def _validate_application_text(
@@ -437,7 +638,10 @@ def _validate_application_text(
             "before submitting."
         )
 
-    if "Section 6(1)" not in application_text:
+    # "6(1)" rather than "Section 6(1)" - the word "Section"/"धारा"/"कलम"
+    # varies by language (see LETTER_STRINGS), but the section number itself
+    # is always rendered in Arabic numerals across en/hi/mr.
+    if "6(1)" not in application_text:
         warnings.append(
             "The drafted letter does not reference Section 6(1) of the RTI Act, 2005 — please review the letter "
             "before submitting."
@@ -451,6 +655,7 @@ def compose_letter(
     information_sought: list[str],
     likely_authority: str,
     grounding_chunks: list[RetrievedChunk],
+    language: str = "en",
 ) -> DraftResult:
     """Assemble the final DraftResult from already-gathered analysis + grounding.
 
@@ -458,6 +663,7 @@ def compose_letter(
     separate progress for the analysis/retrieval phase vs. this fast,
     deterministic composition phase.
     """
+    language = language if language in SUPPORTED_LANGUAGES else "en"
     warnings = []
     clause_links = []
     if not grounding_chunks:
@@ -467,7 +673,7 @@ def compose_letter(
         )
         procedural_clauses = []
     else:
-        procedural_clauses, clause_warnings, clause_links = build_procedural_clauses(grounding_chunks)
+        procedural_clauses, clause_warnings, clause_links = build_procedural_clauses(grounding_chunks, language)
         warnings.extend(clause_warnings)
 
     if not information_sought:
@@ -476,12 +682,27 @@ def compose_letter(
             "and edit the 'Particulars of information sought' section before submitting."
         )
 
+    # Gate 12f: this is deliberately independent of the "scope screening was
+    # unavailable" warning web/api/draft.py adds when in_scope is None -
+    # likely_authority can end up as UNKNOWN_AUTHORITY even when
+    # classification succeeded (the model just left it blank), so this must
+    # fire on its own rather than assuming the other warning already covers
+    # it. Without this, a citizen could get a fully "successful" draft whose
+    # addressee is unresolved with nothing in the warnings panel to say so.
+    if likely_authority == UNKNOWN_AUTHORITY:
+        warnings.append(
+            "The public authority could not be automatically determined — the letter marks this "
+            "plainly where the addressee would go. Please fill in the correct department and Public "
+            "Information Officer before submitting."
+        )
+
     application_text = _format_letter(
         department_guess=likely_authority,
         department_verified=False,  # always an unverified best guess — never presented as fact
         procedural_clauses=procedural_clauses,
         information_sought=information_sought,
         slots=state.slots,
+        language=language,
     )
 
     warnings.extend(_validate_application_text(application_text, state.slots, information_sought))
@@ -496,12 +717,13 @@ def compose_letter(
     )
 
 
-def draft_application(state: IntakeState) -> DraftResult:
+def draft_application(state: IntakeState, language: str = "en") -> DraftResult:
     """Produce a grounded, best-effort RTI application from a completed intake state."""
     information_sought, likely_authority = understand_request(
         state.problem_description,
         locality=state.slots.get("locality", ""),
         timeframe=state.slots.get("timeframe", ""),
+        language=language,
     )
     grounding_chunks = gather_grounding()
-    return compose_letter(state, information_sought, likely_authority, grounding_chunks)
+    return compose_letter(state, information_sought, likely_authority, grounding_chunks, language=language)

@@ -18,6 +18,7 @@ from rag.retriever import CHROMA_DIR, COLLECTION_NAME, RetrieverError, _get_coll
 from rag.retriever import warm_up as warm_up_retriever
 from web import state as web_state
 from web.api.act import router as act_router
+from web.api.ask import router as ask_router
 from web.api.draft import router as draft_router
 from web.api.system import router as system_router
 
@@ -106,6 +107,7 @@ templates = Jinja2Templates(directory=BASE_DIR / "templates")
 templates.env.globals["current_year"] = date.today().year
 app.include_router(draft_router)
 app.include_router(act_router)
+app.include_router(ask_router)
 app.include_router(system_router)
 
 
@@ -213,7 +215,6 @@ def demo(request: Request):
 # are server-defined (not query-param input) so nothing here can be used to
 # inject arbitrary page content.
 COMING_SOON_FEATURES = {
-    "ask": ("Ask", "Standalone Q&A over the Act is not yet implemented."),
     "track": ("Track", "Filing status and statutory deadline tracking is not yet implemented."),
     "login": ("Account Login", "Signing in to save and manage your RTI applications is not yet implemented."),
     "save-draft": ("Save Draft", "Saving a draft to return to later is not yet implemented."),
@@ -320,7 +321,7 @@ def _coming_soon(request: Request, feature_key: str):
 
 @app.get("/ask")
 def ask(request: Request):
-    return _coming_soon(request, "ask")
+    return templates.TemplateResponse(request, "ask.html")
 
 
 @app.get("/track")

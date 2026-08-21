@@ -13,6 +13,7 @@ class DraftRequest(BaseModel):
     timeframe: str | None = None
     is_bpl: bool = False
     pio: str = ""
+    language: str = "en"
 
 
 class ChunkOut(BaseModel):
@@ -42,3 +43,16 @@ class DraftResponse(BaseModel):
 
 class PdfRequest(BaseModel):
     application_text: str
+
+
+class AskRequest(BaseModel):
+    question: str
+
+
+class AskResponse(BaseModel):
+    answer: str
+    citations: list[ClauseOut]
+    chunks: list[ChunkOut]
+    warnings: list[str]
+    meta: dict
+    status: str = "ok"

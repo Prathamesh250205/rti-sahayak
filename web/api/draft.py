@@ -126,12 +126,17 @@ def create_draft(req: DraftRequest, request: Request):
         if req.is_bpl:
             state.slots["is_bpl"] = "true"
 
-        # CHECK B - scope. See module docstring.
+        # CHECK B - scope. See module docstring. Language only affects the
+        # LLM-generated information_sought/reason text (Gate 12) - the
+        # in_scope classification itself must work the same regardless of
+        # the citizen's chosen output language, since problem_description
+        # itself may be in any language independent of this setting.
         understanding = understand_request(
             req.problem_description,
             locality=req.locality or "",
             timeframe=req.timeframe or "",
             user_supplied_authority=req.public_authority or "",
+            language=req.language,
         )
         information_sought, likely_authority = understanding
 
@@ -166,7 +171,7 @@ def create_draft(req: DraftRequest, request: Request):
                 "genuinely a request for a specific record before submitting."
             )
 
-        letter = compose_letter(state, information_sought, likely_authority, chunks)
+        letter = compose_letter(state, information_sought, likely_authority, chunks, language=req.language)
         result_dict = asdict(letter)
 
         latency_ms = int((time.perf_counter() - t0) * 1000)
