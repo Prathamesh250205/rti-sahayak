@@ -33,7 +33,7 @@ import sys
 import time
 from dataclasses import asdict
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
 import llm.client as llm_client
@@ -41,14 +41,25 @@ from agent.drafter import compose_letter, gather_grounding, understand_request
 from agent.intake import IntakeState
 from export.pdf_writer import build_pdf
 from web import state as web_state
+from web.rate_limit import is_rate_limited
 from web.schemas import ChunkOut, ClauseOut, DraftRequest, DraftResponse, PdfRequest
 
 router = APIRouter()
 
 
 @router.post("/api/draft", response_model=DraftResponse)
-def create_draft(req: DraftRequest):
+def create_draft(req: DraftRequest, request: Request):
     t0 = time.perf_counter()
+
+    # Per-IP, so one runaway client (or judge double-clicking Generate)
+    # can't burn the shared Groq/Gemini quota for everyone else testing
+    # the deployment at the same time. See web/rate_limit.py.
+    client_ip = request.client.host if request.client else "unknown"
+    if is_rate_limited(client_ip):
+        return JSONResponse(
+            status_code=429,
+            content={"error": "Too many requests have come from this network in a short time. Please wait a few minutes and try again."},
+        )
 
     # The retriever's embedding model loads in a background task (see
     # web/main.py's lifespan) so the server can bind its port immediately.

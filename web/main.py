@@ -1,5 +1,6 @@
 """FastAPI entry point for the web/ UI layer."""
 import asyncio
+import json
 import sys
 import time
 from contextlib import asynccontextmanager
@@ -192,6 +193,20 @@ def browse(request: Request):
     return templates.TemplateResponse(request, "browse.html")
 
 
+# A real POST /api/draft response, captured once from an actual run of this
+# app's own pipeline (see web/fixtures/demo_draft.json) - not hand-written,
+# not connected to Chroma or the LLM at request time. This is what /demo
+# renders, so it stays up if either of those is down during judging. Loaded
+# once at import time since the file never changes at runtime.
+with open(BASE_DIR / "fixtures" / "demo_draft.json", encoding="utf-8") as _f:
+    DEMO_DRAFT = json.load(_f)
+
+
+@app.get("/demo")
+def demo(request: Request):
+    return templates.TemplateResponse(request, "demo.html", {"demo_data": DEMO_DRAFT})
+
+
 # Every dead "#" link found while auditing home.html/draft.html/browse.html
 # and their partials leads here instead of doing nothing - each entry states
 # plainly what the feature will do, with no functionality faked. Title/copy
@@ -200,13 +215,100 @@ def browse(request: Request):
 COMING_SOON_FEATURES = {
     "ask": ("Ask", "Standalone Q&A over the Act is not yet implemented."),
     "track": ("Track", "Filing status and statutory deadline tracking is not yet implemented."),
-    "legal": ("Legal Disclaimer", "A dedicated legal disclaimer page is not yet implemented."),
-    "privacy": ("Privacy Policy", "A dedicated privacy policy page is not yet implemented."),
-    "terms": ("Terms of Service", "A dedicated terms of service page is not yet implemented."),
-    "support": ("Support", "A dedicated support and help center is not yet implemented."),
     "login": ("Account Login", "Signing in to save and manage your RTI applications is not yet implemented."),
     "save-draft": ("Save Draft", "Saving a draft to return to later is not yet implemented."),
 }
+
+# Real content pages, not stubs - each rendered through content_page.html.
+# All server-authored, never user input, so Jinja's default autoescaping is
+# the only escaping this needs.
+CONTENT_PAGES = {
+    "legal": (
+        "Legal Disclaimer",
+        [
+            {"paragraphs": [
+                "RTI Sahayak is an educational tool that helps you draft a Right to Information "
+                "Act, 2005 application. It is not legal advice, and nothing on this site should be "
+                "treated as legal advice or as the practice of law.",
+            ]},
+            {"heading": "Verify before filing", "paragraphs": [
+                "Every draft is produced with the help of an AI model. AI-generated content can be "
+                "wrong. Before submitting any application, verify the full text - including the "
+                "cited sections - against the official Right to Information Act, 2005 and the rules "
+                "applicable in your state.",
+            ]},
+            {"heading": "The suggested public authority is a guess", "paragraphs": [
+                "The department or public authority named in a draft is the AI's best guess at who "
+                "is likely to hold the information you're asking for. It is not checked against any "
+                "official directory and may be wrong, outdated, or incomplete. Confirm the correct "
+                "Public Information Officer and mailing address with the relevant government office "
+                "before filing.",
+            ]},
+            {"heading": "No professional relationship", "paragraphs": [
+                "Using this tool does not create a lawyer-client relationship or any other "
+                "professional relationship between you and the creators of RTI Sahayak. If you need "
+                "legal advice about a specific matter, consult a qualified professional.",
+            ]},
+        ],
+    ),
+    "privacy": (
+        "Privacy Policy",
+        [
+            {"heading": "What this app stores", "paragraphs": [
+                "RTI Sahayak has no user accounts and no session store or database of past requests. "
+                "Each draft request is processed statelessly: the form data you submit is used to "
+                "generate a response and is not saved anywhere by this application once that "
+                "response is returned.",
+            ]},
+            {"heading": "What happens to your request", "paragraphs": [
+                "The problem description and other details you enter are sent to the LLM provider "
+                "configured for this deployment (Groq or Google Gemini, depending on configuration) "
+                "to help draft the letter, and are used to search the RTI Act text stored locally in "
+                "this application's own database. Beyond that, RTI Sahayak's own code does not "
+                "deliberately log, store, or share the content of your request.",
+            ]},
+            {"heading": "Operational logs", "paragraphs": [
+                "Like most web services, the hosting platform (Render) may keep short-lived "
+                "infrastructure-level logs, such as request timing or error traces, as part of "
+                "running the service.",
+            ]},
+            {"heading": "Third-party terms", "paragraphs": [
+                "Requests are also subject to the privacy practices of the configured LLM provider. "
+                "If you have concerns about how they handle data sent to their API, review their own "
+                "privacy policy directly.",
+            ]},
+        ],
+    ),
+    "terms": (
+        "Terms of Service",
+        [
+            {"paragraphs": [
+                "RTI Sahayak is provided as-is, for educational use, without warranty of any kind, "
+                "express or implied.",
+                "Drafts generated by this tool may contain errors, and you are solely responsible "
+                "for reviewing, correcting, and verifying anything you choose to file with a public "
+                "authority.",
+                "Use of this tool does not guarantee your RTI application will be accepted or will "
+                "receive a response.",
+            ]},
+        ],
+    ),
+    "support": (
+        "Support",
+        [
+            {"paragraphs": [
+                "RTI Sahayak is a hackathon submission, not a maintained product, and there's no "
+                "dedicated support channel. If you've found a bug or want to see how it works, the "
+                "source code is public:",
+            ], "link": {"href": "https://github.com/Prathamesh250205/rti-sahayak", "text": "github.com/Prathamesh250205/rti-sahayak"}},
+        ],
+    ),
+}
+
+
+def _content_page(request: Request, page_key: str):
+    page_title, sections = CONTENT_PAGES[page_key]
+    return templates.TemplateResponse(request, "content_page.html", {"page_title": page_title, "sections": sections})
 
 
 def _coming_soon(request: Request, feature_key: str):
@@ -228,22 +330,22 @@ def track(request: Request):
 
 @app.get("/legal")
 def legal(request: Request):
-    return _coming_soon(request, "legal")
+    return _content_page(request, "legal")
 
 
 @app.get("/privacy")
 def privacy(request: Request):
-    return _coming_soon(request, "privacy")
+    return _content_page(request, "privacy")
 
 
 @app.get("/terms")
 def terms(request: Request):
-    return _coming_soon(request, "terms")
+    return _content_page(request, "terms")
 
 
 @app.get("/support")
 def support(request: Request):
-    return _coming_soon(request, "support")
+    return _content_page(request, "support")
 
 
 @app.get("/contact")

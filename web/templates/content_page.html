@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} - RTI Sahayak{% endblock %}
+
+{% block nav %}
+<!-- TopNavBar - same structure as coming_soon.html/home.html. -->
+<header class="bg-surface dark:bg-inverse-surface border-b border-outline-variant dark:border-outline sticky top-0 z-50">
+<div class="flex justify-between items-center px-gutter w-full max-w-max-width mx-auto h-16">
+<div class="flex items-center gap-md transition-all duration-200 shrink-0">
+<a class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed whitespace-nowrap" href="/">RTI Sahayak</a>
+</div>
+<nav class="hidden md:flex items-center gap-md h-full" id="main-nav-links">
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm whitespace-nowrap" href="/">Home</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm whitespace-nowrap" href="/ask">Ask<sup class="ml-0.5 font-label-mono text-[9px] uppercase text-outline">v2</sup></a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm whitespace-nowrap" href="/draft">Draft Application</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm whitespace-nowrap" href="/browse">Browse the Act</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm whitespace-nowrap" href="/track">Track<sup class="ml-0.5 font-label-mono text-[9px] uppercase text-outline">v2</sup></a>
+</nav>
+<button aria-label="Open menu" class="md:hidden text-primary" id="mobile-menu-btn" type="button">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+<nav class="hidden flex-col md:hidden border-t border-outline-variant bg-surface dark:bg-inverse-surface" id="mobile-nav-links">
+<a class="block px-gutter py-sm text-on-surface-variant" href="/">Home</a>
+<a class="block px-gutter py-sm text-on-surface-variant" href="/ask">Ask</a>
+<a class="block px-gutter py-sm text-on-surface-variant" href="/draft">Draft Application</a>
+<a class="block px-gutter py-sm text-on-surface-variant" href="/browse">Browse the Act</a>
+<a class="block px-gutter py-sm text-on-surface-variant" href="/track">Track</a>
+</nav>
+</header>
+{% endblock %}
+
+{% block content %}
+<main class="flex-grow px-gutter py-xl w-full">
+<div class="max-w-3xl mx-auto">
+<h1 class="font-headline-lg text-headline-lg text-rti-text mb-lg">{{ page_title }}</h1>
+{% for section in sections %}
+<div class="mb-lg">
+{% if section.heading %}<h2 class="font-headline-md text-headline-md text-rti-text mb-sm">{{ section.heading }}</h2>{% endif %}
+{% for para in section.paragraphs %}
+<p class="font-body-md text-body-md text-on-surface-variant mb-sm">{{ para }}</p>
+{% endfor %}
+{% if section.link %}
+<a class="font-body-md text-body-md text-primary hover:underline break-all" href="{{ section.link.href }}" rel="noopener" target="_blank">{{ section.link.text }}</a>
+{% endif %}
+</div>
+{% endfor %}
+<a class="inline-block secondary-button font-label-mono text-label-mono px-lg py-sm rounded transition-colors mt-sm" href="/">Back to Home</a>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-low dark:bg-surface-container-lowest border-t border-outline-variant dark:border-outline mt-auto">
+<div class="w-full py-xl px-gutter max-w-max-width mx-auto flex flex-col md:flex-row justify-between items-center gap-base">
+<p class="font-caption text-caption text-on-surface-variant max-w-2xl">© {{ current_year }} RTI Sahayak. This AI assistant is an educational tool and does not constitute legal advice. All responses should be verified against the official Right to Information Act, 2005.</p>
+<div class="flex flex-wrap gap-md font-caption text-caption">
+<a class="text-on-surface-variant opacity-80 hover:opacity-100 hover:text-primary transition-all" href="/legal">Legal Disclaimer</a>
+<a class="text-on-surface-variant opacity-80 hover:opacity-100 hover:text-primary transition-all" href="/privacy">Privacy Policy</a>
+<a class="text-on-surface-variant opacity-80 hover:opacity-100 hover:text-primary transition-all" href="/terms">Terms of Service</a>
+<a class="text-on-surface-variant opacity-80 hover:opacity-100 hover:text-primary transition-all" href="/support">Contact Support</a>
+</div>
+</div>
+</footer>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var mobileMenuBtn = document.getElementById('mobile-menu-btn');
+  var mobileNavLinks = document.getElementById('mobile-nav-links');
+  if (mobileMenuBtn && mobileNavLinks) {
+    mobileMenuBtn.addEventListener('click', function () {
+      mobileNavLinks.classList.toggle('hidden');
+      mobileNavLinks.classList.toggle('flex');
+    });
+  }
+})();
+</script>
+{% endblock %}

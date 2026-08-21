@@ -192,7 +192,7 @@ Review before submitting
 Fill in the form and click "Generate Application" to see your drafted RTI application here.
 </div>
 <div class="hidden text-center py-xl" id="preview-loading">
-<p class="font-label-mono text-label-mono text-on-surface-variant">Drafting your application...</p>
+<p class="font-label-mono text-label-mono text-on-surface-variant" id="preview-loading-message">Drafting your application... (usually 8-10 seconds)</p>
 </div>
 <div class="hidden font-body-md text-body-md text-[#93000a] text-center py-xl" id="preview-error"></div>
 {% include "partials/no_grounding.html" %}
@@ -237,6 +237,8 @@ Fill in the form and click "Generate Application" to see your drafted RTI applic
   var providerChip = document.getElementById('provider-chip');
   var previewEmpty = document.getElementById('preview-empty');
   var previewLoading = document.getElementById('preview-loading');
+  var previewLoadingMessage = document.getElementById('preview-loading-message');
+  var loadingMessageTimer = null;
   var previewError = document.getElementById('preview-error');
   var noGrounding = document.getElementById('no-grounding');
   var noGroundingRetryBtn = document.getElementById('no-grounding-retry');
@@ -411,6 +413,17 @@ Fill in the form and click "Generate Application" to see your drafted RTI applic
     printBtn.disabled = true;
     providerChip.classList.add('hidden');
 
+    // Render's free tier spins down after ~15 min idle and warns of 50s+
+    // cold-start delays; even a warm instance takes 8-10s (LLM call +
+    // retrieval). Most requests land in the first message; this escalates
+    // only if one is actually taking the longer, cold-start-shaped path,
+    // so a silent multi-second wait never looks like a hang.
+    previewLoadingMessage.textContent = 'Drafting your application... (usually 8-10 seconds)';
+    clearTimeout(loadingMessageTimer);
+    loadingMessageTimer = setTimeout(function () {
+      previewLoadingMessage.textContent = 'Still working - if this server was idle, a cold start can take up to a minute.';
+    }, 12000);
+
     fetch('/api/draft', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -419,12 +432,15 @@ Fill in the form and click "Generate Application" to see your drafted RTI applic
       .then(function (response) {
         if (!response.ok) {
           return response.json().then(function (body) {
-            throw new Error(body.error || ('Request failed with status ' + response.status));
+            var err = new Error(body.error || ('Request failed with status ' + response.status));
+            err.status = response.status;
+            throw err;
           });
         }
         return response.json();
       })
       .then(function (data) {
+        clearTimeout(loadingMessageTimer);
         if (data.status === 'insufficient_grounding') {
           // A service/index failure, not a judgement on the citizen's text -
           // deliberately does not quote payload.problem_description back,
@@ -454,7 +470,12 @@ Fill in the form and click "Generate Application" to see your drafted RTI applic
         }
       })
       .catch(function (err) {
-        previewError.textContent = 'Could not draft the application: ' + err.message;
+        clearTimeout(loadingMessageTimer);
+        // The 429 message is already plain-language and explains itself
+        // ("too many requests from this network... wait a few minutes") -
+        // prefixing it with "Could not draft the application" would make
+        // an intentional, temporary block read like the system is broken.
+        previewError.textContent = err.status === 429 ? err.message : 'Could not draft the application: ' + err.message;
         showState('error');
       });
   });

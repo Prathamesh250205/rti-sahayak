@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Sample Application - RTI Sahayak{% endblock %}
+
+{% block nav %}
+<!-- TopNavBar - same structure as draft.html's, minus the form-specific controls. -->
+<nav class="bg-surface docked full-width top-0 border-b border-outline-variant z-50 relative bg-white">
+<div class="flex justify-between items-center px-gutter w-full max-w-max-width mx-auto h-16">
+<div class="flex items-center gap-md">
+<a class="font-headline-md text-headline-md font-bold text-primary" href="/">RTI Sahayak</a>
+<div class="hidden md:flex gap-md ml-lg h-full items-center">
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/">Home</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/ask">Ask<sup class="ml-0.5 font-label-mono text-[9px] uppercase text-outline">v2</sup></a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/draft">Draft Application</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/browse">Browse the Act</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/track">Track<sup class="ml-0.5 font-label-mono text-[9px] uppercase text-outline">v2</sup></a>
+</div>
+</div>
+</div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<main class="flex-grow flex flex-col items-center px-gutter py-lg gap-md max-w-[900px] w-full mx-auto">
+<div class="w-full bg-surface-container-lowest border border-outline-variant rounded-card p-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-sm">
+<div>
+<p class="font-label-mono text-label-mono uppercase tracking-widest text-secondary">Sample application</p>
+<p class="font-caption text-caption text-on-surface-variant mt-xs">Pre-generated from a real run of this app's own pipeline - not connected to the live system, so it renders even if the LLM provider or the corpus is unavailable.</p>
+</div>
+<a class="shrink-0 amber-button font-label-mono text-label-mono px-lg py-sm rounded transition-colors flex items-center gap-xs" href="/draft">Try it yourself</a>
+</div>
+
+<div class="w-full flex flex-col items-center gap-md">
+<!-- Validation Warnings -->
+<div class="hidden w-full max-w-[700px] border border-warning bg-[#FDF6EC] rounded-sm p-sm shrink-0" id="draft-warnings">
+<div class="flex items-center gap-xs font-label-mono text-label-mono text-warning tracking-widest uppercase mb-xs">
+<span class="material-symbols-outlined text-[16px]" data-icon="warning">warning</span>
+Review before submitting
+</div>
+<ul class="list-disc list-inside font-caption text-caption text-on-surface-variant space-y-xs" id="draft-warnings-list"></ul>
+</div>
+<!-- The Paper -->
+<div class="bg-white w-full max-w-[700px] min-h-[400px] p-xl paper-shadow rounded-sm relative shrink-0">
+<div class="font-headline-lg-mobile text-body-lg leading-relaxed whitespace-pre-wrap" id="preview-content"></div>
+</div>
+<!-- Source Cards -->
+<div class="w-full max-w-[700px] space-y-sm shrink-0" id="source-cards"></div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-low w-full bottom-0 border-t border-outline-variant flat no shadows mt-auto">
+<div class="flex flex-col md:flex-row justify-between items-center max-w-max-width mx-auto px-gutter py-lg gap-md">
+<p class="font-caption text-caption text-on-surface-variant max-w-2xl">© {{ current_year }} RTI Sahayak. This AI assistant is an educational tool and does not constitute legal advice. All responses should be verified against the official Right to Information Act, 2005.</p>
+<nav class="flex gap-6 items-center">
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="/legal">Legal Disclaimer</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="/privacy">Privacy Policy</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="/terms">Terms of Service</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="/support">Contact Support</a>
+</nav>
+</div>
+</footer>
+{% endblock %}
+
+{% block scripts %}
+<!-- The fixture is embedded server-side (not fetched) so this page has
+     nothing to fail: no network call, no LLM, no Chroma. Rendering logic
+     (chip splicing, source cards, click-to-highlight) is the same as
+     draft.html's, trimmed to the read-only subset this page needs. -->
+<script id="demo-data" type="application/json">{{ demo_data | tojson }}</script>
+<script>
+(function () {
+  var data = JSON.parse(document.getElementById('demo-data').textContent);
+  var previewContent = document.getElementById('preview-content');
+  var sourceCards = document.getElementById('source-cards');
+  var draftWarnings = document.getElementById('draft-warnings');
+  var draftWarningsList = document.getElementById('draft-warnings-list');
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function renderChunks(chunks) {
+    sourceCards.innerHTML = '';
+    (chunks || []).forEach(function (chunk, index) {
+      var card = document.createElement('div');
+      card.id = 'source-card-' + index;
+      card.className = 'bg-white border border-outline-variant rounded-sm p-sm transition-shadow';
+
+      var meta = document.createElement('p');
+      meta.className = 'font-label-mono text-label-mono text-secondary';
+      meta.textContent = chunk.section + ' · p.' + chunk.page + ' · distance ' + chunk.distance.toFixed(3);
+
+      var snippet = document.createElement('p');
+      snippet.className = 'font-caption text-caption text-on-surface-variant mt-xs';
+      snippet.textContent = chunk.text.length > 200 ? chunk.text.slice(0, 200) + '...' : chunk.text;
+
+      card.appendChild(meta);
+      card.appendChild(snippet);
+      sourceCards.appendChild(card);
+    });
+  }
+
+  function renderWarnings(warnings) {
+    draftWarningsList.innerHTML = '';
+    if (!warnings || warnings.length === 0) {
+      draftWarnings.classList.add('hidden');
+      return;
+    }
+    warnings.forEach(function (warning) {
+      var item = document.createElement('li');
+      item.textContent = warning;
+      draftWarningsList.appendChild(item);
+    });
+    draftWarnings.classList.remove('hidden');
+  }
+
+  function highlightSourceCard(chunkIndex) {
+    var prev = sourceCards.querySelector('.cite-highlight');
+    if (prev) {
+      prev.classList.remove('cite-highlight', 'ring-2', 'ring-primary');
+    }
+    var card = document.getElementById('source-card-' + chunkIndex);
+    if (!card) {
+      return;
+    }
+    card.classList.add('cite-highlight', 'ring-2', 'ring-primary');
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function renderApplicationText(text, clauses) {
+    var matches = [];
+    (clauses || []).forEach(function (clause) {
+      var idx = text.indexOf(clause.text);
+      if (idx === -1) {
+        return;
+      }
+      matches.push({ start: idx, end: idx + clause.text.length, section: clause.section, chunkIndex: clause.chunk_index });
+    });
+    matches.sort(function (a, b) { return a.start - b.start; });
+
+    if (matches.length === 0) {
+      previewContent.textContent = text;
+      return;
+    }
+
+    var html = '';
+    var cursor = 0;
+    matches.forEach(function (m) {
+      if (m.start < cursor) {
+        return;
+      }
+      html += escapeHtml(text.slice(cursor, m.start));
+      html += escapeHtml(text.slice(m.start, m.end));
+      html += '<span class="cite" data-chunk-index="' + m.chunkIndex + '" role="button" tabindex="0">' + escapeHtml(m.section) + '</span>';
+      cursor = m.end;
+    });
+    html += escapeHtml(text.slice(cursor));
+    previewContent.innerHTML = html;
+  }
+
+  previewContent.addEventListener('click', function (e) {
+    var chip = e.target.closest('.cite');
+    if (!chip) {
+      return;
+    }
+    highlightSourceCard(chip.getAttribute('data-chunk-index'));
+  });
+
+  renderChunks(data.chunks);
+  renderApplicationText(data.application_text, data.clauses);
+  renderWarnings(data.warnings);
+})();
+</script>
+{% endblock %}
