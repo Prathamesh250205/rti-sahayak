@@ -80,6 +80,40 @@ in behind it in default order - existing `LLM_PROVIDER=groq` setups keep working
 unchanged. `LLM_PROVIDER_CHAIN` (comma-separated, e.g. `anthropic,groq,gemini`) fully
 overrides the order, for promoting Anthropic to primary or any other arrangement.
 
+### Chunking
+
+`rag/ingest.py` chunks each Act section on its own boundary - a section becomes one
+chunk when its full text is under `CHUNK_MAX_CHARS` (1800), and a longer section is
+sub-split into ~1200-char windows (`_split_oversized_segment`, snapped to the nearest
+word boundary, 150-char overlap between pieces) that all carry the same section label.
+83 chunks total from the Act's 31 numbered sections plus its Preamble.
+
+**Section 7 is a deliberate, targeted exception to that general windowing.** A citizen
+question this app should answer easily - *"what happens if the PIO misses the
+deadline?"* - was retrieving nothing useful: Section 7(6), the fee-waiver provision
+(arguably the single most useful sentence in the Act for an ordinary citizen), was
+ranking 46th of 78 chunks. The cause wasn't retrieval tuning - it was mislabeling.
+`_split_oversized_segment`'s blind character windows had put (6)'s actual text in the
+same ~1200-char chunk as unrelated sub-section (4)/(5) content (disability-access
+assistance, printed/electronic-format fee mechanics); a chunk's embedding is an average
+over everything in it, so (6)'s own topic was diluted by text that had nothing to do
+with it.
+
+The fix (`_split_section_7_at_subsections`) gives Section 7 - and only Section 7 - one
+chunk per top-level sub-section, (1) through (9), instead of character windows. Every
+other section's chunking is untouched: diffed the full before/after chunk set to
+confirm it - 78 → 83 chunks, Section 7's count changed (4 → 9), every other section's
+chunks are byte-for-byte identical. A corpus-wide version of this fix (chunking every
+oversized section at its own sub-section boundaries, not just Section 7) was considered
+and deliberately not taken - Sections 2, 4, 16, and 19 are all *larger* than Section 7
+and would all be affected, including Section 19, which currently ranks appeal questions
+very well (distance 0.38) and had nothing to gain from being touched. The blast radius
+of a general change wasn't worth it for a fix that only Section 7 needed.
+
+This bought real improvement without full correctness - see the Section 7(6) note in
+Known limitations for where it still falls short, and why that gap was left as an
+honestly-documented regression case rather than forced.
+
 ## The two-check grounding design
 
 This is the most important design decision in the project, and it went through two
@@ -211,7 +245,7 @@ python -m rag.ingest
 ```
 
 This downloads the embedding model on first run (cached under `data/onnx_model_cache/`,
-gitignored) and prints `Ingested 78 chunks from 1 PDF(s) ... (78/78 tagged with a section
+gitignored) and prints `Ingested 83 chunks from 1 PDF(s) ... (83/83 tagged with a section
 number)`. Re-run it any time the corpus PDF changes; it deletes and replaces the existing
 Chroma collection.
 
@@ -265,7 +299,7 @@ repo declares that the key is required but never carries its value).
 | | |
 |---|---|
 | **Implemented** | Conversational intake (Streamlit) and one-shot web form (FastAPI); two-check grounded letter drafting with clause-level citations (see above); standalone **Ask** (`/ask`) - retrieval-gated Q&A over the Act with inline `[N]`-marker citations, refuses honestly when nothing retrieves; **multilingual drafting** (English/Hindi/Marathi) - letter boilerplate is statically translated (not LLM-translated, to avoid mistranslating legally-load-bearing text), `information_sought`/`reason` are generated in the selected language, department names are deliberately left untranslated; **Track** (`/track`) - statutory deadline tracker grounded in retrieved Act text (see below); **Save Draft** - save the filled form and a generated letter, citation chips intact, to this browser; PDF export; Browse the Act (real section list + search over the corpus); a static `/demo` sample application that works with neither Chroma nor the LLM available; system telemetry panel; a 3-provider LLM fallback chain (see Architecture); per-IP rate limiting on `/api/draft` and `/api/ask`; real content pages for the legal disclaimer, privacy policy, terms of service, and support. |
-| **Regression-verified** | A single combined run against a live server (`tools/gate12_verification.py`), paced to stay under provider rate limits: `tools/scope_regression_suite.py` 10/10, `tools/ask_regression_suite.py` 4/4, and the 4-homepage-example × 3-language matrix 12/12 - **26/26 overall**, zero `scope_check_failed` (0/19 checkable rows), and every "ok" row resolved to a real department name in all three languages, never the `Unknown` sentinel. Re-verified locally after every Gate 13-16 change, and finally **against the deployed instance itself on its actual `groq,anthropic,gemini` config: 26/26, 0/19 `scope_check_failed`, 0 unresolved authorities.** That run happened to catch Groq mid-throttle (likely from the same testing session's own load) - every one of the 26 requests fell through to Anthropic, averaging **11.25s** (min 4.58s, max 14.24s, n=25). That number is the Groq-fails-then-Anthropic-succeeds fallback cost, not a healthy first-hop Groq request - it's real evidence the fallback works exactly as designed under load, but not yet a clean read on ordinary latency; a re-run once Groq's throttle clears would be expected to show most requests served directly by Groq in a few seconds instead. See Known limitations for a real scope-classification difference the anthropic-first *investigation* surfaced between providers, and Deployment for why the deployed chain isn't anthropic-first. |
+| **Regression-verified** | A single combined run against a live server (`tools/gate12_verification.py`), paced to stay under provider rate limits: `tools/scope_regression_suite.py` 10/10, `tools/ask_regression_suite.py` 5/5 (plus 1 known-failing case tracked separately, see Known limitations), and the 4-homepage-example × 3-language matrix 12/12 - **27/27 core passed**, zero `scope_check_failed` (0/19 checkable rows), and every "ok" row resolved to a real department name in all three languages, never the `Unknown` sentinel. Re-verified locally after every Gate 13-16 change and the subsequent retrieval/chunking fix above. Separately, **against the deployed instance itself on its actual `groq,anthropic,gemini` config** (the 26-case fixture, before the ask-suite additions above): 26/26, 0/19 `scope_check_failed`, 0 unresolved authorities. That run happened to catch Groq mid-throttle (likely from the same testing session's own load) - every one of the 26 requests fell through to Anthropic, averaging **11.25s** (min 4.58s, max 14.24s, n=25). That number is the Groq-fails-then-Anthropic-succeeds fallback cost, not a healthy first-hop Groq request - it's real evidence the fallback works exactly as designed under load, but not yet a clean read on ordinary latency; a re-run once Groq's throttle clears would be expected to show most requests served directly by Groq in a few seconds instead. See Known limitations for a real scope-classification difference the anthropic-first *investigation* surfaced between providers, and Deployment for why the deployed chain isn't anthropic-first. |
 | **Not implemented** | **Login** was considered and deliberately dropped rather than shipped as a stub - see Track and Save Draft (localStorage only) below for the reasoning. |
 
 ## Known limitations
@@ -356,6 +390,32 @@ repo declares that the key is required but never carries its value).
   to `understand_request()`'s prompt (`agent/drafter.py`) stating this; re-verified 10/10
   on the fixed case and 5/5 on its true-negative twin (*"how do I file my income tax
   return"*) with no over-broadening, then the full 26-case suite passed 26/26 again.
+- **`/ask`'s `ANSWER_TOP_K` was 5, retrieving too few candidates for a real user
+  question.** *"After how many days PIO have to respond?"* on the deployed site got an
+  honest "the excerpts don't cover this" refusal instead of the answer - Section 7's
+  actual 30-day-deadline chunk was retrieved at rank 8, well inside the 0.75 grounding
+  threshold but outside a top-5 cutoff. Raised to 10 (same fix, same reasoning as Gate
+  13's deadline-endpoint top_k bump) - roughly doubles this endpoint's context tokens,
+  acceptable given the prompt already instructs the model to cite only what it finds.
+- **Section 7(6) (the fee-waiver-on-missed-deadline provision) is a known-failing
+  regression case, not silently dropped** - see Architecture's Chunking section for the
+  full diagnosis and the targeted fix that was taken. After that fix it ranks 21st of 83
+  chunks (distance 0.786, down from 46th/78 at 0.877) for *"what happens if the PIO
+  misses the deadline"* - real progress, but still outside `ANSWER_TOP_K=10` and the
+  0.75 threshold. `tools/ask_regression_suite.py` tracks this explicitly
+  (`known_failing`, reported as `XFAIL`/`XPASS`, excluded from the core pass rate so a
+  documented gap can never masquerade as 27/27 while also never silently vanish from the
+  suite). A general fix exists in principle - corpus-wide sub-section-aware chunking -
+  but needs a full re-ingest and re-validation across every other oversized section,
+  which wasn't safe to bundle into a single-section targeted fix. Left as an honest,
+  visible gap rather than forced.
+- **A terse 3-word query can miss the grounding threshold entirely, and that's
+  acceptable.** *"30 days RTI"* doesn't retrieve Section 7 at all (distance 0.75+) -
+  considered and deliberately left alone: lowering `MAX_RELEVANT_DISTANCE` to catch it
+  would weaken grounding for every query, not just this one. As a side effect of the
+  Section 7 chunking fix above (not a threshold change), this phrasing now does at least
+  retrieve *a* Section 7 chunk, at distance 0.742 - inside threshold, previously wasn't -
+  but this was incidental, not the fix's goal.
 - Groq rate-limit header logging (`x-ratelimit-remaining-requests`/`-tokens`) is
   implemented but gated behind `GROQ_LOG_RATE_LIMITS` (default off, opt-in only) rather
   than always on. It requires switching from `client.chat.completions.create()` (used,
