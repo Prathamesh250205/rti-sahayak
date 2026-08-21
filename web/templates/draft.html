@@ -32,10 +32,10 @@
 <a class="font-headline-md text-headline-md font-bold text-primary" href="/">RTI Sahayak</a>
 <div class="hidden md:flex gap-md ml-lg h-full items-center">
 <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/">Home</a>
-<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/ask">Ask</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/ask">Ask<sup class="ml-0.5 font-label-mono text-[9px] uppercase text-outline">v2</sup></a>
 <a class="font-body-md text-body-md text-secondary font-bold border-b-2 border-secondary pb-1 h-full flex items-center pt-1 cursor-pointer transition-colors" href="/draft">Draft Application</a>
 <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/browse">Browse the Act</a>
-<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/track">Track</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/track">Track<sup class="ml-0.5 font-label-mono text-[9px] uppercase text-outline">v2</sup></a>
 </div>
 </div>
 <div class="flex items-center gap-md relative">
@@ -143,10 +143,11 @@
 </div>
 <!-- Sticky Form Footer -->
 <div class="bg-white border-t border-outline-variant p-md flex justify-between items-center shadow-[0_-4px_20px_rgba(18,33,46,0.05)] z-10">
-<a class="secondary-button font-label-mono text-label-mono px-md py-sm rounded transition-colors flex items-center gap-xs" href="/save-draft" rel="noopener" target="_blank">
+<button class="secondary-button font-label-mono text-label-mono px-md py-sm rounded flex items-center gap-xs opacity-50 cursor-not-allowed" disabled title="Saving a draft to return to later is not yet implemented" type="button">
 <span class="material-symbols-outlined text-[18px]" data-icon="save">save</span>
                     Save Draft
-                </a>
+<span class="font-label-mono text-label-mono text-[10px] uppercase border border-outline-variant rounded px-1 leading-relaxed">v2</span>
+</button>
 <button class="amber-button font-label-mono text-label-mono px-lg py-sm rounded transition-colors flex items-center gap-xs" id="generate-btn" type="button">
                     Generate Application
                     <span class="material-symbols-outlined text-[18px]" data-icon="arrow_forward">arrow_forward</span>
@@ -208,7 +209,7 @@ Fill in the form and click "Generate Application" to see your drafted RTI applic
 <div class="w-full py-xl px-gutter max-w-max-width mx-auto flex flex-col md:flex-row justify-between items-center gap-base">
 <div class="text-center md:text-left space-y-sm">
 <p class="font-label-mono text-label-mono uppercase tracking-widest text-on-surface-variant font-bold">RTI Sahayak</p>
-<p class="font-caption text-caption text-on-surface-variant max-w-2xl">© 2024 RTI Sahayak. This AI assistant is an educational tool and does not constitute legal advice. All responses should be verified against the official Right to Information Act, 2005.</p>
+<p class="font-caption text-caption text-on-surface-variant max-w-2xl">© {{ current_year }} RTI Sahayak. This AI assistant is an educational tool and does not constitute legal advice. All responses should be verified against the official Right to Information Act, 2005.</p>
 </div>
 <div class="flex flex-wrap justify-center md:justify-end gap-md">
 <a class="font-caption text-caption text-on-surface-variant hover:text-primary transition-opacity opacity-80 hover:opacity-100" href="/legal">Legal Disclaimer</a>

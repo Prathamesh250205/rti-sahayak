@@ -7,15 +7,14 @@
 <header class="bg-surface w-full top-0 border-b border-outline-variant flat no shadows">
 <div class="flex justify-between items-center max-w-max-width mx-auto px-gutter py-sm">
 <a class="font-headline-md text-headline-md font-bold text-primary flex items-center gap-2" href="/">
-<span class="material-symbols-outlined" data-icon="account_balance">account_balance</span>
                 RTI Sahayak
             </a>
 <nav class="hidden md:flex gap-6 items-center">
 <a class="text-on-surface-variant hover:text-on-surface transition-colors font-body-md text-body-md" href="/">Home</a>
-<a class="text-on-surface-variant hover:text-on-surface transition-colors font-body-md text-body-md" href="/ask">Ask</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-body-md text-body-md" href="/ask">Ask<sup class="ml-0.5 font-label-mono text-[9px] uppercase text-outline">v2</sup></a>
 <a class="text-on-surface-variant hover:text-on-surface transition-colors font-body-md text-body-md" href="/draft">Draft Application</a>
 <a class="text-secondary border-b-2 border-secondary pb-1 font-body-md text-body-md" href="/browse">Browse the Act</a>
-<a class="text-on-surface-variant hover:text-on-surface transition-colors font-body-md text-body-md" href="/track">Track</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-body-md text-body-md" href="/track">Track<sup class="ml-0.5 font-label-mono text-[9px] uppercase text-outline">v2</sup></a>
 </nav>
 <div class="flex items-center gap-4">
 <div class="relative hidden md:block">
@@ -28,7 +27,6 @@
 </button>
 <span class="hidden absolute top-full right-0 mt-xs w-64 bg-white border border-custom-border rounded p-sm font-caption text-caption text-on-surface-variant shadow-[0_4px_20px_rgba(18,33,46,0.08)] z-50" id="lang-note">Multilingual drafting is in development.</span>
 </div>
-<a class="bg-custom-amber text-white px-4 py-2 rounded font-caption text-caption hover:opacity-90 transition-opacity" href="/login">Login</a>
 </div>
 </div>
 </header>
@@ -68,14 +66,12 @@
 <!-- Footer -->
 <footer class="bg-surface-container-low w-full bottom-0 border-t border-outline-variant flat no shadows mt-auto">
 <div class="flex flex-col md:flex-row justify-between items-center max-w-max-width mx-auto px-gutter py-lg gap-md">
-<div class="font-label-mono text-label-mono uppercase tracking-widest text-on-surface">
-                © 2024 RTI Sahayak. Statutory Clarity &amp; Archival Utility.
-            </div>
+<p class="font-caption text-caption text-on-surface-variant max-w-2xl">© {{ current_year }} RTI Sahayak. This AI assistant is an educational tool and does not constitute legal advice. All responses should be verified against the official Right to Information Act, 2005.</p>
 <nav class="flex gap-6 items-center">
 <a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="/legal">Legal Disclaimer</a>
 <a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="/privacy">Privacy Policy</a>
-<a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="/support">Support</a>
-<a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="/contact">Contact Us</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="/terms">Terms of Service</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="/support">Contact Support</a>
 </nav>
 </div>
 </footer>
@@ -109,9 +105,21 @@
   }
 
   function loadSections() {
+    // Three distinct states below - a failed fetch and a successful-but-
+    // empty one must never look the same to the user (they didn't
+    // previously: an empty result silently rendered nothing at all).
     fetch('/api/act/sections')
-      .then(function (r) { return r.json(); })
+      .then(function (r) {
+        if (!r.ok) {
+          return r.json().then(function (b) { throw new Error(b.detail || ('Request failed with status ' + r.status)); });
+        }
+        return r.json();
+      })
       .then(function (data) {
+        if (!data.sections || data.sections.length === 0) {
+          sectionNav.innerHTML = '<p class="px-md text-sm text-outline italic">No sections found in the corpus.</p>';
+          return;
+        }
         sectionNav.innerHTML = '';
         data.sections.forEach(function (s) {
           var a = document.createElement('a');

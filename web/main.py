@@ -3,11 +3,14 @@ import asyncio
 import sys
 import time
 from contextlib import asynccontextmanager
+from datetime import date
 from pathlib import Path
 
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import llm.client as llm_client
 from rag.retriever import CHROMA_DIR, COLLECTION_NAME, RetrieverError, _get_collection
@@ -96,9 +99,31 @@ app = FastAPI(title="RTI Sahayak", lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
+# Computed once at process start, not re-read from disk per request - the
+# footer's "© {year}" only needs to be right for whatever year this
+# process happens to be running in, which a redeploy refreshes anyway.
+templates.env.globals["current_year"] = date.today().year
 app.include_router(draft_router)
 app.include_router(act_router)
 app.include_router(system_router)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    # /api/* routes must keep returning JSON (browse.html's and draft.html's
+    # own JS parse `.detail` out of error responses) - only page routes get
+    # the HTML error screen.
+    if exc.status_code == 404 and not request.url.path.startswith("/api/"):
+        return templates.TemplateResponse(request, "404.html", status_code=404)
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail}, headers=exc.headers)
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    print(f"[error] Unhandled exception on {request.method} {request.url.path}: {type(exc).__name__}: {exc}", file=sys.stderr)
+    if request.url.path.startswith("/api/"):
+        return JSONResponse(status_code=500, content={"error": "Internal server error"})
+    return templates.TemplateResponse(request, "500.html", status_code=500)
 
 
 @app.get("/health")
@@ -179,7 +204,6 @@ COMING_SOON_FEATURES = {
     "privacy": ("Privacy Policy", "A dedicated privacy policy page is not yet implemented."),
     "terms": ("Terms of Service", "A dedicated terms of service page is not yet implemented."),
     "support": ("Support", "A dedicated support and help center is not yet implemented."),
-    "contact": ("Contact Us", "A contact form is not yet implemented."),
     "login": ("Account Login", "Signing in to save and manage your RTI applications is not yet implemented."),
     "save-draft": ("Save Draft", "Saving a draft to return to later is not yet implemented."),
 }
@@ -223,8 +247,13 @@ def support(request: Request):
 
 
 @app.get("/contact")
-def contact(request: Request):
-    return _coming_soon(request, "contact")
+def contact():
+    # /contact and /support were two separate stub routes for the same
+    # concept - /support is the one every page's footer actually links to
+    # (see web/templates/*.html), so it's the one that survives; this
+    # redirect exists only for anyone who already had /contact bookmarked
+    # or linked, rather than serving them a raw 404.
+    return RedirectResponse(url="/support", status_code=301)
 
 
 @app.get("/login")

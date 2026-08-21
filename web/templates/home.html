@@ -11,10 +11,10 @@
 </div>
 <nav class="hidden md:flex items-center gap-md h-full" id="main-nav-links">
 <a class="text-secondary dark:text-secondary-fixed-dim font-bold border-b-2 border-secondary pb-1 h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm whitespace-nowrap" href="/">Home</a>
-<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm whitespace-nowrap" href="/ask">Ask</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm whitespace-nowrap" href="/ask">Ask<sup class="ml-0.5 font-label-mono text-[9px] uppercase text-outline">v2</sup></a>
 <a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm whitespace-nowrap" href="/draft">Draft Application</a>
 <a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm whitespace-nowrap" href="/browse">Browse the Act</a>
-<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm whitespace-nowrap" href="/track">Track</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm whitespace-nowrap" href="/track">Track<sup class="ml-0.5 font-label-mono text-[9px] uppercase text-outline">v2</sup></a>
 </nav>
 <div class="hidden md:flex items-center gap-sm font-body-md text-body-md text-primary dark:text-primary-fixed relative shrink-0">
 <span class="cursor-pointer transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm py-xs rounded whitespace-nowrap" id="lang-pill">English / हिंदी / मराठी</span>
@@ -27,10 +27,10 @@
 </div>
 <nav class="hidden flex-col md:hidden border-t border-outline-variant bg-surface dark:bg-inverse-surface" id="mobile-nav-links">
 <a class="block px-gutter py-sm text-secondary font-bold" href="/">Home</a>
-<a class="block px-gutter py-sm text-on-surface-variant" href="/ask">Ask</a>
+<a class="block px-gutter py-sm text-on-surface-variant" href="/ask">Ask <span class="font-label-mono text-label-mono text-[10px] uppercase text-outline border border-outline-variant rounded px-1">v2</span></a>
 <a class="block px-gutter py-sm text-on-surface-variant" href="/draft">Draft Application</a>
 <a class="block px-gutter py-sm text-on-surface-variant" href="/browse">Browse the Act</a>
-<a class="block px-gutter py-sm text-on-surface-variant" href="/track">Track</a>
+<a class="block px-gutter py-sm text-on-surface-variant" href="/track">Track <span class="font-label-mono text-label-mono text-[10px] uppercase text-outline border border-outline-variant rounded px-1">v2</span></a>
 </nav>
 </header>
 {% endblock %}
@@ -68,7 +68,7 @@
 </div>
 <div class="bg-white border border-rti-border rounded-xl p-md flex flex-col items-center text-center gap-sm">
 <span aria-hidden="true" class="material-symbols-outlined text-rti-amber text-4xl">fact_check</span>
-<p class="font-body-md text-body-md text-rti-text font-medium">Refuses to draft when the Act doesn't cover your request</p>
+<p class="font-body-md text-body-md text-rti-text font-medium">Declines requests that aren't asking for a specific record</p>
 </div>
 <div class="bg-white border border-rti-border rounded-xl p-md flex flex-col items-center text-center gap-sm">
 <span aria-hidden="true" class="material-symbols-outlined text-rti-amber text-4xl">edit_document</span>
@@ -82,7 +82,7 @@
 <div class="flex flex-col gap-xs">
 <span class="font-label-mono text-label-mono uppercase tracking-widest text-on-surface-variant dark:text-on-surface-variant">RTI Sahayak</span>
 <p class="font-caption text-caption text-on-surface-variant dark:text-on-surface-variant max-w-2xl opacity-80">
-                    © 2024 RTI Sahayak. Informational guidance based on the RTI Act, 2005. Not legal advice. This AI assistant is an educational tool and does not constitute legal advice. All responses should be verified against the official Right to Information Act, 2005.
+                    © {{ current_year }} RTI Sahayak. This AI assistant is an educational tool and does not constitute legal advice. All responses should be verified against the official Right to Information Act, 2005.
                 </p>
 </div>
 <div class="flex flex-wrap gap-md font-caption text-caption">
