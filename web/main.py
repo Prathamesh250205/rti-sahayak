@@ -248,16 +248,6 @@ def demo(request: Request):
     return templates.TemplateResponse(request, "demo.html", {"demo_data": DEMO_DRAFT})
 
 
-# Every dead "#" link found while auditing home.html/draft.html/browse.html
-# and their partials leads here instead of doing nothing - each entry states
-# plainly what the feature will do, with no functionality faked. Title/copy
-# are server-defined (not query-param input) so nothing here can be used to
-# inject arbitrary page content.
-COMING_SOON_FEATURES = {
-    "login": ("Account Login", "Signing in to save and manage your RTI applications is not yet implemented."),
-    "save-draft": ("Save Draft", "Saving a draft to return to later is not yet implemented."),
-}
-
 # Real content pages, not stubs - each rendered through content_page.html.
 # All server-authored, never user input, so Jinja's default autoescaping is
 # the only escaping this needs.
@@ -350,13 +340,6 @@ def _content_page(request: Request, page_key: str):
     return templates.TemplateResponse(request, "content_page.html", {"page_title": page_title, "sections": sections})
 
 
-def _coming_soon(request: Request, feature_key: str):
-    title, description = COMING_SOON_FEATURES[feature_key]
-    return templates.TemplateResponse(
-        request, "coming_soon.html", {"feature_title": title, "feature_description": description}
-    )
-
-
 @app.get("/ask")
 def ask(request: Request):
     return templates.TemplateResponse(request, "ask.html")
@@ -397,11 +380,3 @@ def contact():
     return RedirectResponse(url="/support", status_code=301)
 
 
-@app.get("/login")
-def login(request: Request):
-    return _coming_soon(request, "login")
-
-
-@app.get("/save-draft")
-def save_draft(request: Request):
-    return _coming_soon(request, "save-draft")
