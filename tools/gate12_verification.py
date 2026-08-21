@@ -18,6 +18,14 @@ import sys
 import time
 import urllib.request
 
+# Windows' console defaults stdout to cp1252, not UTF-8 - a Devanagari
+# authority name (Hindi/Marathi results) or a stray em-dash in any row's
+# detail string then crashes the whole run mid-print with an
+# UnicodeEncodeError, losing the combined table this script exists to
+# produce. Reconfigure unconditionally; a no-op on platforms where stdout is
+# already UTF-8.
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 import tools.ask_regression_suite as ask_suite
 import tools.scope_regression_suite as scope_suite
 import tools.test_llm_provider_fallback as fallback_test
