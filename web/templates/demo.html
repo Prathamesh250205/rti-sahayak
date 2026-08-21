@@ -16,7 +16,17 @@
 <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/track"><span data-i18n="nav.track">Track</span></a>
 </div>
 </div>
+<button aria-label="Open menu" class="md:hidden text-primary" id="mobile-menu-btn" type="button">
+<span class="material-symbols-outlined">menu</span>
+</button>
 </div>
+<nav class="hidden flex-col md:hidden border-t border-outline-variant bg-white" id="mobile-nav-links">
+<a class="block px-gutter py-sm text-on-surface-variant" href="/" data-i18n="nav.home">Home</a>
+<a class="block px-gutter py-sm text-on-surface-variant" href="/ask" data-i18n="nav.ask">Ask</a>
+<a class="block px-gutter py-sm text-on-surface-variant" href="/draft" data-i18n="nav.draft">Draft Application</a>
+<a class="block px-gutter py-sm text-on-surface-variant" href="/browse" data-i18n="nav.browse">Browse the Act</a>
+<a class="block px-gutter py-sm text-on-surface-variant" href="/track"><span data-i18n="nav.track">Track</span></a>
+</nav>
 </nav>
 {% endblock %}
 
@@ -169,6 +179,15 @@ Review before submitting
   renderChunks(data.chunks);
   renderApplicationText(data.application_text, data.clauses);
   renderWarnings(data.warnings);
+
+  var mobileMenuBtn = document.getElementById('mobile-menu-btn');
+  var mobileNavLinks = document.getElementById('mobile-nav-links');
+  if (mobileMenuBtn && mobileNavLinks) {
+    mobileMenuBtn.addEventListener('click', function () {
+      mobileNavLinks.classList.toggle('hidden');
+      mobileNavLinks.classList.toggle('flex');
+    });
+  }
 })();
 </script>
 {% endblock %}

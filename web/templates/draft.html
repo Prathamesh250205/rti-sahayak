@@ -47,8 +47,18 @@
                     English / हिंदी / मराठी
                 </button>
 <span class="hidden absolute top-full right-0 mt-xs w-64 bg-white border border-outline-variant rounded p-sm font-caption text-caption text-on-surface-variant shadow-[0_4px_20px_rgba(18,33,46,0.08)] z-50" id="lang-note"></span>
+<button aria-label="Open menu" class="md:hidden text-primary" id="mobile-menu-btn" type="button">
+<span class="material-symbols-outlined">menu</span>
+</button>
 </div>
 </div>
+<nav class="hidden flex-col md:hidden border-t border-outline-variant bg-white" id="mobile-nav-links">
+<a class="block px-gutter py-sm text-on-surface-variant" href="/" data-i18n="nav.home">Home</a>
+<a class="block px-gutter py-sm text-on-surface-variant" href="/ask" data-i18n="nav.ask">Ask</a>
+<a class="block px-gutter py-sm text-secondary font-bold" href="/draft" data-i18n="nav.draft">Draft Application</a>
+<a class="block px-gutter py-sm text-on-surface-variant" href="/browse" data-i18n="nav.browse">Browse the Act</a>
+<a class="block px-gutter py-sm text-on-surface-variant" href="/track"><span data-i18n="nav.track">Track</span></a>
+</nav>
 </nav>
 {% endblock %}
 
@@ -819,6 +829,15 @@ Fill in the form and click "Generate Application" to see your drafted RTI applic
   if (langPill && langNote) {
     langPill.addEventListener('click', function () {
       langNote.classList.toggle('hidden');
+    });
+  }
+
+  var mobileMenuBtn = document.getElementById('mobile-menu-btn');
+  var mobileNavLinks = document.getElementById('mobile-nav-links');
+  if (mobileMenuBtn && mobileNavLinks) {
+    mobileMenuBtn.addEventListener('click', function () {
+      mobileNavLinks.classList.toggle('hidden');
+      mobileNavLinks.classList.toggle('flex');
     });
   }
 
