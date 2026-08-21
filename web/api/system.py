@@ -33,10 +33,15 @@ def system_status():
     collection = _get_collection()
     result = collection.get(include=["metadatas"])
     metadatas = result["metadatas"]
-    # "unknown" is the front-matter/preamble catch-all, not a real Act
-    # section - excluded so this counts what the tile actually claims to
-    # count: distinct numbered RTI Act sections present in the corpus.
-    real_sections = set(m.get("section") for m in metadatas if m.get("section") != "unknown")
+    # Neither "Preamble" (real, citable front matter, but not a numbered
+    # section - see rag/ingest.py's PREAMBLE_ANCHOR) nor "unknown" (should
+    # be unreachable post-Preamble-fix, kept here defensively) count as a
+    # numbered Act section - excluded so this counts what the tile actually
+    # claims to count: distinct numbered RTI Act sections present in the
+    # corpus.
+    real_sections = set(
+        m.get("section") for m in metadatas if m.get("section") not in ("unknown", "Preamble")
+    )
 
     return {
         "provider": {

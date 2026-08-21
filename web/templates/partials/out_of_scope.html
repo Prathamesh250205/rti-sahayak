@@ -1,0 +1,29 @@
+<!-- CHECK B (scope classification) refusal screen - distinct from
+     partials/no_grounding.html, which is CHECK A (procedural grounding /
+     corpus health) failing. no_grounding.html says the Act's text doesn't
+     cover the request; that would be false here. The Act covers requests
+     for records from any public authority, on almost any topic - this
+     screen only fires when the request itself isn't a request for a
+     record at all, per the model's own stated reason. -->
+<div class="hidden text-left py-lg" id="out-of-scope">
+<div class="bg-surface-container-lowest border border-warning rounded-card p-md flex flex-col gap-sm">
+<div class="flex items-center gap-sm text-warning">
+<span class="material-symbols-outlined" data-icon="warning">warning</span>
+<h2 class="font-headline-md text-headline-md">This doesn't look like a request for a record</h2>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+The RTI Act lets you request records held by a public authority, on almost any topic - but here's what the system found for:
+</p>
+<p class="font-body-md text-body-md text-on-surface italic" id="out-of-scope-query"></p>
+<p class="font-body-md text-body-md text-on-surface-variant" id="out-of-scope-reason"></p>
+<p class="font-body-md text-body-md text-on-surface-variant">
+Try rephrasing as a request for a specific document or record — e.g. "copies of complaints I filed" or "the inspection report for my case" — rather than a general question.
+</p>
+<div class="flex flex-col gap-base mt-sm">
+<button class="bg-surface-container-lowest border border-archival-border rounded-input p-sm flex justify-between items-center hover:bg-surface-container-low transition-colors group" id="out-of-scope-rephrase" type="button">
+<span class="font-body-md text-body-md text-on-surface">Edit my request and try again</span>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>

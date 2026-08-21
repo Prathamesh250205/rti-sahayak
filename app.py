@@ -131,7 +131,8 @@ def handle_user_message(text: str):
                 "role": "assistant",
                 "content": (
                     f"Thanks — I can help you draft an RTI application for that. Likely authority: "
-                    f"**{st.session_state.likely_authority}** (best guess — verify before filing). "
+                    f"**{st.session_state.likely_authority}** (best guess — please confirm the correct "
+                    f"Public Information Officer and address before filing). "
                     f"A few details first: {question}"
                 ),
             }
@@ -229,7 +230,8 @@ def render_sidebar():
             st.markdown("### Identified authority")
             st.markdown(
                 f'<div class="card"><strong>{authority}</strong><br>'
-                f'<span class="authority-note">Best guess — verify the correct office before filing.</span></div>',
+                f'<span class="authority-note">Best guess — please confirm the correct Public Information '
+                f'Officer and address before filing.</span></div>',
                 unsafe_allow_html=True,
             )
 

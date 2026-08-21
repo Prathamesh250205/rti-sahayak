@@ -56,14 +56,36 @@ class DraftResult:
 class UnderstandResult(tuple):
     """Behaves exactly like the (information_sought, likely_authority) 2-tuple
     understand_request() has always returned - `a, b = understand_request(...)`
-    keeps working unchanged - but also carries the LLM's own computed_guess as
-    an attribute, for callers that want to know what the model guessed even
-    when a user-supplied authority overrode it as the returned likely_authority.
+    keeps working unchanged - but also carries additional attributes for
+    callers (currently only web/api/draft.py) that need the scope verdict:
+
+    computed_guess: the LLM's own guess, even when a user-supplied authority
+        overrode it in the returned likely_authority.
+
+    in_scope: the CHECK B verdict - is this genuinely a request for records
+        held by an Indian public authority? True/False are explicit model
+        verdicts. None means no verdict was obtained at all (the call
+        failed, or the response didn't parse, or "in_scope" came back in an
+        unexpected shape) - deliberately distinct from False, so a
+        classification failure can never silently masquerade as an
+        out-of-scope refusal. Callers must branch on all three states.
+
+    scope_reason: the model's one-sentence reason for its in_scope verdict.
+        Empty when in_scope is None (no verdict to explain).
     """
 
-    def __new__(cls, information_sought: list[str], likely_authority: str, computed_guess: str):
+    def __new__(
+        cls,
+        information_sought: list[str],
+        likely_authority: str,
+        computed_guess: str,
+        in_scope: bool | None,
+        scope_reason: str,
+    ):
         obj = super().__new__(cls, (information_sought, likely_authority))
         obj.computed_guess = computed_guess
+        obj.in_scope = in_scope
+        obj.scope_reason = scope_reason
         return obj
 
 
@@ -73,16 +95,27 @@ def understand_request(
     timeframe: str = "",
     user_supplied_authority: str = "",
     on_chunk: Callable[[str], None] | None = None,
-) -> tuple[list[str], str]:
-    """Return (information_sought items, likely public authority guess).
+) -> UnderstandResult:
+    """Return (information_sought items, likely public authority guess), plus
+    the CHECK B scope verdict on the result's .in_scope/.scope_reason.
 
-    This is general civic reasoning, not grounded in the RTI Act corpus
-    (the Act doesn't list municipal departments) — the caller must always
-    present the authority as an unverified best guess, never as fact -
+    The department guess is general civic reasoning, not grounded in the RTI
+    Act corpus (the Act doesn't list municipal departments) — the caller
+    must always present it as an unverified best guess, never as fact -
     *unless* the citizen supplied their own authority via
     user_supplied_authority, in which case that takes precedence over the
     computed guess in the returned likely_authority (the guess is still
     computed and available via the result's .computed_guess attribute).
+
+    Scope (in_scope/scope_reason) is a genuinely different question from
+    grounding: whether the Act's text happens to resemble the citizen's
+    words is close to meaningless (the Act is purely procedural and never
+    mentions ration cards, roads, or pensions by name), so this is asked as
+    an explicit classification, not inferred from retrieval distance and
+    not inferred from information_sought coming back empty - a truncated
+    completion or a provider hiccup looks identical to a genuine "not a
+    records request" answer otherwise, and those must not be confused with
+    each other (see UnderstandResult.in_scope).
 
     Streams the underlying LLM call so callers (the UI) can show live
     progress via on_chunk - e.g. rendering it into an st.status() panel -
@@ -95,16 +128,28 @@ def understand_request(
         else ""
     )
     prompt = (
-        "A citizen describes a problem below. For an RTI application about this problem, work out:\n"
-        '1. "information_sought": a list of 2-5 short, specific pieces of information/documents to '
+        "A citizen describes a problem below. First decide:\n"
+        '1. "in_scope": is this genuinely a request for RECORDS/INFORMATION held by an Indian public '
+        "authority (a government office, PSU, or publicly-funded body) - the kind of thing that can be "
+        "requested under the Right to Information Act, 2005? The Act grants a general right to any "
+        "record from any public authority, not a topic-specific one, so this is true for almost any "
+        "grievance about a government office, service, delay, or decision - a stuck ration card, an "
+        "unrepaired road, a stopped pension are all in scope, even though the Act's own text never "
+        "mentions any of those topics by name. It is false only when the citizen isn't actually asking "
+        "for a document/record at all - general advice, a how-to question with no public-authority "
+        "records angle, or something unrelated to any public authority.\n"
+        '2. "reason": one short sentence explaining the in_scope decision.\n\n'
+        "If in scope, also work out:\n"
+        '3. "information_sought": a list of 2-5 short, specific pieces of information/documents to '
         "formally request (e.g. copies of complaints on file, inspection reports, name and designation "
         "of the responsible officer, action-taken reports).\n"
-        '2. "likely_authority": your best guess at the specific Indian public authority/department '
+        '4. "likely_authority": your best guess at the specific Indian public authority/department '
         "that would hold this information (be as specific as plausible, e.g. 'Public Works Department, "
-        "[Municipal Corporation]' rather than just 'Government').\n\n"
+        "[Municipal Corporation]' rather than just 'Government'). Leave this \"\" if not in scope.\n\n"
         f'Citizen\'s problem: "{problem_description}"\n\n'
         f"{known_details}"
-        'Respond with ONLY a JSON object: {"information_sought": ["...", "..."], "likely_authority": "..."}'
+        'Respond with ONLY a JSON object: {"in_scope": true or false, "reason": "...", '
+        '"information_sought": ["...", "..."], "likely_authority": "..."}'
     )
     def _call() -> str:
         chunks = []
@@ -123,7 +168,7 @@ def understand_request(
     except LLMError:
         computed_guess = "Unknown — could not determine automatically"
         fallback_authority = user_supplied_authority.strip() or computed_guess
-        return UnderstandResult([], fallback_authority, computed_guess)
+        return UnderstandResult([], fallback_authority, computed_guess, None, "")
 
     parsed = parse_json_object(response)
 
@@ -140,6 +185,15 @@ def understand_request(
         except LLMError:
             pass  # retry failed too - fall through to today's warning path unchanged
 
+    if not parsed:
+        # No usable response even after a retry - this is a classification
+        # FAILURE, not a verdict. in_scope=None, never True/False, so the
+        # caller can't mistake "we don't know" for "we checked and it's
+        # out of scope".
+        computed_guess = "Unknown — could not determine automatically"
+        fallback_authority = user_supplied_authority.strip() or computed_guess
+        return UnderstandResult([], fallback_authority, computed_guess, None, "")
+
     information_sought = parsed.get("information_sought") or []
     computed_guess = str(parsed.get("likely_authority") or "Unknown — could not determine automatically")
     if not isinstance(information_sought, list):
@@ -147,7 +201,16 @@ def understand_request(
     information_sought = [str(i) for i in information_sought if str(i).strip()]
 
     likely_authority = user_supplied_authority.strip() or computed_guess
-    return UnderstandResult(information_sought, likely_authority, computed_guess)
+
+    # Anything other than a clean bool is treated as "no verdict obtained"
+    # (missing key, wrong type, etc.) - same reasoning as the LLMError/parse
+    # -failure branches above: a malformed field must not silently collapse
+    # into an explicit False refusal.
+    raw_in_scope = parsed.get("in_scope")
+    in_scope = raw_in_scope if isinstance(raw_in_scope, bool) else None
+    scope_reason = str(parsed.get("reason") or "").strip()
+
+    return UnderstandResult(information_sought, likely_authority, computed_guess, in_scope, scope_reason)
 
 
 def gather_grounding() -> list[RetrievedChunk]:
@@ -262,7 +325,11 @@ def _format_letter(
     information_sought: list[str],
     slots: dict[str, str],
 ) -> str:
-    verify_note = "" if department_verified else "\n(Best guess — please verify the correct office before submitting.)"
+    verify_note = (
+        ""
+        if department_verified
+        else "\n(Best guess — please confirm the correct Public Information Officer and mailing address before submitting.)"
+    )
     particulars = "\n".join(f"{i}. {item}" for i, item in enumerate(information_sought, start=1))
     if not particulars:
         particulars = "(Could not automatically determine specific particulars — please add manually.)"

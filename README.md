@@ -118,6 +118,10 @@ streamlit run app.py                                    # conversational intake
 uvicorn web.main:app --host 127.0.0.1 --port 8000        # web UI, http://127.0.0.1:8000
 ```
 
+The FastAPI app (`web/`) is the primary surface; the Streamlit app (`app.py`) is a
+reduced fallback with no scope screening, so it will draft a letter for any input,
+on- or off-topic.
+
 The first request after ingestion is slow (roughly 20-50s depending on machine load,
 measured runs: 22.25s, 30.83s, 30.94s, 46.26s) while the embedding model
 loads into memory — the FastAPI app warms this up at startup before accepting requests;
@@ -167,5 +171,6 @@ app.py    Streamlit interface over the same agent/llm/rag/export pipeline as web
   20-token budget. The app's actual budgets are large enough that this hasn't shown up in
   practice, but it's a real characteristic of the model, not handled defensively in code.
 - The letter's public-authority line is an LLM guess, not a verified fact — it's always
-  rendered with "(Best guess — please verify the correct office before submitting.)" in the
-  output. Citizens still need to confirm the correct office before filing.
+  rendered with "(Best guess — please confirm the correct Public Information Officer and
+  mailing address before submitting.)" in the output. Citizens still need to confirm the
+  correct office and PIO before filing.

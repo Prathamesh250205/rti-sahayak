@@ -195,6 +195,7 @@ Fill in the form and click "Generate Application" to see your drafted RTI applic
 </div>
 <div class="hidden font-body-md text-body-md text-[#93000a] text-center py-xl" id="preview-error"></div>
 {% include "partials/no_grounding.html" %}
+{% include "partials/out_of_scope.html" %}
 <div class="hidden font-headline-lg-mobile text-body-lg leading-relaxed whitespace-pre-wrap" id="preview-content"></div>
 </div>
 <!-- Source Cards: grounding evidence for the draft above -->
@@ -237,8 +238,11 @@ Fill in the form and click "Generate Application" to see your drafted RTI applic
   var previewLoading = document.getElementById('preview-loading');
   var previewError = document.getElementById('preview-error');
   var noGrounding = document.getElementById('no-grounding');
-  var noGroundingQuery = document.getElementById('no-grounding-query');
-  var noGroundingRephraseBtn = document.getElementById('no-grounding-rephrase');
+  var noGroundingRetryBtn = document.getElementById('no-grounding-retry');
+  var outOfScope = document.getElementById('out-of-scope');
+  var outOfScopeQuery = document.getElementById('out-of-scope-query');
+  var outOfScopeReason = document.getElementById('out-of-scope-reason');
+  var outOfScopeRephraseBtn = document.getElementById('out-of-scope-rephrase');
   var previewContent = document.getElementById('preview-content');
   var sourceCards = document.getElementById('source-cards');
   var draftWarnings = document.getElementById('draft-warnings');
@@ -268,11 +272,13 @@ Fill in the form and click "Generate Application" to see your drafted RTI applic
     previewLoading.classList.add('hidden');
     previewError.classList.add('hidden');
     noGrounding.classList.add('hidden');
+    outOfScope.classList.add('hidden');
     previewContent.classList.add('hidden');
     if (state === 'empty') previewEmpty.classList.remove('hidden');
     if (state === 'loading') previewLoading.classList.remove('hidden');
     if (state === 'error') previewError.classList.remove('hidden');
     if (state === 'no-grounding') noGrounding.classList.remove('hidden');
+    if (state === 'out-of-scope') outOfScope.classList.remove('hidden');
     if (state === 'content') previewContent.classList.remove('hidden');
   }
 
@@ -419,8 +425,17 @@ Fill in the form and click "Generate Application" to see your drafted RTI applic
       })
       .then(function (data) {
         if (data.status === 'insufficient_grounding') {
-          noGroundingQuery.textContent = '“' + payload.problem_description + '”';
+          // A service/index failure, not a judgement on the citizen's text -
+          // deliberately does not quote payload.problem_description back,
+          // unlike the out-of-scope screen below.
           showState('no-grounding');
+          return;
+        }
+
+        if (data.status === 'out_of_scope') {
+          outOfScopeQuery.textContent = '“' + payload.problem_description + '”';
+          outOfScopeReason.textContent = (data.meta && data.meta.scope_reason) || '';
+          showState('out-of-scope');
           return;
         }
 
@@ -476,7 +491,14 @@ Fill in the form and click "Generate Application" to see your drafted RTI applic
       });
   });
 
-  noGroundingRephraseBtn.addEventListener('click', function () {
+  noGroundingRetryBtn.addEventListener('click', function () {
+    // A service/index failure, not a request problem - re-submit as-is
+    // rather than sending the citizen back to edit text that was never
+    // the issue.
+    generateBtn.click();
+  });
+
+  outOfScopeRephraseBtn.addEventListener('click', function () {
     showState('empty');
     var field = document.querySelector('[name="problem_description"]');
     if (field) {

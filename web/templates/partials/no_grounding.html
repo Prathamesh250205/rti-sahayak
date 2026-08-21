@@ -1,44 +1,27 @@
-<!-- Content block ported from
-     design/stitch_rti_sahayak_ai_assistant/no_results_answer_screen/code.html.
-     Only that screen's warning-card content is ported, not its page chrome
-     (own nav/footer/bottom ask-bar) - this slots into draft.html's existing
-     preview pane, which already has its own request/edit controls.
-
-     Deliberately NOT ported, per the same honesty standard applied to
-     browse.html - nothing here may claim something the app doesn't actually
-     do:
-       - The hardcoded example question ("How do I apply for a passport
-         using RTI?") - replaced below with the citizen's own submitted text.
-       - The "Ask about state-specific RTI rules" button - no such feature
-         exists.
-       - The external placeholder image and the "Sources used" panel's
-         hardcoded "(0.62)" confidence number - that number belongs to a
-         different, unrelated mockup value, never wired to this app's real
-         threshold (rag.retriever.MAX_RELEVANT_DISTANCE).
-     "Show me the closest related sections" became a real link to /browse,
-     which lists the actual sections in the corpus. -->
+<!-- CHECK A (procedural grounding / corpus health) failure screen. Its only
+     trigger is gather_grounding() returning zero chunks for the two fixed
+     procedural queries - that only happens when the Chroma collection
+     itself is empty or broken (e.g. a deploy that skipped ingestion), never
+     because of anything about the citizen's specific request. It must not
+     read as a judgement on their text, and must not quote it back as if it
+     were the cause - see web/api/draft.py's CHECK A branch. -->
 <div class="hidden text-left py-lg" id="no-grounding">
 <div class="bg-surface-container-lowest border border-warning rounded-card p-md flex flex-col gap-sm">
 <div class="flex items-center gap-sm text-warning">
 <span class="material-symbols-outlined" data-icon="warning">warning</span>
-<h2 class="font-headline-md text-headline-md">I couldn't find this in the RTI Act, 2005</h2>
+<h2 class="font-headline-md text-headline-md">The Act's text is temporarily unavailable</h2>
 </div>
 <p class="font-body-md text-body-md text-on-surface-variant">
-None of the Act's text retrieved for your request scored confidently enough to draft a grounded letter for:
+This is a problem on our end, not with your request — the system couldn't load the RTI Act's text to draft against right now. Nothing was wrong with what you asked.
 </p>
-<p class="font-body-md text-body-md text-on-surface italic" id="no-grounding-query"></p>
 <p class="font-body-md text-body-md text-on-surface-variant">
-I won't guess at procedure or law I can't verify against the Act. Please rephrase your request with more specific detail, or browse the Act directly.
+Please try again in a moment. If this keeps happening, the service may be having a temporary issue — it isn't something you can fix by rephrasing.
 </p>
 <div class="flex flex-col gap-base mt-sm">
-<button class="bg-surface-container-lowest border border-archival-border rounded-input p-sm flex justify-between items-center hover:bg-surface-container-low transition-colors group" id="no-grounding-rephrase" type="button">
-<span class="font-body-md text-body-md text-on-surface">Edit my request and try again</span>
+<button class="bg-surface-container-lowest border border-archival-border rounded-input p-sm flex justify-between items-center hover:bg-surface-container-low transition-colors group" id="no-grounding-retry" type="button">
+<span class="font-body-md text-body-md text-on-surface">Try again</span>
 <span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">arrow_forward</span>
 </button>
-<a class="bg-surface-container-lowest border border-archival-border rounded-input p-sm flex justify-between items-center hover:bg-surface-container-low transition-colors group" href="/browse">
-<span class="font-body-md text-body-md text-on-surface">Browse the Act's real sections instead</span>
-<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">arrow_forward</span>
-</a>
 </div>
 </div>
 </div>

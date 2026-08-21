@@ -9,6 +9,8 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+import llm.client as llm_client
+from rag.retriever import CHROMA_DIR, COLLECTION_NAME, RetrieverError, _get_collection
 from rag.retriever import warm_up as warm_up_retriever
 from web import state as web_state
 from web.api.act import router as act_router
@@ -16,6 +18,49 @@ from web.api.draft import router as draft_router
 from web.api.system import router as system_router
 
 BASE_DIR = Path(__file__).parent
+
+
+def _check_corpus_health() -> None:
+    """Log loud, unmissable ERROR lines if the just-loaded Chroma collection
+    is empty or still carries the pre-Gate-3 "unknown" front-matter label.
+
+    Both are silent-degradation failure modes otherwise: a zero-chunk
+    collection (e.g. a Render deploy whose build step skipped ingestion)
+    doesn't crash anything - every draft just quietly refuses via CHECK A,
+    which looks identical to a real corpus-health problem from the outside.
+    An "unknown" chunk reappearing would mean the PREAMBLE_ANCHOR split in
+    rag/ingest.py regressed (see that module) - the retrieval-quality bug
+    Gate 2/3 fixed. Neither condition should ever be true in a healthy
+    deploy; this makes it obvious in Render logs the moment it isn't,
+    rather than only showing up as vague empty-/browse or refusal
+    complaints days later. Never raises - a broken health check must not
+    be mistaken for a warm-up failure in the caller's logs.
+    """
+    try:
+        collection = _get_collection()
+        result = collection.get(include=["metadatas"])
+        metadatas = result["metadatas"]
+    except Exception as e:
+        print(f"[startup] ERROR: corpus health check itself failed: {type(e).__name__}: {e}", file=sys.stderr)
+        return
+
+    if not metadatas:
+        print(
+            "[startup] ERROR: Chroma collection has 0 chunks. The corpus was not ingested "
+            "(check the build command actually ran `python -m rag.ingest`) - every draft "
+            "will refuse via CHECK A until this is fixed.",
+            file=sys.stderr,
+        )
+        return
+
+    unknown_count = sum(1 for m in metadatas if m.get("section") == "unknown")
+    if unknown_count:
+        print(
+            f"[startup] ERROR: {unknown_count} chunk(s) carry section='unknown' - the "
+            "PREAMBLE_ANCHOR front-matter split in rag/ingest.py has regressed. See that "
+            "module's PREAMBLE_ANCHOR constant.",
+            file=sys.stderr,
+        )
 
 
 async def _warm_up_in_background() -> None:
@@ -31,6 +76,7 @@ async def _warm_up_in_background() -> None:
         await asyncio.to_thread(warm_up_retriever)
         web_state.warm_up_seconds = time.perf_counter() - t0
         print(f"[startup] RTI Act knowledge base warm-up completed in {web_state.warm_up_seconds:.2f}s", file=sys.stderr)
+        await asyncio.to_thread(_check_corpus_health)
     except Exception as e:
         print(f"[startup] Knowledge base warm-up failed after {time.perf_counter() - t0:.2f}s: {e}", file=sys.stderr)
     finally:
@@ -58,6 +104,47 @@ app.include_router(system_router)
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/healthz")
+def healthz():
+    """Deployment diagnostics for the Chroma corpus - built to make a
+    zero-chunk deploy (e.g. a build step that silently failed to run
+    ingestion) immediately visible instead of surfacing only as a vague
+    empty /browse page or a universal insufficient_grounding refusal.
+
+    chroma_persist_path is resolved with Path.resolve() specifically so
+    this reports the real absolute filesystem location the process is
+    actually reading, not the unresolved "rag/../data/chroma" string the
+    code constructs it from - the two can look identical relative to the
+    repo but only the resolved form proves what's genuinely on disk.
+    """
+    from chromadb.utils import embedding_functions
+
+    resolved_path = Path(CHROMA_DIR).resolve()
+    path_exists = resolved_path.exists()
+
+    chunk_count = None
+    collection_error = None
+    if path_exists:
+        try:
+            chunk_count = _get_collection().count()
+        except RetrieverError as e:
+            collection_error = str(e)
+        except Exception as e:
+            collection_error = f"{type(e).__name__}: {e}"
+    else:
+        collection_error = "Persist path does not exist on disk."
+
+    return {
+        "chroma_collection_name": COLLECTION_NAME,
+        "chroma_chunk_count": chunk_count,
+        "chroma_persist_path": str(resolved_path),
+        "chroma_persist_path_exists": path_exists,
+        "collection_error": collection_error,
+        "llm_provider": llm_client.PROVIDER,
+        "embedding_model": embedding_functions.ONNXMiniLM_L6_V2.MODEL_NAME,
+    }
 
 
 @app.get("/")

@@ -2,8 +2,34 @@
 agent.intake / agent.drafter pipeline (the same pipeline app.py drives
 turn-by-turn in the Streamlit UI). This endpoint takes all fields in a
 single request instead: no session store, no agent.intake.process_reply.
+
+Two independent checks gate a draft, deliberately kept separate because
+they answer different questions and fail in different ways:
+
+  CHECK A (procedural grounding, deterministic): does the corpus actually
+  contain the procedural text that backs the Section 6/7 clauses and the
+  citation chips? gather_grounding()'s two fixed queries always retrieve
+  well against a real, populated corpus - this only fails if Chroma is
+  empty or broken (e.g. a deploy that skipped ingestion), never because of
+  anything about the specific request. Kept as the "insufficient_grounding"
+  status/screen, now scoped to exactly this failure mode.
+
+  CHECK B (scope, LLM classification): is this genuinely a request for
+  records held by an Indian public authority? Semantic similarity between
+  a citizen's grievance and the Act's own text is close to meaningless -
+  the Act is purely procedural and never mentions ration cards, roads, or
+  pensions by name - so this used to be answered (badly) by a retrieval-
+  distance check on the citizen's own text, which produced both false
+  refusals (legitimate requests with no vocabulary overlap) and
+  meaningless false positives (an unrelated grievance scoring under
+  threshold against an unrelated section by coincidence). It's an explicit
+  model verdict now - see agent.drafter.UnderstandResult.in_scope - not
+  inferred from retrieval distance or from information_sought coming back
+  empty, which would conflate a genuine "not a records request" answer
+  with a provider hiccup.
 """
 import io
+import sys
 import time
 from dataclasses import asdict
 
@@ -14,18 +40,10 @@ import llm.client as llm_client
 from agent.drafter import compose_letter, gather_grounding, understand_request
 from agent.intake import IntakeState
 from export.pdf_writer import build_pdf
-from rag.retriever import MAX_RELEVANT_DISTANCE, retrieve
 from web import state as web_state
 from web.schemas import ChunkOut, ClauseOut, DraftRequest, DraftResponse, PdfRequest
 
 router = APIRouter()
-
-# How many chunks to pull when checking whether the Act's text actually
-# covers the citizen's own topic (see the insufficient_grounding guard
-# below) - separate from agent.drafter.gather_grounding(), which always
-# retrieves the same fixed procedural queries (filing manner, response
-# timeline) regardless of topic and so can't detect an off-topic request.
-TOPIC_CHECK_TOP_K = 5
 
 
 @router.post("/api/draft", response_model=DraftResponse)
@@ -49,23 +67,20 @@ def create_draft(req: DraftRequest):
         )
 
     try:
-        # Anti-hallucination guard: if nothing retrieved for the citizen's own
-        # problem_description clears the relevance threshold, the Act's text
-        # doesn't confidently cover this request - refuse to draft a letter
-        # rather than have the LLM improvise information_sought/authority for
-        # a topic (e.g. income tax filing) the corpus says nothing about.
-        # Uses rag.retriever.MAX_RELEVANT_DISTANCE directly rather than a
-        # second hardcoded threshold, so the two can't drift out of sync.
-        topic_chunks = retrieve(req.problem_description, top_k=TOPIC_CHECK_TOP_K)
-        best_distance = min((c.distance for c in topic_chunks), default=None)
+        # CHECK A - procedural grounding. Runs first and needs no LLM call,
+        # so a broken deploy is caught cheaply, before anything else.
+        chunks = gather_grounding()
+        best_distance = min((c.distance for c in chunks), default=None)
 
-        if not any(c.distance < MAX_RELEVANT_DISTANCE for c in topic_chunks):
+        if not chunks:
+            print(
+                "[draft] CHECK A (procedural grounding) found zero chunks - the Chroma "
+                "collection is empty or broken. This is a corpus/deploy failure, not a "
+                "verdict about this specific request.",
+                file=sys.stderr,
+            )
             latency_ms = int((time.perf_counter() - t0) * 1000)
-            web_state.last_request = {
-                "latency_ms": latency_ms,
-                "chunks_used": 0,
-                "best_distance": best_distance,
-            }
+            web_state.last_request = {"latency_ms": latency_ms, "chunks_used": 0, "best_distance": None}
             return DraftResponse(
                 application_text="",
                 department_guess="",
@@ -74,11 +89,7 @@ def create_draft(req: DraftRequest):
                 clauses=[],
                 warnings=[],
                 status="insufficient_grounding",
-                meta={
-                    "provider": None,
-                    "latency_ms": latency_ms,
-                    "chunks_used": 0,
-                },
+                meta={"provider": None, "latency_ms": latency_ms, "chunks_used": 0},
             )
 
         # agent.intake.IntakeState.slots keys, verbatim from
@@ -104,15 +115,48 @@ def create_draft(req: DraftRequest):
         if req.is_bpl:
             state.slots["is_bpl"] = "true"
 
-        information_sought, likely_authority = understand_request(
+        # CHECK B - scope. See module docstring.
+        understanding = understand_request(
             req.problem_description,
             locality=req.locality or "",
             timeframe=req.timeframe or "",
             user_supplied_authority=req.public_authority or "",
         )
-        chunks = gather_grounding()
-        result = compose_letter(state, information_sought, likely_authority, chunks)
-        result_dict = asdict(result)
+        information_sought, likely_authority = understanding
+
+        if understanding.in_scope is False:
+            latency_ms = int((time.perf_counter() - t0) * 1000)
+            web_state.last_request = {"latency_ms": latency_ms, "chunks_used": 0, "best_distance": best_distance}
+            return DraftResponse(
+                application_text="",
+                department_guess="",
+                information_sought=[],
+                chunks=[],
+                clauses=[],
+                warnings=[],
+                status="out_of_scope",
+                meta={
+                    "provider": llm_client.LAST_PROVIDER_USED,
+                    "latency_ms": latency_ms,
+                    "chunks_used": 0,
+                    "scope_reason": understanding.scope_reason,
+                },
+            )
+
+        extra_warnings = []
+        if understanding.in_scope is None:
+            # Fail-open: CHECK A already holds, and a mysterious refusal
+            # during a live demo is worse than a flagged draft - see
+            # agent/drafter.py's UnderstandResult.in_scope docs. The
+            # citizen still sees this plainly rather than a silent gap.
+            extra_warnings.append(
+                "Automated scope screening was unavailable for this request (the classification "
+                "step failed) - this draft was produced anyway. Please double-check that this is "
+                "genuinely a request for a specific record before submitting."
+            )
+
+        letter = compose_letter(state, information_sought, likely_authority, chunks)
+        result_dict = asdict(letter)
 
         latency_ms = int((time.perf_counter() - t0) * 1000)
         web_state.last_request = {
@@ -126,7 +170,7 @@ def create_draft(req: DraftRequest):
             information_sought=result_dict["information_sought"],
             chunks=[ChunkOut(**c) for c in result_dict["grounding_chunks"]],
             clauses=[ClauseOut(**c) for c in result_dict["clauses"]],
-            warnings=result_dict["warnings"],
+            warnings=extra_warnings + result_dict["warnings"],
             status="ok",
             meta={
                 "provider": llm_client.LAST_PROVIDER_USED,

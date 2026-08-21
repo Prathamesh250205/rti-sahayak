@@ -51,6 +51,24 @@ SECTION_HEADING_RE = re.compile(
     r"(?<!\d)(\d{1,3}[A-Z]?)\.\s+[A-Z][a-zA-Z ,'\-]{3,80}?\.?\s*[-–—]"
 )
 
+# This exact phrase is unique to this specific RTI_Act_2005.pdf and marks
+# where the Act's actual legal text begins - the long title ("An Act to
+# provide for...") immediately followed by the enacting formula and the
+# WHEREAS clauses (the Preamble). Everything before this anchor (title
+# page, Ministry header, preface, table of contents) carries no legal
+# content and is dropped from the corpus entirely rather than ingested as
+# unlabeled "unknown" text: a bare table-of-contents chunk repeats every
+# section title in the Act, which makes it similar enough to almost any
+# RTI query to clear the grounding threshold on its own - a real
+# retrieval-quality bug, not a cosmetic one, since it then competes with
+# genuine section text in every query.
+#
+# If this corpus PDF is ever swapped for a different edition, this anchor
+# will very likely no longer match - see the RuntimeError in ingest()
+# below. That's deliberate: a silent fallback here would silently
+# reintroduce the exact bug this constant fixes.
+PREAMBLE_ANCHOR = "An Act to provide for"
+
 
 def extract_pages(pdf_path: str) -> list[tuple[int, str]]:
     """Return [(page_number, text), ...] for a PDF, 1-indexed pages."""
@@ -106,19 +124,30 @@ def _split_oversized_segment(segment_text: str, target: int, overlap: int):
         start = max(end - overlap, start + 1)
 
 
-def chunk_document(text: str, page_offsets: list[tuple[int, int]], section_markers: list[tuple[int, str]]):
+def chunk_document(
+    text: str,
+    page_offsets: list[tuple[int, int]],
+    section_markers: list[tuple[int, str]],
+    preamble_start: int,
+):
     """Yield (chunk_text, page_num, section_number) chunks split on section
-    boundaries - each chunk belongs to exactly one section (or section=None
-    for the front matter before the first detected heading), by construction,
+    boundaries - each chunk belongs to exactly one section, by construction,
     never inferred from a midpoint. A section's full text becomes a single
     chunk when it's <= CHUNK_MAX_CHARS; a longer section is sub-split into
     ~CHUNK_TARGET_CHARS pieces (see _split_oversized_segment) that all carry
     that same section label.
+
+    preamble_start: char offset of PREAMBLE_ANCHOR in `text` (see that
+    constant). Everything before it is title page/Ministry header/preface/
+    table of contents with no legal content - text[:preamble_start] is
+    simply never visited, so it's dropped rather than yielded as a chunk.
+    The span from preamble_start up to the first real section heading is
+    yielded as section="Preamble".
     """
     if not text:
         return
 
-    boundaries = [(0, None)] + list(section_markers)
+    boundaries = [(preamble_start, "Preamble")] + list(section_markers)
     for i, (start, section) in enumerate(boundaries):
         end = boundaries[i + 1][0] if i + 1 < len(boundaries) else len(text)
         segment = text[start:end]
@@ -165,15 +194,33 @@ def ingest() -> int:
         print(f"Processing {filename}...")
         pages = extract_pages(path)
         full_text, page_offsets = build_document(pages)
+
+        preamble_start = full_text.find(PREAMBLE_ANCHOR)
+        if preamble_start == -1:
+            raise RuntimeError(
+                f"PREAMBLE_ANCHOR {PREAMBLE_ANCHOR!r} not found in {filename}. "
+                "This anchor is specific to the current RTI_Act_2005.pdf edition - "
+                "if the corpus PDF was swapped for a different edition, update "
+                "PREAMBLE_ANCHOR to match its actual long-title wording. Refusing "
+                "to guess: ingesting without a verified anchor would silently drop "
+                "or mislabel the front matter again."
+            )
+
         section_markers = find_section_markers(full_text)
 
-        for chunk_text_str, page_num, section in chunk_document(full_text, page_offsets, section_markers):
+        for chunk_text_str, page_num, section in chunk_document(full_text, page_offsets, section_markers, preamble_start):
             documents.append(chunk_text_str)
+            if section == "Preamble":
+                section_label = "Preamble"
+            elif section:
+                section_label = f"Section {section}"
+            else:
+                section_label = "unknown"
             metadatas.append(
                 {
                     "source": filename,
                     "page": page_num,
-                    "section": f"Section {section}" if section else "unknown",
+                    "section": section_label,
                 }
             )
             ids.append(f"{filename}-c{chunk_id}")
