@@ -48,6 +48,10 @@
 <p class="font-caption text-caption text-on-surface-variant">Filings are stored only in this browser (localStorage) - there is no server-side account or database. Clearing your browser data, switching browsers, or using a different device will lose them. Nothing is uploaded anywhere.</p>
 </div>
 
+<div class="w-full max-w-[700px]">
+{% include "partials/backup_controls.html" %}
+</div>
+
 <!-- Deadline-rules loading/error state - fetched once on page load, no LLM call. -->
 <div class="hidden font-caption text-caption text-on-surface-variant" id="rules-loading">Loading statutory deadlines from the Act...</div>
 <div class="hidden w-full max-w-[700px] border border-[#93000a] bg-[#FDECEA] rounded-sm p-sm font-caption text-caption text-[#93000a]" id="rules-error"></div>
@@ -488,6 +492,12 @@ No filings tracked yet. Add one above once you've submitted an RTI application.
 
   // Prevent filing a date in the future at the picker level too.
   document.getElementById('filing-date').max = new Date().toISOString().slice(0, 10);
+
+  // A backup import (see partials/backup_controls.html) writes straight to
+  // localStorage - this page's own list needs telling to re-read it.
+  window.addEventListener('rtisahayak:backup-imported', function () {
+    renderFilings();
+  });
 
   loadDeadlineRules();
 })();

@@ -1,0 +1,129 @@
+<!-- Export/import both localStorage datasets (Track's filings, Save
+     Draft's drafts) as one combined JSON file. Included on /track and
+     /draft near their existing localStorage disclosures - see
+     web/static/js/backup.js for the actual read/write/validation logic;
+     this partial is the UI shell and wiring only, so it can be dropped
+     into both pages without duplicating that logic. -->
+<div class="w-full border border-outline-variant bg-white rounded-card p-sm space-y-sm" id="backup-panel">
+<div class="flex items-center justify-between gap-sm flex-wrap">
+<div>
+<p class="font-label-mono text-label-mono text-on-surface-variant tracking-widest uppercase">Backup</p>
+<p class="font-caption text-caption text-on-surface-variant mt-xs">Move your filings and drafts to another device or browser, or keep a backup - clearing browser data erases both otherwise.</p>
+</div>
+<div class="flex items-center gap-xs shrink-0">
+<button class="secondary-button font-label-mono text-label-mono px-md py-xs rounded flex items-center gap-xs" id="backup-export-btn" type="button">
+<span class="material-symbols-outlined text-[16px]" data-icon="download">download</span>
+Export
+</button>
+<label class="secondary-button font-label-mono text-label-mono px-md py-xs rounded flex items-center gap-xs cursor-pointer" for="backup-import-input">
+<span class="material-symbols-outlined text-[16px]" data-icon="upload">upload</span>
+Import
+</label>
+<input accept="application/json,.json" class="hidden" id="backup-import-input" type="file"/>
+</div>
+</div>
+<div class="hidden font-caption text-caption text-[#93000a]" id="backup-error"></div>
+<div class="hidden font-caption text-caption text-[#1E7A5A]" id="backup-success"></div>
+<!-- Merge/Replace confirmation - shown only once a file has passed validation. Never overwrites silently. -->
+<div class="hidden border border-warning bg-[#FDF6EC] rounded-DEFAULT p-sm space-y-sm" id="backup-confirm">
+<p class="font-body-md text-body-md" id="backup-confirm-summary"></p>
+<div class="flex flex-wrap gap-sm">
+<button class="amber-button font-label-mono text-label-mono px-md py-sm rounded" id="backup-confirm-merge" type="button">Merge with existing data</button>
+<button class="secondary-button font-label-mono text-label-mono px-md py-sm rounded border-[#93000a] text-[#93000a]" id="backup-confirm-replace" type="button">Replace all existing data</button>
+<button class="font-label-mono text-label-mono px-md py-sm rounded text-on-surface-variant hover:bg-surface-container-low" id="backup-confirm-cancel" type="button">Cancel</button>
+</div>
+</div>
+</div>
+
+<script>
+(function () {
+  var exportBtn = document.getElementById('backup-export-btn');
+  var importInput = document.getElementById('backup-import-input');
+  var errorEl = document.getElementById('backup-error');
+  var successEl = document.getElementById('backup-success');
+  var confirmPanel = document.getElementById('backup-confirm');
+  var confirmSummary = document.getElementById('backup-confirm-summary');
+  var mergeBtn = document.getElementById('backup-confirm-merge');
+  var replaceBtn = document.getElementById('backup-confirm-replace');
+  var cancelBtn = document.getElementById('backup-confirm-cancel');
+  var pendingBackup = null;
+
+  function clearMessages() {
+    errorEl.classList.add('hidden');
+    successEl.classList.add('hidden');
+  }
+
+  function showError(msg) {
+    clearMessages();
+    errorEl.textContent = msg;
+    errorEl.classList.remove('hidden');
+  }
+
+  function showSuccess(msg) {
+    clearMessages();
+    successEl.textContent = msg;
+    successEl.classList.remove('hidden');
+  }
+
+  exportBtn.addEventListener('click', function () {
+    clearMessages();
+    if (!window.RTISahayakBackup.hasAnyData()) {
+      showError('Nothing to export yet - add a filing on /track or save a draft on /draft first.');
+      return;
+    }
+    var counts = window.RTISahayakBackup.exportBackup();
+    showSuccess('Exported ' + counts.filings_count + ' filing(s) and ' + counts.drafts_count + ' draft(s).');
+  });
+
+  importInput.addEventListener('change', function () {
+    clearMessages();
+    confirmPanel.classList.add('hidden');
+    pendingBackup = null;
+    var file = importInput.files && importInput.files[0];
+    if (!file) {
+      return;
+    }
+    window.RTISahayakBackup.readBackupFile(file)
+      .then(function (backup) {
+        pendingBackup = backup;
+        var savedNote = backup.exported_at ? ' (saved ' + new Date(backup.exported_at).toLocaleDateString() + ')' : '';
+        confirmSummary.textContent =
+          'This backup contains ' + backup.filings.length + ' filing(s) and ' + backup.drafts.length +
+          ' draft(s)' + savedNote + '. Merge with what\'s already on this device, or replace it entirely?';
+        confirmPanel.classList.remove('hidden');
+      })
+      .catch(function (err) {
+        showError(err.message);
+      })
+      .finally(function () {
+        importInput.value = '';
+      });
+  });
+
+  function finishImport(mode) {
+    if (!pendingBackup) {
+      return;
+    }
+    try {
+      var summary = window.RTISahayakBackup.importBackup(pendingBackup, mode);
+      var parts = [
+        summary.filings_imported + ' filing(s) imported' + (summary.filings_skipped ? ' (' + summary.filings_skipped + ' skipped as duplicates)' : ''),
+        summary.drafts_imported + ' draft(s) imported' + (summary.drafts_skipped ? ' (' + summary.drafts_skipped + ' skipped as duplicates)' : ''),
+      ];
+      showSuccess((mode === 'replace' ? 'Replaced existing data. ' : 'Merged. ') + parts.join(', ') + '.');
+    } catch (e) {
+      showError(e.message);
+    }
+    pendingBackup = null;
+    confirmPanel.classList.add('hidden');
+  }
+
+  mergeBtn.addEventListener('click', function () { finishImport('merge'); });
+  replaceBtn.addEventListener('click', function () { finishImport('replace'); });
+  cancelBtn.addEventListener('click', function () {
+    pendingBackup = null;
+    confirmPanel.classList.add('hidden');
+    clearMessages();
+  });
+})();
+</script>

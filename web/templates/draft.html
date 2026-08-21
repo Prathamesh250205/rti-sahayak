@@ -77,6 +77,7 @@
 <span class="material-symbols-outlined text-[16px] text-warning shrink-0" data-icon="info">info</span>
 <p class="font-caption text-caption text-on-surface-variant">Saved drafts are stored only in this browser (localStorage) - there is no server-side account or database. Clearing your browser data, switching browsers, or using a different device will lose them.</p>
 </div>
+{% include "partials/backup_controls.html" %}
 <div class="hidden font-caption text-caption text-[#93000a]" id="saved-drafts-error"></div>
 <p class="font-caption text-caption text-on-surface-variant italic" id="saved-drafts-empty">No saved drafts yet. Fill in the form (and generate a letter, if you like), then click "Save Draft" below to keep your progress.</p>
 <div class="space-y-sm" id="saved-drafts-list"></div>
@@ -516,6 +517,12 @@ Fill in the form and click "Generate Application" to see your drafted RTI applic
   });
 
   renderSavedDrafts();
+
+  // A backup import (see partials/backup_controls.html) writes straight to
+  // localStorage - this page's own list needs telling to re-read it.
+  window.addEventListener('rtisahayak:backup-imported', function () {
+    renderSavedDrafts();
+  });
 
   // The home screen's ask input and suggestion chips link here with the
   // typed/clicked text in ?problem_description= - pre-fill the field so the
