@@ -69,7 +69,7 @@ def _check_corpus_health() -> None:
 
 
 def _log_llm_config() -> None:
-    """Print exactly which provider+model is primary and which is fallback.
+    """Print the full resolved provider chain and model for each, in order.
 
     Gate 12e: GEMINI_MODEL has historically been set to "gemini-flash-latest",
     a floating alias that has silently repointed to a different underlying
@@ -79,15 +79,17 @@ def _log_llm_config() -> None:
     whatever the configured model string actually resolves to, every
     startup, so a repoint (or an unfilled TODO placeholder) is visible in
     the logs immediately rather than discovered via a mysterious quota
-    failure days later.
+    failure days later. Gate 13 extended this from a fixed primary/fallback
+    pair to the full N-provider PROVIDER_CHAIN (never logs an API key -
+    only the provider name and model ID, same as before).
     """
-    fallback_provider = "groq" if llm_client.PROVIDER == "gemini" else "gemini"
-    models = {"groq": llm_client.GROQ_MODEL, "gemini": llm_client.GEMINI_MODEL}
-    print(
-        f"[startup] LLM config - primary: {llm_client.PROVIDER}={models.get(llm_client.PROVIDER)!r}, "
-        f"fallback: {fallback_provider}={models.get(fallback_provider)!r}",
-        file=sys.stderr,
-    )
+    models = {
+        "groq": llm_client.GROQ_MODEL,
+        "gemini": llm_client.GEMINI_MODEL,
+        "anthropic": llm_client.ANTHROPIC_MODEL,
+    }
+    chain_desc = " -> ".join(f"{p}={models.get(p)!r}" for p in llm_client.PROVIDER_CHAIN)
+    print(f"[startup] LLM provider chain: {chain_desc}", file=sys.stderr)
     # A "should fix", not a "cannot run" - Gemini is the fallback, not the
     # primary, so this stays a loud warning rather than a boot failure. See
     # the GEMINI_MODEL comment in .env.example for the repoint history.

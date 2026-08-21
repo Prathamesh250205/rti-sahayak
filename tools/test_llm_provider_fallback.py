@@ -1,15 +1,16 @@
-"""Regression test for Gate 12d/12e: llm.client's provider fallback and
-Groq rate-limit header logging.
+"""Regression test for Gate 12d/12e/13: llm.client's provider fallback,
+Groq rate-limit header logging, and the 3-provider chain (Groq -> Gemini ->
+Anthropic).
 
-Confirms three things with a fully mocked provider dispatch - no real
-network calls, no API quota spent:
+Confirms all of the following with a fully mocked provider dispatch - no
+real network calls, no API quota spent:
 
-1. When the primary provider fails, generate() (the buffered call path
+1. When a provider fails, generate() (the buffered call path
    agent.drafter.understand_request() and agent.qa.answer_question() both
-   use) retries the fallback and returns its COMPLETE result rather than
-   giving up or returning a partial - the property that makes buffered
-   calls safe to restart where llm.client.generate_stream() genuinely isn't
-   (see that function's docstring).
+   use) retries the next provider in the chain and returns its COMPLETE
+   result rather than giving up or returning a partial - the property that
+   makes buffered calls safe to restart where llm.client.generate_stream()
+   genuinely isn't (see that function's docstring).
 2. Every failure along the way is logged - the silent version of this is
    exactly how CHECK B's classification failing under provider load
    produced a normal-looking "ok" response with "Unknown - could not
@@ -17,6 +18,10 @@ network calls, no API quota spent:
    explain why (Gate 12's diagnosis).
 3. _log_groq_rate_limit() (Gate 12e) degrades to a no-op on malformed or
    missing headers instead of ever breaking the actual generate() call.
+4. The provider chain order is genuinely configurable via env
+   (LLM_PROVIDER_CHAIN / LLM_PROVIDER), and a 3-provider chain actually
+   reaches its third hop - Groq failing and Gemini also failing lands on
+   Anthropic, not a give-up after 2 hops (Gate 13).
 
 Usage:
     python -m tools.test_llm_provider_fallback
@@ -163,7 +168,7 @@ def test_raw_response_path_rate_limit_still_triggers_fallback():
         completions = FakeGroqCompletions()
 
     class FakeGroqClient:
-        def __init__(self, api_key):
+        def __init__(self, **kwargs):
             self.chat = FakeGroqChat()
 
     class FakeGeminiMessage:
@@ -221,9 +226,208 @@ def test_raw_response_path_rate_limit_still_triggers_fallback():
     print("PASS: a RateLimitError from the with_raw_response call path still triggers provider fallback correctly")
 
 
+def test_groq_max_retries_is_passed_to_client():
+    """Gate 12e: GROQ_MAX_RETRIES must actually reach the Groq() client
+    constructor - a config value that exists but is never wired through
+    would silently leave the SDK on its own default (2) regardless of what
+    this is set to. Mocks groq.Groq itself to capture its constructor
+    kwargs directly; exercises the real _generate_groq()/_stream_groq(),
+    not a re-implementation of the wiring. No network call - the fake
+    client's .chat is never a real completions resource, so the call
+    fails immediately after construction, which is fine: the constructor
+    call is what this test needs, not a response.
+    """
+    import groq as groq_sdk
+
+    class FakeChatCompletionsStub:
+        def __getattr__(self, name):
+            raise RuntimeError("test stub - no real call should be made")
+
+    class FakeGroqClient:
+        def __init__(self, **kwargs):
+            captured_kwargs.update(kwargs)
+            self.chat = FakeChatCompletionsStub()
+
+    original_groq_class = groq_sdk.Groq
+    original_env_key = os.environ.get("GROQ_API_KEY")
+    original_max_retries = llm_client.GROQ_MAX_RETRIES
+
+    for forced_value in (0, 1, 3):
+        captured_kwargs = {}
+        groq_sdk.Groq = FakeGroqClient
+        os.environ["GROQ_API_KEY"] = "fake-key-for-test"
+        llm_client.GROQ_MAX_RETRIES = forced_value
+        try:
+            try:
+                llm_client._generate_groq("test prompt", None, None, None)
+            except Exception:
+                pass  # expected - the stub chat resource has no real completions
+        finally:
+            groq_sdk.Groq = original_groq_class
+            llm_client.GROQ_MAX_RETRIES = original_max_retries
+            if original_env_key is None:
+                os.environ.pop("GROQ_API_KEY", None)
+            else:
+                os.environ["GROQ_API_KEY"] = original_env_key
+
+        assert captured_kwargs.get("max_retries") == forced_value, (
+            f"expected max_retries={forced_value} passed to Groq(), got kwargs: {captured_kwargs!r}"
+        )
+
+    print("PASS: GROQ_MAX_RETRIES is actually passed to the Groq() client constructor")
+
+
+def test_provider_chain_order_is_configurable():
+    """Gate 13: the chain order must be genuinely configurable via env, not
+    hardcoded - LLM_PROVIDER_CHAIN fully overrides the order, and
+    LLM_PROVIDER alone (the pre-Gate-13 config) still produces a working
+    3-provider chain with the other two filled in behind it. Exercises the
+    real _parse_provider_chain(), not a re-implementation of its logic.
+    """
+
+    def _set(chain_val, provider_val):
+        if chain_val is None:
+            os.environ.pop("LLM_PROVIDER_CHAIN", None)
+        else:
+            os.environ["LLM_PROVIDER_CHAIN"] = chain_val
+        if provider_val is None:
+            os.environ.pop("LLM_PROVIDER", None)
+        else:
+            os.environ["LLM_PROVIDER"] = provider_val
+
+    original_chain_env = os.environ.get("LLM_PROVIDER_CHAIN")
+    original_provider_env = os.environ.get("LLM_PROVIDER")
+    try:
+        # Full explicit override wins outright.
+        _set("anthropic,groq,gemini", "groq")
+        assert llm_client._parse_provider_chain() == ("anthropic", "groq", "gemini"), (
+            f"got: {llm_client._parse_provider_chain()!r}"
+        )
+
+        # LLM_PROVIDER alone still produces a full 3-provider chain, with
+        # the other two filled in behind it in default order.
+        _set(None, "anthropic")
+        assert llm_client._parse_provider_chain() == ("anthropic", "groq", "gemini")
+
+        _set(None, "gemini")
+        assert llm_client._parse_provider_chain() == ("gemini", "groq", "anthropic")
+
+        # Neither set - falls back to the documented default.
+        _set(None, None)
+        assert llm_client._parse_provider_chain() == ("groq", "gemini", "anthropic")
+
+        # An unknown provider name is a clear, immediate error, not a
+        # silent skip - a typo in .env should never quietly narrow the
+        # chain to fewer providers than intended.
+        _set("groq,not-a-real-provider,anthropic", None)
+        try:
+            llm_client._parse_provider_chain()
+            raise AssertionError("expected LLMError for an unknown provider name")
+        except LLMError as e:
+            assert "not-a-real-provider" in str(e), f"expected the bad name in the error, got: {e}"
+    finally:
+        _set(original_chain_env, original_provider_env)
+
+    print("PASS: the provider chain order is genuinely configurable via LLM_PROVIDER_CHAIN/LLM_PROVIDER")
+
+
+def test_three_hop_chain_groq_then_gemini_then_anthropic():
+    """Gate 13: with a full 3-provider chain, Groq failing and Gemini also
+    failing must land on Anthropic as the last resort, not give up after 2
+    hops (the old code had no concept of a third hop at all). Mocks each
+    provider's real SDK client class - no network calls - forces the chain
+    order, and checks both the final result and that all three were tried
+    in the right order.
+    """
+    import groq as groq_sdk
+    import google.genai as genai
+    from google.genai import errors as genai_errors
+    import httpx
+    import anthropic as anthropic_sdk
+
+    call_order = []
+
+    class FakeGroqCompletions:
+        def create(self, **kwargs):
+            call_order.append("groq")
+            raise groq_sdk.APIConnectionError(request=httpx.Request("POST", "https://api.groq.com/x"))
+
+    class FakeGroqChat:
+        completions = FakeGroqCompletions()
+
+    class FakeGroqClient:
+        def __init__(self, **kwargs):
+            self.chat = FakeGroqChat()
+
+    class FakeGeminiModels:
+        def generate_content(self, model, contents, config):
+            call_order.append("gemini")
+            raise genai_errors.APIError(500, {"error": {"message": "simulated Gemini failure"}})
+
+    class FakeGeminiClient:
+        def __init__(self, **kwargs):
+            self.models = FakeGeminiModels()
+
+    class FakeTextBlock:
+        type = "text"
+        text = "COMPLETE ANTHROPIC RESPONSE"
+
+    class FakeAnthropicResponse:
+        content = [FakeTextBlock()]
+
+    class FakeAnthropicMessages:
+        def create(self, **kwargs):
+            call_order.append("anthropic")
+            return FakeAnthropicResponse()
+
+    class FakeAnthropicClient:
+        def __init__(self, **kwargs):
+            self.messages = FakeAnthropicMessages()
+
+    original_groq_class = groq_sdk.Groq
+    original_genai_class = genai.Client
+    original_anthropic_class = anthropic_sdk.Anthropic
+    original_chain = llm_client.PROVIDER_CHAIN
+    original_stderr = sys.stderr
+    original_keys = {k: os.environ.get(k) for k in ("GROQ_API_KEY", "GEMINI_API_KEY", "ANTHROPIC_API_KEY")}
+
+    groq_sdk.Groq = FakeGroqClient
+    genai.Client = FakeGeminiClient
+    anthropic_sdk.Anthropic = FakeAnthropicClient
+    llm_client.PROVIDER_CHAIN = ("groq", "gemini", "anthropic")
+    for k in original_keys:
+        os.environ[k] = "fake-key-for-test"
+    sys.stderr = io.StringIO()
+    try:
+        result = llm_client.generate("test prompt")
+        log_output = sys.stderr.getvalue()
+    finally:
+        groq_sdk.Groq = original_groq_class
+        genai.Client = original_genai_class
+        anthropic_sdk.Anthropic = original_anthropic_class
+        llm_client.PROVIDER_CHAIN = original_chain
+        sys.stderr = original_stderr
+        for k, v in original_keys.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+
+    assert result == "COMPLETE ANTHROPIC RESPONSE", f"expected Anthropic's response, got: {result!r}"
+    assert call_order == ["groq", "gemini", "anthropic"], f"expected chain order groq->gemini->anthropic, got: {call_order}"
+    assert llm_client.LAST_PROVIDER_USED == "anthropic", (
+        f"expected LAST_PROVIDER_USED='anthropic', got: {llm_client.LAST_PROVIDER_USED!r}"
+    )
+    assert log_output.count("failed") >= 2, f"expected two failure log lines (groq, gemini), got: {log_output!r}"
+    print("PASS: Groq fails -> Gemini fails -> Anthropic succeeds, chain order respected end-to-end")
+
+
 if __name__ == "__main__":
     test_fallback_succeeds_after_primary_failure()
     test_both_providers_failing_is_logged_and_fails_open_correctly()
     test_groq_rate_limit_logging_cannot_break_on_malformed_headers()
     test_raw_response_path_rate_limit_still_triggers_fallback()
-    print("\nAll Gate 12d/12e fallback and logging tests passed. No real API calls were made.")
+    test_groq_max_retries_is_passed_to_client()
+    test_provider_chain_order_is_configurable()
+    test_three_hop_chain_groq_then_gemini_then_anthropic()
+    print("\nAll Gate 12d/12e/13 fallback and logging tests passed. No real API calls were made.")
