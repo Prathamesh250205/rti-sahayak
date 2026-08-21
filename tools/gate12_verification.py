@@ -150,7 +150,14 @@ def print_combined_table(scope_rows, ask_rows, matrix_rows):
         # ask suite rows don't carry expected/actual/scope_check_failed/authority -
         # only label/passed/provider/latency_ms/detail (it's a grounding check,
         # not a scope check) - but provider/latency are now real, not placeholders.
-        mark = "PASS" if row["passed"] else "FAIL"
+        # A known_failing row (see tools/ask_regression_suite.py's FIXTURE)
+        # is documented as expected to fail, not a surprise regression - marked
+        # XFAIL/XPASS and excluded from the pass rate below, never silently
+        # folded into either bucket.
+        if row.get("known_failing"):
+            mark = "XPASS" if row["passed"] else "XFAIL"
+        else:
+            mark = "PASS" if row["passed"] else "FAIL"
         provider = row.get("provider") or "-"
         latency = row.get("latency_ms")
         latency_str = "-" if latency is None else str(latency)
@@ -160,9 +167,12 @@ def print_combined_table(scope_rows, ask_rows, matrix_rows):
 
     print("-" * 140)
     all_rows = scope_rows + ask_rows + matrix_rows
-    total = len(all_rows)
-    total_passed = sum(r["passed"] for r in all_rows)
-    print(f"{total_passed}/{total} passed overall")
+    core_rows = [r for r in all_rows if not r.get("known_failing")]
+    known_rows = [r for r in all_rows if r.get("known_failing")]
+    total = len(core_rows)
+    total_passed = sum(r["passed"] for r in core_rows)
+    note = f" ({len(known_rows)} known-failing case(s) tracked separately, see XFAIL/XPASS rows above)" if known_rows else ""
+    print(f"{total_passed}/{total} passed overall{note}")
 
     scope_checked_rows = [r for r in (scope_rows + matrix_rows) if r.get("scope_check_failed") is not None]
     n_scope_failed = sum(1 for r in scope_checked_rows if r["scope_check_failed"])

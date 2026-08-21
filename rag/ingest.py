@@ -124,6 +124,49 @@ def _split_oversized_segment(segment_text: str, target: int, overlap: int):
         start = max(end - overlap, start + 1)
 
 
+# Section 7 only (see _split_section_7_at_subsections) - matches a TRUE
+# top-level sub-section start like "(6)" or "(4) Where", never the far more
+# common inline cross-reference to some other sub-section mid-sentence
+# ("sub-section (2) of section 5", "sub-sections (1) and (5) of section 7").
+# The bare pattern \(\d{1,2}\) can't tell those apart; empirically, in this
+# Act's actual text, a true start is always immediately followed by the
+# capitalized first word of a new sentence ("(4) Where access...", or with
+# an OCR-dropped space: "(6)Notwithstanding..."), while a cross-reference is
+# always followed by a lowercase continuation word or punctuation ("(2) of
+# section 5", "(6), pay such fee"). Verified against every one of Section
+# 7's 14 numeric-paren occurrences (8 true starts, 6 cross-references) before
+# relying on this - see the "targeted Section 7(6) retrieval fix" report.
+_SUBSECTION_START_RE = re.compile(r"\(\d{1,2}\)\s*(?=[A-Z])")
+
+
+def _split_section_7_at_subsections(segment_text: str) -> list[tuple[int, int]]:
+    """Section 7 (Disposal of request) ONLY - one chunk per top-level
+    sub-section, (1) through (9), instead of the general splitter's blind
+    ~1200-char windows.
+
+    Investigation found the general splitter's arbitrary windows put the
+    single most citizen-relevant sentence in Section 7 - sub-section (6),
+    "the information shall be provided free of charge where a public
+    authority fails to comply with the time limits" - inside the same chunk
+    as unrelated sub-section (4)/(5) content (disability-access assistance,
+    printed/electronic-format fee mechanics). A chunk's embedding is an
+    average over everything in it, so (6)'s own topic was diluted by that
+    unrelated text: it ranked 46th of 78 chunks for a natural "what happens
+    if the PIO misses the deadline" question - unreachable at any sane
+    top_k, not merely ranked low. Splitting one-sub-section-per-chunk
+    removes that dilution entirely, for every sub-section of Section 7, not
+    only (6) - most of them are already well under CHUNK_TARGET_CHARS on
+    their own, so this doesn't fragment anything that needed to stay whole.
+
+    Deliberately scoped to Section 7 alone via chunk_document()'s dispatch,
+    not a general chunking strategy - _split_oversized_segment (every other
+    section) is completely untouched by this function's existence.
+    """
+    starts = [m.start() for m in _SUBSECTION_START_RE.finditer(segment_text)]
+    boundaries = sorted({0, *(s for s in starts if s > 0), len(segment_text)})
+    return [(boundaries[i], boundaries[i + 1]) for i in range(len(boundaries) - 1)]
+
+
 def chunk_document(
     text: str,
     page_offsets: list[tuple[int, int]],
@@ -156,6 +199,11 @@ def chunk_document(
 
         if len(segment) <= CHUNK_MAX_CHARS:
             spans = [(0, len(segment))]
+        elif section == "7":
+            # Targeted fix, not a general chunking-strategy change - see
+            # _split_section_7_at_subsections. Every other oversized section
+            # still goes through _split_oversized_segment exactly as before.
+            spans = _split_section_7_at_subsections(segment)
         else:
             spans = list(_split_oversized_segment(segment, CHUNK_TARGET_CHARS, CHUNK_OVERLAP_CHARS))
 

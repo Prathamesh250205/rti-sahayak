@@ -504,7 +504,18 @@ def build_procedural_clauses(
     if "thirty days" in sec7:
         clause_text = strings["clause_timeline"]
         clauses.append(clause_text)
-        match_idx = _best_matching_chunk_index(sec7_indices, chunks, ["thirty days"])
+        # Both keywords required, not just "thirty days" alone: since the
+        # targeted Section 7 sub-section chunking fix, sub-section (3) (the
+        # further-fee calculation) is its own chunk and contains its own
+        # cross-reference - "the period of thirty days referred to in that
+        # sub-section" - referring back to sub-section (1)'s deadline
+        # without stating it. A single-keyword match let that cross-
+        # reference chunk win over the actual deadline chunk whenever it
+        # happened to come first in retrieval order, silently citing the
+        # letter's 30-day clause to a fee-calculation provision instead of
+        # the deadline itself. "receipt of the" only appears in the chunk
+        # that actually states the deadline.
+        match_idx = _best_matching_chunk_index(sec7_indices, chunks, ["thirty days", "receipt of the"])
         if match_idx is not None:
             links.append({"text": clause_text, "section": chunks[match_idx].section, "chunk_index": match_idx})
     else:

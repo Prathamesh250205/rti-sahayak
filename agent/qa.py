@@ -21,7 +21,18 @@ from rag.retriever import RetrievedChunk, retrieve
 # in its own answer text (see answer_question's prompt).
 _MARKER_RE = re.compile(r"\[(\d+)\]")
 
-ANSWER_TOP_K = 5
+# Raised from 5: a real user question ("After how many days does a PIO
+# have to respond?") retrieved the actual Section 7 answer at rank 8, well
+# inside the 0.75 distance threshold but outside a top-5 cutoff - the
+# question got an honest "the excerpts don't cover this" instead of the
+# answer that was sitting right there. Same root cause and same fix as
+# Gate 13's deadline-endpoint top_k bump. Cost: roughly doubles this
+# endpoint's context tokens (~1200 -> ~2400 at this corpus's ~243
+# tokens/chunk average) - acceptable given answer_question()'s prompt
+# already instructs the model to cite only what it finds and note gaps
+# rather than blend indiscriminately, so extra lower-ranked chunks are a
+# token-cost risk, not a fabrication one.
+ANSWER_TOP_K = 10
 ANSWER_MAX_TOKENS = 800
 
 
