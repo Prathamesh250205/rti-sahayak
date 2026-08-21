@@ -33,10 +33,10 @@ _MODEL_BY_PROVIDER = {
 @router.get("/api/system")
 def system_status():
     # Gate 13: PROVIDER_CHAIN can now have 3 hops (or a fully custom order -
-    # see LLM_PROVIDER_CHAIN), not a fixed groq/gemini pair. "fallback" here
-    # stays the immediate next hop after primary, for the existing telemetry
-    # UI's one-line note; "chain" carries the complete, correctly-ordered
-    # picture for anything that wants it.
+    # see LLM_PROVIDER_CHAIN), not a fixed groq/gemini pair - "chain" carries
+    # the complete, correctly-ordered picture, each hop's own configured
+    # state included, so the telemetry UI can show all of it rather than
+    # just primary + one fallback.
     chain = [
         {
             "provider": p,
@@ -45,7 +45,6 @@ def system_status():
         }
         for p in llm_client.PROVIDER_CHAIN
     ]
-    fallback = llm_client.PROVIDER_CHAIN[1] if len(llm_client.PROVIDER_CHAIN) > 1 else None
     model = _MODEL_BY_PROVIDER.get(llm_client.PROVIDER)
 
     collection = _get_collection()
@@ -65,8 +64,6 @@ def system_status():
         "provider": {
             "primary": llm_client.PROVIDER,
             "model": model,
-            "fallback": fallback,
-            "fallback_configured": bool(os.getenv(_API_KEY_ENV[fallback])) if fallback else False,
             "chain": chain,
         },
         "chunks_indexed": len(metadatas),

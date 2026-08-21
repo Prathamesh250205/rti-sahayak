@@ -68,9 +68,17 @@
         var tiles = [];
 
         if (data.provider) {
-          var fallbackNote = 'Fallback: ' + data.provider.fallback
-            + (data.provider.fallback_configured ? ' (key configured)' : ' (no API key set)');
-          tiles.push(tile('Provider', data.provider.primary + ' · ' + data.provider.model, fallbackNote));
+          tiles.push(tile('Provider', data.provider.primary + ' · ' + data.provider.model));
+        }
+        if (data.provider && data.provider.chain && data.provider.chain.length) {
+          var chainValue = data.provider.chain.map(function (p) { return p.provider; }).join(' → ');
+          var missingKeys = data.provider.chain
+            .filter(function (p) { return !p.configured; })
+            .map(function (p) { return p.provider; });
+          var chainExtra = missingKeys.length
+            ? 'No API key configured for: ' + missingKeys.join(', ')
+            : 'All providers configured';
+          tiles.push(tile('Fallback Chain', chainValue, chainExtra));
         }
         if (typeof data.chunks_indexed === 'number') {
           tiles.push(tile('Chunks Indexed', String(data.chunks_indexed)));
