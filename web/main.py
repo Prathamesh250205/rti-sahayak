@@ -1,4 +1,5 @@
 """FastAPI entry point for the web/ UI layer."""
+import asyncio
 import sys
 import time
 from contextlib import asynccontextmanager
@@ -17,19 +18,31 @@ from web.api.system import router as system_router
 BASE_DIR = Path(__file__).parent
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Force the embedding-model cold-load (~20s) to happen now, at startup,
-    # rather than during whichever request happens to hit gather_grounding()
-    # first. Never blocks startup on failure - retrieval just surfaces its
+async def _warm_up_in_background() -> None:
+    # Runs as a fire-and-forget task from lifespan below, off the event
+    # loop thread (warm_up_retriever is blocking, synchronous work) so the
+    # port is already accepting connections while the embedding model
+    # loads. Render's free tier (0.1 CPU) kills services that don't bind
+    # their port fast - blocking startup on this ~20s+ load risked exactly
+    # that. Never blocks startup on failure - retrieval just surfaces its
     # own error normally on first real use if this doesn't work.
     t0 = time.perf_counter()
     try:
-        warm_up_retriever()
+        await asyncio.to_thread(warm_up_retriever)
         web_state.warm_up_seconds = time.perf_counter() - t0
         print(f"[startup] RTI Act knowledge base warm-up completed in {web_state.warm_up_seconds:.2f}s", file=sys.stderr)
     except Exception as e:
         print(f"[startup] Knowledge base warm-up failed after {time.perf_counter() - t0:.2f}s: {e}", file=sys.stderr)
+    finally:
+        # Set even on failure - a wedged "still warming up" response
+        # forever would be worse than letting retrieve() surface its own
+        # real error on first genuine use.
+        web_state.ready = True
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    asyncio.create_task(_warm_up_in_background())
     yield
 
 

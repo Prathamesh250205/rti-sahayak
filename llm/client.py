@@ -295,4 +295,11 @@ def parse_json_object(text: str) -> dict:
         parsed = json.loads(cleaned)
         return parsed if isinstance(parsed, dict) else {}
     except json.JSONDecodeError:
+        # A non-empty response that still failed to parse is almost always
+        # a completion cut off mid-JSON by max_tokens, not garbage from
+        # scratch - logging the length makes that distinguishable at a
+        # glance from a genuinely empty response, without changing the
+        # return value callers rely on.
+        reason = "likely truncated mid-JSON" if cleaned else "empty response"
+        print(f"[llm] parse_json_object: could not parse {len(cleaned)}-char response as JSON ({reason})", file=sys.stderr)
         return {}

@@ -13,6 +13,16 @@ from chromadb.utils import embedding_functions
 
 CORPUS_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "corpus")
 CHROMA_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "chroma")
+# chromadb's ONNXMiniLM_L6_V2 defaults to caching its model under
+# Path.home()/.cache, outside the project directory. On Render's native
+# Python runtime, buildCommand (which triggers this download during
+# ingest) and startCommand aren't documented to guarantee the same $HOME
+# persists between them - redirecting into the project directory removes
+# that ambiguity: whatever the build writes here is guaranteed to ship
+# with the deploy, the same way data/chroma already does. Must match
+# rag/retriever.py's override exactly, or a build-time download here
+# won't be found by the runtime process.
+ONNX_CACHE_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "onnx_model_cache")
 COLLECTION_NAME = "rti_corpus"
 
 # A section becomes a single chunk when its full text is <= CHUNK_MAX_CHARS.
@@ -135,9 +145,13 @@ def ingest() -> int:
         print(f"No PDFs found in {CORPUS_DIR}. Add the RTI Act 2005 PDF there first.")
         return 0
 
-    embed_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
-        model_name="all-MiniLM-L6-v2"
-    )
+    # ONNX runtime, not sentence-transformers/torch - same model
+    # (all-MiniLM-L6-v2) and same output vectors, but without pulling in a
+    # ~500MB PyTorch runtime just to run inference. Must match
+    # rag/retriever.py's embedding function exactly, or query-time vectors
+    # won't be comparable to what's stored here.
+    embedding_functions.ONNXMiniLM_L6_V2.DOWNLOAD_PATH = ONNX_CACHE_DIR
+    embed_fn = embedding_functions.ONNXMiniLM_L6_V2()
     client = chromadb.PersistentClient(path=CHROMA_DIR)
     if COLLECTION_NAME in [c.name for c in client.list_collections()]:
         client.delete_collection(COLLECTION_NAME)

@@ -11,6 +11,9 @@ import streamlit as st
 from chromadb.utils import embedding_functions
 
 CHROMA_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "chroma")
+# Must match rag/ingest.py's ONNX_CACHE_DIR override exactly - see the
+# comment there for why this isn't chromadb's ~/.cache default.
+ONNX_CACHE_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "onnx_model_cache")
 COLLECTION_NAME = "rti_corpus"
 
 # Chroma's default distance is squared L2 over normalized MiniLM embeddings.
@@ -44,13 +47,18 @@ def _get_collection():
     """Load the embedding model + Chroma collection once per server process.
 
     This is the single biggest latency cost in the app (loading the
-    sentence-transformers model from disk) - st.cache_resource means every
-    session after the first one gets it for free, and every rerun within a
-    session is a cache hit rather than a re-load.
+    embedding model from disk) - st.cache_resource means every session
+    after the first one gets it for free, and every rerun within a session
+    is a cache hit rather than a re-load.
+
+    ONNX runtime, not sentence-transformers/torch - same model
+    (all-MiniLM-L6-v2) and output vectors, but without a ~500MB PyTorch
+    runtime just to run inference. Must match rag/ingest.py's embedding
+    function exactly, or these query-time vectors won't be comparable to
+    what's actually stored in the collection.
     """
-    embed_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
-        model_name="all-MiniLM-L6-v2"
-    )
+    embedding_functions.ONNXMiniLM_L6_V2.DOWNLOAD_PATH = ONNX_CACHE_DIR
+    embed_fn = embedding_functions.ONNXMiniLM_L6_V2()
     client = chromadb.PersistentClient(path=CHROMA_DIR)
     existing = [c.name for c in client.list_collections()]
     if COLLECTION_NAME not in existing:
@@ -61,13 +69,21 @@ def _get_collection():
 
 
 def warm_up() -> None:
-    """Force the cached collection to load now rather than on first use.
+    """Force the embedding model to actually load now rather than on first use.
 
-    Call this once at app startup so the one-time model-load cost (~20s)
-    happens behind a startup spinner instead of interrupting a live
-    conversation the first time a user reaches the drafting step.
+    Call this once at app startup so the one-time model-load cost (~20s,
+    or longer on a cold cache - see rag/ingest.py) happens behind a startup
+    spinner instead of interrupting a live conversation the first time a
+    user reaches the drafting step.
+
+    ONNXMiniLM_L6_V2 loads its model lazily inside __call__, not in
+    __init__ or when the collection object is obtained - _get_collection()
+    alone does not touch it. A throwaway query forces the same __call__
+    path retrieve() uses, so this actually pays the load cost here instead
+    of silently deferring it to the first real request.
     """
-    _get_collection()
+    collection = _get_collection()
+    collection.query(query_texts=["warm up"], n_results=1)
 
 
 def retrieve(query: str, top_k: int = 4) -> list[RetrievedChunk]:

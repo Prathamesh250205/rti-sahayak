@@ -7,25 +7,27 @@
      real destination (either the built page or another coming-soon route). -->
 <header class="bg-surface dark:bg-inverse-surface border-b border-outline-variant dark:border-outline sticky top-0 z-50">
 <div class="flex justify-between items-center px-gutter w-full max-w-max-width mx-auto h-16">
-<div class="flex items-center gap-md cursor-pointer transition-all duration-200">
-<a class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed" href="/">RTI Sahayak</a>
+<div class="flex items-center gap-md transition-all duration-200 shrink-0">
+<a class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed whitespace-nowrap" href="/">RTI Sahayak</a>
 </div>
-<nav class="hidden md:flex items-center gap-lg h-full">
-<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm" href="/ask">Ask</a>
-<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm" href="/draft">Draft Application</a>
-<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm" href="/browse">Browse the Act</a>
-<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm" href="/track">Track</a>
+<nav class="hidden md:flex items-center gap-md h-full" id="main-nav-links">
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm whitespace-nowrap" href="/">Home</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm whitespace-nowrap" href="/ask">Ask</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm whitespace-nowrap" href="/draft">Draft Application</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm whitespace-nowrap" href="/browse">Browse the Act</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm whitespace-nowrap" href="/track">Track</a>
 </nav>
-<div class="hidden md:flex items-center gap-md font-body-md text-body-md text-primary dark:text-primary-fixed relative">
-<span class="cursor-pointer transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm py-xs rounded" id="lang-pill">English / हिंदी / मराठी</span>
+<div class="hidden md:flex items-center gap-sm font-body-md text-body-md text-primary dark:text-primary-fixed relative shrink-0">
+<span class="cursor-pointer transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm py-xs rounded whitespace-nowrap" id="lang-pill">English / हिंदी / मराठी</span>
 <span class="hidden absolute top-full right-0 mt-xs w-64 bg-white border border-outline-variant rounded p-sm font-caption text-caption text-on-surface-variant shadow-[0_4px_20px_rgba(18,33,46,0.08)] z-50" id="lang-note">Multilingual drafting is in development.</span>
-<span class="text-on-surface-variant px-sm py-xs">Grounded in RTI Act, 2005</span>
+<span class="text-on-surface-variant font-caption text-caption px-sm py-xs whitespace-nowrap">Grounded in RTI Act, 2005</span>
 </div>
 <button aria-label="Open menu" class="md:hidden text-primary" id="mobile-menu-btn" type="button">
 <span class="material-symbols-outlined">menu</span>
 </button>
 </div>
 <nav class="hidden flex-col md:hidden border-t border-outline-variant bg-surface dark:bg-inverse-surface" id="mobile-nav-links">
+<a class="block px-gutter py-sm text-on-surface-variant" href="/">Home</a>
 <a class="block px-gutter py-sm text-on-surface-variant" href="/ask">Ask</a>
 <a class="block px-gutter py-sm text-on-surface-variant" href="/draft">Draft Application</a>
 <a class="block px-gutter py-sm text-on-surface-variant" href="/browse">Browse the Act</a>

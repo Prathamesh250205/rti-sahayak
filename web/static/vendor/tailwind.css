@@ -801,6 +801,10 @@ select {
   pointer-events: none;
 }
 
+.visible {
+  visibility: visible;
+}
+
 .fixed {
   position: fixed;
 }
@@ -835,10 +839,6 @@ select {
 
 .left-lg {
   left: 48px;
-}
-
-.left-sm {
-  left: 12px;
 }
 
 .right-0 {

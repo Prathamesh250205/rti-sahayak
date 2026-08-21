@@ -31,9 +31,11 @@ GROUNDING_QUERIES = [
     "manner and format of making a request for information along with fee",
 ]
 
-# Generous enough for a JSON object with 5 short strings + one department
-# name, but caps worst-case generation length/latency.
-UNDERSTAND_MAX_TOKENS = 500
+# 500 was measured to truncate the JSON completion mid-string on ~10% of
+# calls (verbose 5-item lists ran past the cap before the closing brackets)
+# - 1200 gives real headroom while still capping worst-case latency, since
+# the model only generates as many tokens as it actually needs.
+UNDERSTAND_MAX_TOKENS = 1200
 
 
 @dataclass
@@ -104,7 +106,7 @@ def understand_request(
         f"{known_details}"
         'Respond with ONLY a JSON object: {"information_sought": ["...", "..."], "likely_authority": "..."}'
     )
-    try:
+    def _call() -> str:
         chunks = []
         for chunk in generate_stream(
             prompt,
@@ -114,13 +116,30 @@ def understand_request(
             chunks.append(chunk)
             if on_chunk:
                 on_chunk(chunk)
-        response = "".join(chunks)
+        return "".join(chunks)
+
+    try:
+        response = _call()
     except LLMError:
         computed_guess = "Unknown — could not determine automatically"
         fallback_authority = user_supplied_authority.strip() or computed_guess
         return UnderstandResult([], fallback_authority, computed_guess)
 
     parsed = parse_json_object(response)
+
+    # A response that failed to parse but wasn't empty is a completion that
+    # got cut short mid-JSON, not a model that genuinely had nothing to
+    # say - worth one retry. A genuinely empty response is left alone:
+    # retrying that would risk masking a real failure (e.g. a provider
+    # silently returning nothing) behind a second silent attempt instead
+    # of surfacing it via the normal "Unknown"/empty fallback below.
+    if not parsed and response.strip():
+        try:
+            response = _call()
+            parsed = parse_json_object(response)
+        except LLMError:
+            pass  # retry failed too - fall through to today's warning path unchanged
+
     information_sought = parsed.get("information_sought") or []
     computed_guess = str(parsed.get("likely_authority") or "Unknown — could not determine automatically")
     if not isinstance(information_sought, list):
@@ -247,7 +266,32 @@ def _format_letter(
     particulars = "\n".join(f"{i}. {item}" for i, item in enumerate(information_sought, start=1))
     if not particulars:
         particulars = "(Could not automatically determine specific particulars — please add manually.)"
-    clause_block = "\n\n".join(procedural_clauses)
+
+    # BPL applicants are exempt from the fee under the proviso to Section 7(5)
+    # of the Act - swap the standard fee clause for the exemption claim rather
+    # than telling a fee-exempt applicant to pay one. Only replaces the exact
+    # clause build_procedural_clauses() emits; if that clause isn't present
+    # (e.g. Section 6 grounding wasn't verified this time), the exemption
+    # claim is appended instead so a BPL applicant never silently loses it.
+    # False (the default - app.py never sets this slot) reproduces today's
+    # clause list unchanged.
+    is_bpl = slots.get("is_bpl", "").strip().lower() == "true"
+    rendered_clauses = list(procedural_clauses)
+    if is_bpl:
+        fee_clause = (
+            "This application is made in writing under Section 6(1) of the Right to Information "
+            "Act, 2005, and is accompanied by the prescribed application fee."
+        )
+        bpl_clause = (
+            "The applicant belongs to a family living below the poverty line and, under the "
+            "proviso to Section 7(5) of the Right to Information Act, 2005, is exempt from "
+            "payment of the application fee; proof of BPL status is enclosed."
+        )
+        if fee_clause in rendered_clauses:
+            rendered_clauses = [bpl_clause if c == fee_clause else c for c in rendered_clauses]
+        else:
+            rendered_clauses.append(bpl_clause)
+    clause_block = "\n\n".join(rendered_clauses)
 
     # Optional - not in REQUIRED_FIELDS, so most drafts never have it. Users
     # may type a name, a title, or both, so it gets its own line beneath the
@@ -257,6 +301,16 @@ def _format_letter(
     # is byte-for-byte the original, unconditional address block.
     pio = slots.get("pio", "").strip()
     pio_block = f"\n{pio}" if pio else ""
+
+    # Neither is in REQUIRED_FIELDS - each renders only if actually supplied,
+    # so an applicant who gives neither gets today's unchanged signature block.
+    phone = slots.get("phone", "").strip()
+    email = slots.get("email", "").strip()
+    contact_block = ""
+    if phone:
+        contact_block += f"\nPhone: {phone}"
+    if email:
+        contact_block += f"\nEmail: {email}"
 
     return f"""To,
 The Public Information Officer,{pio_block}
@@ -283,7 +337,7 @@ knowledge, fall under any of the exemptions in the Act.
 Yours faithfully,
 
 _________________________
-{slots.get('full_name', '')}
+{slots.get('full_name', '')}{contact_block}
 Date: {date.today().strftime('%d %B %Y')}"""
 
 

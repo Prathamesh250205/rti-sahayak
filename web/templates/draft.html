@@ -31,6 +31,7 @@
 <div class="flex items-center gap-md">
 <a class="font-headline-md text-headline-md font-bold text-primary" href="/">RTI Sahayak</a>
 <div class="hidden md:flex gap-md ml-lg h-full items-center">
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/">Home</a>
 <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/ask">Ask</a>
 <a class="font-body-md text-body-md text-secondary font-bold border-b-2 border-secondary pb-1 h-full flex items-center pt-1 cursor-pointer transition-colors" href="/draft">Draft Application</a>
 <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/browse">Browse the Act</a>
@@ -75,7 +76,7 @@
 </div>
 <div>
 <label class="form-label-mono" for="email">Email Address (Optional)</label>
-<input class="form-input-flat" id="email" name="email" placeholder="For digital updates" type="email"/>
+<input class="form-input-flat" id="email" name="email" placeholder="Included in the application if provided" type="email"/>
 </div>
 <div>
 <label class="form-label-mono" for="locality">Locality / Ward / Area</label>
@@ -93,10 +94,7 @@
 <div class="space-y-md">
 <div class="relative">
 <label class="form-label-mono" for="department">Select Department / Public Authority</label>
-<div class="relative">
-<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant z-10" data-icon="search">search</span>
-<input class="form-input-flat pl-xl" id="department" name="public_authority" placeholder="Search departments..." type="text"/>
-</div>
+<input class="form-input-flat" id="department" name="public_authority" placeholder="e.g. Pune Municipal Corporation" type="text"/>
 </div>
 <div>
 <label class="form-label-mono" for="pio">Public Information Officer (Optional)</label>

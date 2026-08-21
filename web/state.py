@@ -1,6 +1,6 @@
 """Small in-process state shared across the web/ API layer.
 
-Populated by web/main.py's startup lifespan (warm_up_seconds) and
+Populated by web/main.py's startup lifespan (warm_up_seconds, ready) and
 web/api/draft.py's request handler (last_request), read by
 web/api/system.py. Deliberately not persisted - it exists only to answer
 "what actually just happened in this running process," so it resets to
@@ -10,3 +10,9 @@ readout (no stale numbers surviving past a redeploy).
 
 warm_up_seconds: float | None = None
 last_request: dict | None = None
+
+# False from process start until the background warm-up task in
+# web/main.py's lifespan finishes (success or failure). Lets /api/draft
+# return a clear "still warming up" response instead of either blocking
+# the request or racing an unloaded retriever - see web/api/draft.py.
+ready: bool = False

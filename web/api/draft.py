@@ -31,6 +31,23 @@ TOPIC_CHECK_TOP_K = 5
 @router.post("/api/draft", response_model=DraftResponse)
 def create_draft(req: DraftRequest):
     t0 = time.perf_counter()
+
+    # The retriever's embedding model loads in a background task (see
+    # web/main.py's lifespan) so the server can bind its port immediately.
+    # A request landing before that finishes would otherwise race an
+    # unloaded collection - tell the client plainly instead.
+    if not web_state.ready:
+        return DraftResponse(
+            application_text="",
+            department_guess="",
+            information_sought=[],
+            chunks=[],
+            clauses=[],
+            warnings=["The RTI Act knowledge base is still warming up. Please try again in a few seconds."],
+            status="warming_up",
+            meta={"provider": None, "latency_ms": 0, "chunks_used": 0},
+        )
+
     try:
         # Anti-hallucination guard: if nothing retrieved for the citizen's own
         # problem_description clears the relevance threshold, the Act's text
@@ -80,6 +97,12 @@ def create_draft(req: DraftRequest):
             state.slots["timeframe"] = req.timeframe
         if req.pio:
             state.slots["pio"] = req.pio
+        if req.phone:
+            state.slots["phone"] = req.phone
+        if req.email:
+            state.slots["email"] = req.email
+        if req.is_bpl:
+            state.slots["is_bpl"] = "true"
 
         information_sought, likely_authority = understand_request(
             req.problem_description,
