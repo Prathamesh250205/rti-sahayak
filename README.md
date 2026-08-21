@@ -33,8 +33,9 @@ agent/    intake slot-filling (agent/intake.py) and letter drafting/composition
           clause-provenance logic both live here
 rag/      corpus ingestion (rag/ingest.py) and retrieval (rag/retriever.py) -
           the Chroma vector store and its embedding function
-llm/      provider-agnostic LLM client (llm/client.py) - Groq primary, Gemini
-          fallback, automatic retry on the other provider if one fails
+llm/      provider-agnostic LLM client (llm/client.py) - a configurable, ordered
+          provider chain (default: Groq -> Gemini -> Anthropic, see below),
+          automatic retry on the next provider in the chain if one fails
 export/   PDF generation (export/pdf_writer.py) - renders the final letter text,
           nothing else
 web/      FastAPI app: routes (web/main.py), the /api/draft and /api/act
@@ -49,6 +50,31 @@ A request flows: **web/api/draft.py** (intake fields) → **CHECK A** (`agent/dr
 `understand_request()`, via `llm/client.py`) → **agent/drafter.py**'s `compose_letter()`
 (procedural clauses assembled in plain Python, department guess and information-sought from
 the LLM) → **export/pdf_writer.py** on download.
+
+### LLM provider chain
+
+`llm/client.py`'s `generate()`/`generate_stream()` walk an ordered `PROVIDER_CHAIN` -
+if one provider fails, the next is tried automatically, with the same `LLMError` type
+and the same fallback semantics regardless of which providers are in play. Default
+chain, in order:
+
+1. **Groq** (`openai/gpt-oss-120b`) - primary. Free tier, 30 RPM / 1,000 RPD.
+2. **Gemini** (`gemini-flash-latest`) - burst absorber, not a safety net. Free tier is a
+   hard 20 requests/day (see Known limitations) - fine for absorbing a short burst that
+   trips Groq's per-minute cap, not for a sustained session.
+3. **Anthropic** (`claude-haiku-4-5-20251001`) - paid, no free-tier daily cap. The
+   provider a Groq/Gemini outage or throttle can no longer turn into a hard failure
+   against. Haiku is used because CHECK B classification and `/ask` Q&A are both small,
+   structured JSON-output calls - no prompt changes were needed to move this app's
+   existing "respond with ONLY a JSON object" design onto Claude; confirmed both by
+   design (the response parser's markdown-fence stripping was already provider-agnostic)
+   and empirically (a real call through `understand_request()`, forced onto an
+   Anthropic-only chain, parsed cleanly on the first try).
+
+`LLM_PROVIDER` (existing config) sets `chain[0]`, with the other two providers filling
+in behind it in default order - existing `LLM_PROVIDER=groq` setups keep working
+unchanged. `LLM_PROVIDER_CHAIN` (comma-separated, e.g. `anthropic,groq,gemini`) fully
+overrides the order, for promoting Anthropic to primary or any other arrangement.
 
 ## The two-check grounding design
 
@@ -178,8 +204,8 @@ carries the pre-fix `"unknown"` front-matter label.
 
 | | |
 |---|---|
-| **Implemented** | Conversational intake (Streamlit) and one-shot web form (FastAPI); two-check grounded letter drafting with clause-level citations (see above); standalone **Ask** (`/ask`) - retrieval-gated Q&A over the Act with inline `[N]`-marker citations, refuses honestly when nothing retrieves; **multilingual drafting** (English/Hindi/Marathi) - letter boilerplate is statically translated (not LLM-translated, to avoid mistranslating legally-load-bearing text), `information_sought`/`reason` are generated in the selected language, department names are deliberately left untranslated; PDF export; Browse the Act (real section list + search over the corpus); a static `/demo` sample application that works with neither Chroma nor the LLM available; system telemetry panel; Groq/Gemini provider fallback; per-IP rate limiting on `/api/draft` and `/api/ask`; real content pages for the legal disclaimer, privacy policy, terms of service, and support. |
-| **Implemented, not fully regression-verified** | Multilingual drafting is unit-verified (template rendering in all 3 languages, `understand_request()`'s language-aware prompt, and — the risky part — CHECK B's scope classifier tested directly against genuinely Hindi/Marathi *input* text, all confirmed correct) but has **not** completed a clean end-to-end run of `tools/scope_regression_suite.py`/`tools/ask_regression_suite.py` against a live server - every attempt this session hit provider quota exhaustion (see Known limitations) before finishing cleanly. Treat as implemented-but-unverified-at-the-integration-level, not confirmed-working, until a full suite run succeeds. |
+| **Implemented** | Conversational intake (Streamlit) and one-shot web form (FastAPI); two-check grounded letter drafting with clause-level citations (see above); standalone **Ask** (`/ask`) - retrieval-gated Q&A over the Act with inline `[N]`-marker citations, refuses honestly when nothing retrieves; **multilingual drafting** (English/Hindi/Marathi) - letter boilerplate is statically translated (not LLM-translated, to avoid mistranslating legally-load-bearing text), `information_sought`/`reason` are generated in the selected language, department names are deliberately left untranslated; PDF export; Browse the Act (real section list + search over the corpus); a static `/demo` sample application that works with neither Chroma nor the LLM available; system telemetry panel; a 3-provider LLM fallback chain (see Architecture); per-IP rate limiting on `/api/draft` and `/api/ask`; real content pages for the legal disclaimer, privacy policy, terms of service, and support. |
+| **Regression-verified** | A single combined run against a live server (`tools/gate12_verification.py`), paced to stay under provider rate limits: `tools/scope_regression_suite.py` 10/10, `tools/ask_regression_suite.py` 4/4, and the 4-homepage-example × 3-language matrix 12/12 - **26/26 overall**, zero `scope_check_failed` (0/19 checkable rows), and every "ok" row resolved to a real department name in all three languages, never the `Unknown` sentinel. Multilingual drafting (Gate 12) is end-to-end verified, not just unit-verified. |
 | **Not implemented** | **Track** (filing status and statutory deadline tracking), **Save Draft**, and **Login** are all honestly labeled "Coming in v2" stubs, not built — clicking them does not fake functionality. |
 
 ## Known limitations
@@ -207,13 +233,16 @@ carries the pre-fix `"unknown"` front-matter label.
   practice, but it's a real characteristic of the model, not handled defensively in code.
 - Gemini's free tier is a hard 20 requests/day on this project's key, observed directly
   during testing (both a 5/minute and a 20/day limit) - Groq is the configured primary for
-  exactly this reason, with Gemini as fallback only. **This means Gemini is not a real
-  safety net for a multi-request testing session or a demo with more than ~20 total
-  LLM calls that day** - once it's exhausted, a Groq rate-limit (which recovers within
-  a minute) becomes a hard failure instead of a transparent fallback, for the rest of
-  that day. Confirmed directly: a regression run paced to stay under Groq's per-minute
-  limit still failed most of its cases once Gemini's daily quota had already been used
-  up earlier in the same session.
+  exactly this reason, with Gemini second in the chain. **This means Gemini is a burst
+  absorber, not a real safety net** for a multi-request testing session or a demo with
+  more than ~20 total LLM calls that day - once it's exhausted, a Groq rate-limit (which
+  recovers within a minute) used to become a hard failure instead of a transparent
+  fallback, for the rest of that day. Confirmed directly, twice: a regression run paced
+  to stay under Groq's per-minute limit still failed most of its cases once Gemini's
+  daily quota had already been used up earlier in the same session - on both attempts,
+  before Anthropic was added as a third provider. With Anthropic (paid, no free-tier
+  daily cap) as the chain's last resort, a subsequent full combined verification run
+  passed 26/26 with zero scope-classification failures - see Scope.
 - `understand_request()` previously called the streaming `generate_stream()` purely for
   a cosmetic live-typing effect in the Streamlit app, despite buffering the whole
   response before parsing it as JSON anyway. That meant a Groq failure *after* it had
@@ -235,14 +264,22 @@ carries the pre-fix `"unknown"` front-matter label.
   boot failure, since Gemini is the fallback, not the primary. Pin an explicit model ID
   once its free-tier RPD is confirmed in the AI Studio dashboard (not published in the
   public docs) - see the comment above `GEMINI_MODEL` in `.env.example`.
-- Groq's client defaults to `max_retries=2`, and its SDK explicitly retries on HTTP 429
-  (rate limit) internally, before `llm/client.py` ever sees a failure - confirmed via the
-  SDK's own `_should_retry()`. It tries to honor a `Retry-After` header when the server
-  sends one, but falls back to jittered exponential backoff (starting well under a
-  second) when it doesn't, which can land another attempt back inside the same
-  still-throttled window on a tight per-minute cap. Each retry is a real request against
-  Groq's own RPM/RPD budget - not currently tuned down (`max_retries=0` would make a 429
-  fail immediately and hand off to the single-shot Gemini fallback right away instead).
+- **The Groq SDK's default `max_retries=2` was silently inflating real request counts by
+  up to 3x on every rate limit** - it explicitly retries on HTTP 429 internally, before
+  `llm/client.py` ever sees a failure (confirmed via the SDK's own `_should_retry()`),
+  trying to honor a `Retry-After` header when the server sends one but falling back to
+  jittered exponential backoff (starting well under a second) when it doesn't - often
+  landing another attempt back inside the same still-throttled window on a tight
+  per-minute cap. Measured directly from this session's server logs: 70 logical Groq
+  failures across ~183 logical requests, each potentially representing up to 3 real HTTP
+  attempts (1 + the SDK's 2 retries) - meaning a single burst of testing could plausibly
+  cost several hundred real requests against Groq's 1,000 RPD cap without a single
+  visible failure in the app's own logs, since the SDK only surfaces the *final* outcome.
+  Now explicit and configurable via `GROQ_MAX_RETRIES` (default **1**, not the SDK's 2) -
+  one retry after backoff is still worth it on a 30 RPM limit, but a second mostly spends
+  budget on a request that's already losing, and 1 caps worst-case cost per logical call
+  at 2 real requests instead of 3. `ANTHROPIC_MAX_RETRIES` (default 1) follows the same
+  reasoning for the Anthropic provider.
 - Groq rate-limit header logging (`x-ratelimit-remaining-requests`/`-tokens`) is
   implemented but gated behind `GROQ_LOG_RATE_LIMITS` (default off, opt-in only) rather
   than always on. It requires switching from `client.chat.completions.create()` (used,

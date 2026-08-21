@@ -106,10 +106,11 @@ def run_suite(base_url: str, delay_seconds: float) -> list[dict]:
 
         data = run_case(base_url, case)
         if "error" in data:
-            rows.append({"label": case["label"], "passed": False, "detail": data["error"]})
+            rows.append({"label": case["label"], "passed": False, "provider": None, "detail": data["error"]})
             continue
         passed, detail = evaluate(case, data)
-        rows.append({"label": case["label"], "passed": passed, "detail": detail})
+        provider = (data.get("meta") or {}).get("provider")
+        rows.append({"label": case["label"], "passed": passed, "provider": provider, "detail": detail})
     return rows
 
 

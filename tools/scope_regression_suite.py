@@ -138,6 +138,7 @@ def run_suite(base_url: str, delay_seconds: float) -> list[dict]:
                     "scope_check_failed": None,
                     "authority": None,
                     "info_sought_count": None,
+                    "provider": None,
                     "detail": data["error"],
                 }
             )
@@ -148,6 +149,7 @@ def run_suite(base_url: str, delay_seconds: float) -> list[dict]:
         scope_check_failed = None
         authority = None
         info_sought_count = None
+        provider = (data.get("meta") or {}).get("provider")
 
         if actual_status == "out_of_scope":
             detail = (data.get("meta") or {}).get("scope_reason", "<no reason returned>")
@@ -170,7 +172,8 @@ def run_suite(base_url: str, delay_seconds: float) -> list[dict]:
                 f"chunks_used={data.get('meta', {}).get('chunks_used')} "
                 f"department_guess={authority[:60]!r} "
                 f"info_sought_count={info_sought_count} "
-                f"scope_check_failed={scope_check_failed}"
+                f"scope_check_failed={scope_check_failed} "
+                f"provider={provider}"
             )
         else:
             detail = json.dumps(data)[:200]
@@ -184,6 +187,7 @@ def run_suite(base_url: str, delay_seconds: float) -> list[dict]:
                 "scope_check_failed": scope_check_failed,
                 "authority": authority,
                 "info_sought_count": info_sought_count,
+                "provider": provider,
                 "detail": detail,
             }
         )

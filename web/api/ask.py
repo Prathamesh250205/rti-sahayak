@@ -7,6 +7,7 @@ right check here, unlike for drafting.
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
+import llm.client as llm_client
 from agent.qa import answer_question
 from web import state as web_state
 from web.rate_limit import is_rate_limited
@@ -56,5 +57,5 @@ def ask_question(req: AskRequest, request: Request):
         chunks=[ChunkOut(text=c.text, section=c.section, page=c.page, source=c.source, distance=c.distance) for c in result.chunks],
         warnings=[],
         status="ok",
-        meta={},
+        meta={"provider": llm_client.LAST_PROVIDER_USED},
     )
