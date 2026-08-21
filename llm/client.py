@@ -20,6 +20,17 @@ PROVIDER = os.getenv("LLM_PROVIDER", "gemini").lower()
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
 
+# Gate 12e: off by default. Logging Groq's rate-limit headers means calling
+# client.chat.completions.with_raw_response.create() instead of the plain
+# .create() this project has used (and relied on) all along - a code path
+# that hasn't been exercised against the real API, since doing so wasn't
+# possible without spending quota already tight enough to be the reason
+# this exists. Diagnostic convenience must not be able to change how the
+# primary provider path behaves during judging, so the untested path only
+# runs when explicitly opted into - flip this on when there's quota to
+# smoke-test it, not during a demo.
+GROQ_LOG_RATE_LIMITS = os.getenv("GROQ_LOG_RATE_LIMITS", "").strip().lower() in ("1", "true", "yes")
+
 # Set after each successful generate() call to whichever provider actually
 # served it (PROVIDER or its fallback) — lets the UI show a "served by" badge.
 LAST_PROVIDER_USED: str | None = None
@@ -205,6 +216,26 @@ def _groq_messages(system, prompt):
     return messages
 
 
+def _log_groq_rate_limit(headers) -> None:
+    """Best-effort log of Groq's rate-limit headers on a successful call
+    (Gate 12e) - a local trail of remaining budget instead of only finding
+    out via a 429. Deliberately isolated from the actual call: if the
+    header names or shape ever change, this must degrade to a no-op, never
+    to a broken generate()/generate_stream() call. Single line, only when
+    at least one of the two headers is actually present.
+    """
+    try:
+        remaining_requests = headers.get("x-ratelimit-remaining-requests")
+        remaining_tokens = headers.get("x-ratelimit-remaining-tokens")
+        if remaining_requests is not None or remaining_tokens is not None:
+            print(
+                f"[llm] groq quota remaining - requests: {remaining_requests}, tokens: {remaining_tokens}",
+                file=sys.stderr,
+            )
+    except Exception:
+        pass
+
+
 def _generate_groq(prompt: str, system: str | None, tools: list[dict] | None, max_tokens: int | None):
     from groq import Groq
     import groq as groq_sdk
@@ -231,7 +262,12 @@ def _generate_groq(prompt: str, system: str | None, tools: list[dict] | None, ma
         ]
 
     try:
-        response = client.chat.completions.create(**kwargs)
+        if GROQ_LOG_RATE_LIMITS:
+            raw_response = client.chat.completions.with_raw_response.create(**kwargs)
+            _log_groq_rate_limit(raw_response.headers)
+            response = raw_response.parse()
+        else:
+            response = client.chat.completions.create(**kwargs)
     except groq_sdk.AuthenticationError:
         raise LLMError("Invalid Groq API key. Check your .env file.")
     except groq_sdk.RateLimitError:
@@ -263,7 +299,13 @@ def _stream_groq(prompt: str, system: str | None, max_tokens: int | None) -> Ite
         kwargs["max_tokens"] = max_tokens
 
     try:
-        for chunk in client.chat.completions.create(**kwargs):
+        if GROQ_LOG_RATE_LIMITS:
+            raw_response = client.chat.completions.with_raw_response.create(**kwargs)
+            _log_groq_rate_limit(raw_response.headers)
+            stream = raw_response.parse()
+        else:
+            stream = client.chat.completions.create(**kwargs)
+        for chunk in stream:
             delta = chunk.choices[0].delta.content
             if delta:
                 yield delta

@@ -226,3 +226,30 @@ carries the pre-fix `"unknown"` front-matter label.
   to restart, and which `agent/qa.py` already used) and adding explicit logging to every
   failure path in both callers. `generate_stream()` itself is untouched and currently has
   no callers in this app - kept as a primitive for any future genuinely-live-rendered use.
+- `GEMINI_MODEL` defaults to `gemini-flash-latest`, a floating alias that has already
+  silently repointed to a different underlying model more than once (observed directly:
+  `gemini-3-flash-preview` → `gemini-3.5-flash` → `gemini-3.7-flash`), each repoint
+  carrying a different, undocumented free-tier quota with zero code change on our end.
+  `web/main.py` logs the resolved provider/model on every startup and prints a loud
+  `WARNING` whenever `GEMINI_MODEL` still contains `"latest"` - a "should fix", not a
+  boot failure, since Gemini is the fallback, not the primary. Pin an explicit model ID
+  once its free-tier RPD is confirmed in the AI Studio dashboard (not published in the
+  public docs) - see the comment above `GEMINI_MODEL` in `.env.example`.
+- Groq's client defaults to `max_retries=2`, and its SDK explicitly retries on HTTP 429
+  (rate limit) internally, before `llm/client.py` ever sees a failure - confirmed via the
+  SDK's own `_should_retry()`. It tries to honor a `Retry-After` header when the server
+  sends one, but falls back to jittered exponential backoff (starting well under a
+  second) when it doesn't, which can land another attempt back inside the same
+  still-throttled window on a tight per-minute cap. Each retry is a real request against
+  Groq's own RPM/RPD budget - not currently tuned down (`max_retries=0` would make a 429
+  fail immediately and hand off to the single-shot Gemini fallback right away instead).
+- Groq rate-limit header logging (`x-ratelimit-remaining-requests`/`-tokens`) is
+  implemented but gated behind `GROQ_LOG_RATE_LIMITS` (default off, opt-in only) rather
+  than always on. It requires switching from `client.chat.completions.create()` (used,
+  proven, for this project's whole history) to `.with_raw_response.create()` + `.parse()`
+  - a code path not yet exercised against the real API, since verifying it would have
+  cost quota already too tight to spend on a diagnostic convenience. `_log_groq_rate_limit()`
+  itself is proven never to break the call path even on malformed headers
+  (`tools/test_llm_provider_fallback.py`), and a mocked `RateLimitError` through the
+  `with_raw_response` call site is proven to still trigger provider fallback correctly -
+  but the flag stays off by default until there's quota to smoke-test it live.
