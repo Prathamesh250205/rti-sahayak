@@ -58,6 +58,19 @@
 <!-- LEFT COLUMN (Form) -->
 <div class="w-full lg:w-1/2 flex flex-col h-[calc(100vh-64px)] bg-white border-r border-outline-variant">
 <div class="flex-grow overflow-y-auto custom-scrollbar p-md lg:p-lg space-y-lg relative">
+<!-- Saved Drafts -->
+<section class="space-y-sm">
+<div class="flex justify-between items-baseline border-b border-outline-variant pb-xs">
+<h2 class="font-label-mono text-label-mono text-on-surface-variant tracking-widest">SAVED DRAFTS</h2>
+</div>
+<div class="border border-warning bg-[#FDF6EC] rounded-sm p-sm flex items-start gap-xs">
+<span class="material-symbols-outlined text-[16px] text-warning shrink-0" data-icon="info">info</span>
+<p class="font-caption text-caption text-on-surface-variant">Saved drafts are stored only in this browser (localStorage) - there is no server-side account or database. Clearing your browser data, switching browsers, or using a different device will lose them.</p>
+</div>
+<div class="hidden font-caption text-caption text-[#93000a]" id="saved-drafts-error"></div>
+<p class="font-caption text-caption text-on-surface-variant italic" id="saved-drafts-empty">No saved drafts yet. Fill in the form (and generate a letter, if you like), then click "Save Draft" below to keep your progress.</p>
+<div class="space-y-sm" id="saved-drafts-list"></div>
+</section>
 <!-- Section 1: YOUR DETAILS -->
 <section class="space-y-md">
 <h2 class="font-label-mono text-label-mono text-on-surface-variant tracking-widest border-b border-outline-variant pb-xs" data-i18n="draft.section_your_details">YOUR DETAILS</h2>
@@ -144,10 +157,9 @@
 </div>
 <!-- Sticky Form Footer -->
 <div class="bg-white border-t border-outline-variant p-md flex justify-between items-center shadow-[0_-4px_20px_rgba(18,33,46,0.05)] z-10">
-<button class="secondary-button font-label-mono text-label-mono px-md py-sm rounded flex items-center gap-xs opacity-50 cursor-not-allowed" disabled title="Saving a draft to return to later is not yet implemented" type="button">
+<button class="secondary-button font-label-mono text-label-mono px-md py-sm rounded flex items-center gap-xs transition-colors" id="save-draft-btn" title="Save this form and letter to this browser" type="button">
 <span class="material-symbols-outlined text-[18px]" data-icon="save">save</span>
 <span data-i18n="draft.save_draft_button">Save Draft</span>
-<span class="font-label-mono text-label-mono text-[10px] uppercase border border-outline-variant rounded px-1 leading-relaxed">v2</span>
 </button>
 <button class="amber-button font-label-mono text-label-mono px-lg py-sm rounded transition-colors flex items-center gap-xs" id="generate-btn" type="button">
 <span data-i18n="draft.generate_button">Generate Application</span>
@@ -254,6 +266,246 @@ Fill in the form and click "Generate Application" to see your drafted RTI applic
   // injected as <span> elements, textContent would splice their labels
   // (e.g. "Section 6") into the middle of the sentence.
   var lastApplicationText = '';
+  // The full last successful /api/draft response (chunks, clauses,
+  // warnings, meta, department_guess, information_sought) - kept
+  // alongside lastApplicationText so Save Draft can persist the whole
+  // rendered letter, not just its plain text.
+  var lastDraftResponse = null;
+
+  var STORAGE_KEY_DRAFTS = 'rtiSahayakSavedDrafts';
+  var saveDraftBtn = document.getElementById('save-draft-btn');
+  var savedDraftsList = document.getElementById('saved-drafts-list');
+  var savedDraftsEmpty = document.getElementById('saved-drafts-empty');
+  var savedDraftsError = document.getElementById('saved-drafts-error');
+
+  // --- localStorage (defensive - private browsing / blocked site data must
+  // never crash the page, just behave as if nothing were saved) - same
+  // pattern as /track's filings storage. Kept in a separate key: a saved
+  // draft (full form + an unsent letter) and a tracked filing (an
+  // already-submitted application's statutory deadlines) are different
+  // enough in shape and lifecycle that sharing storage would only add
+  // coupling, not simplify anything. ---
+  function loadDrafts() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY_DRAFTS);
+      var parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveDrafts(drafts) {
+    try {
+      localStorage.setItem(STORAGE_KEY_DRAFTS, JSON.stringify(drafts));
+      savedDraftsError.classList.add('hidden');
+    } catch (e) {
+      savedDraftsError.textContent = 'Could not save to this browser\'s storage - it may be full or blocked. Your draft was not saved.';
+      savedDraftsError.classList.remove('hidden');
+    }
+  }
+
+  function deriveTitle(payload) {
+    if (payload.public_authority) {
+      return payload.public_authority;
+    }
+    if (payload.problem_description) {
+      var t = payload.problem_description.trim();
+      return t.length > 60 ? t.slice(0, 60) + '...' : t;
+    }
+    return 'Untitled draft';
+  }
+
+  function formatSavedAt(iso) {
+    try {
+      return new Date(iso).toLocaleString(undefined, {
+        year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+    } catch (e) {
+      return iso;
+    }
+  }
+
+  function renderDraftRow(draft) {
+    var row = document.createElement('div');
+    row.className = 'bg-white border border-outline-variant rounded-card p-sm space-y-xs';
+    row.setAttribute('data-draft-row', draft.id);
+
+    var titleRow = document.createElement('div');
+    titleRow.className = 'flex justify-between items-start gap-sm';
+    titleRow.innerHTML =
+      '<div class="min-w-0">' +
+        '<p class="font-body-md text-body-md font-medium truncate" data-title-el="' + escapeHtml(draft.id) + '">' + escapeHtml(draft.title) + '</p>' +
+        '<p class="font-caption text-caption text-on-surface-variant">Saved ' + escapeHtml(formatSavedAt(draft.savedAt)) +
+          (draft.letter ? ' · Letter generated' : ' · Form only') +
+        '</p>' +
+      '</div>' +
+      '<div class="flex items-center gap-xs shrink-0">' +
+        '<button class="p-xs text-on-surface-variant hover:text-primary transition-colors" title="Load this draft" data-load-id="' + escapeHtml(draft.id) + '" type="button">' +
+          '<span class="material-symbols-outlined text-[18px]" data-icon="file_open">file_open</span>' +
+        '</button>' +
+        '<button class="p-xs text-on-surface-variant hover:text-primary transition-colors" title="Rename" data-rename-id="' + escapeHtml(draft.id) + '" type="button">' +
+          '<span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span>' +
+        '</button>' +
+        '<button class="p-xs text-on-surface-variant hover:text-[#93000a] transition-colors" title="Delete this draft" data-delete-id="' + escapeHtml(draft.id) + '" type="button">' +
+          '<span class="material-symbols-outlined text-[18px]" data-icon="delete">delete</span>' +
+        '</button>' +
+      '</div>';
+    row.appendChild(titleRow);
+    return row;
+  }
+
+  function renderSavedDrafts() {
+    var drafts = loadDrafts();
+    savedDraftsList.innerHTML = '';
+    if (drafts.length === 0) {
+      savedDraftsEmpty.classList.remove('hidden');
+      return;
+    }
+    savedDraftsEmpty.classList.add('hidden');
+    drafts.forEach(function (draft) {
+      savedDraftsList.appendChild(renderDraftRow(draft));
+    });
+  }
+
+  function loadDraftIntoForm(draft) {
+    // Hide any letter currently on screen before touching the language
+    // pill below - the 'rtisahayak:languagechange' listener regenerates a
+    // live letter whenever one is visible when the language changes, and
+    // that would immediately overwrite the exact saved letter this
+    // function is about to restore.
+    showState('empty');
+
+    document.querySelector('[name="full_name"]').value = draft.form.full_name || '';
+    document.querySelector('[name="address"]').value = draft.form.address || '';
+    document.querySelector('[name="phone"]').value = draft.form.phone || '';
+    document.querySelector('[name="email"]').value = draft.form.email || '';
+    document.querySelector('[name="public_authority"]').value = draft.form.public_authority || '';
+    document.querySelector('[name="problem_description"]').value = draft.form.problem_description || '';
+    document.querySelector('[name="locality"]').value = draft.form.locality || '';
+    document.querySelector('[name="timeframe"]').value = draft.form.timeframe || '';
+    document.querySelector('[name="pio"]').value = draft.form.pio || '';
+    var bplValue = draft.form.is_bpl ? 'true' : 'false';
+    var bplRadio = document.querySelector('[name="is_bpl"][value="' + bplValue + '"]');
+    if (bplRadio) {
+      bplRadio.checked = true;
+    }
+    if (draft.form.language && window.RTISahayakI18n) {
+      window.RTISahayakI18n.setLanguage(draft.form.language);
+    }
+    updatePreviewLangIndicator();
+
+    if (draft.letter) {
+      lastDraftResponse = draft.letter;
+      renderChunks(draft.letter.chunks);
+      renderApplicationText(draft.letter.application_text, draft.letter.clauses);
+      renderWarnings(draft.letter.warnings);
+      showState('content');
+      downloadBtn.disabled = false;
+      copyTextBtn.disabled = false;
+      printBtn.disabled = false;
+      if (draft.letter.meta && draft.letter.meta.provider) {
+        providerChip.textContent = 'Served by ' + draft.letter.meta.provider;
+        providerChip.classList.remove('hidden');
+      } else {
+        providerChip.classList.add('hidden');
+      }
+    } else {
+      lastDraftResponse = null;
+      lastApplicationText = '';
+      sourceCards.innerHTML = '';
+      renderWarnings([]);
+      downloadBtn.disabled = true;
+      copyTextBtn.disabled = true;
+      printBtn.disabled = true;
+      providerChip.classList.add('hidden');
+    }
+  }
+
+  savedDraftsList.addEventListener('click', function (e) {
+    var loadBtn = e.target.closest('[data-load-id]');
+    if (loadBtn) {
+      var drafts = loadDrafts();
+      var draft = drafts.filter(function (d) { return d.id === loadBtn.getAttribute('data-load-id'); })[0];
+      if (draft) {
+        loadDraftIntoForm(draft);
+      }
+      return;
+    }
+
+    var deleteBtn = e.target.closest('[data-delete-id]');
+    if (deleteBtn) {
+      var id = deleteBtn.getAttribute('data-delete-id');
+      saveDrafts(loadDrafts().filter(function (d) { return d.id !== id; }));
+      renderSavedDrafts();
+      return;
+    }
+
+    var renameBtn = e.target.closest('[data-rename-id]');
+    if (renameBtn) {
+      var renameId = renameBtn.getAttribute('data-rename-id');
+      var titleEl = savedDraftsList.querySelector('[data-title-el="' + renameId + '"]');
+      if (!titleEl || titleEl.tagName === 'INPUT') {
+        return;
+      }
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'form-input-flat font-body-md text-body-md';
+      input.value = titleEl.textContent;
+      input.setAttribute('data-title-el', renameId);
+
+      function commit() {
+        var newTitle = input.value.trim();
+        if (newTitle) {
+          var drafts = loadDrafts();
+          drafts.forEach(function (d) {
+            if (d.id === renameId) {
+              d.title = newTitle;
+            }
+          });
+          saveDrafts(drafts);
+        }
+        renderSavedDrafts();
+      }
+
+      input.addEventListener('blur', commit);
+      input.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') {
+          input.blur();
+        } else if (ev.key === 'Escape') {
+          input.removeEventListener('blur', commit);
+          renderSavedDrafts();
+        }
+      });
+      titleEl.replaceWith(input);
+      input.focus();
+      input.select();
+    }
+  });
+
+  saveDraftBtn.addEventListener('click', function () {
+    var payload = buildPayload();
+    var draft = {
+      id: 'draft_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+      title: deriveTitle(payload),
+      savedAt: new Date().toISOString(),
+      form: payload,
+      letter: lastDraftResponse
+    };
+    var drafts = loadDrafts();
+    drafts.unshift(draft);
+    saveDrafts(drafts);
+    renderSavedDrafts();
+
+    var icon = saveDraftBtn.querySelector('.material-symbols-outlined');
+    var originalIcon = icon.textContent;
+    icon.textContent = 'check';
+    setTimeout(function () {
+      icon.textContent = originalIcon;
+    }, 1500);
+  });
+
+  renderSavedDrafts();
 
   // The home screen's ask input and suggestion chips link here with the
   // typed/clicked text in ?problem_description= - pre-fill the field so the
@@ -389,9 +641,11 @@ Fill in the form and click "Generate Application" to see your drafted RTI applic
     highlightSourceCard(chip.getAttribute('data-chunk-index'));
   });
 
-  generateBtn.addEventListener('click', function () {
+  // Shared by the Generate Application request and Save Draft, so a saved
+  // draft's form snapshot is always exactly what a re-generate would send.
+  function buildPayload() {
     var isBplInput = document.querySelector('[name="is_bpl"]:checked');
-    var payload = {
+    return {
       full_name: fieldValue('full_name'),
       address: fieldValue('address'),
       phone: fieldValue('phone'),
@@ -404,6 +658,10 @@ Fill in the form and click "Generate Application" to see your drafted RTI applic
       pio: fieldValue('pio'),
       language: window.RTISahayakI18n ? window.RTISahayakI18n.getLanguage() : 'en'
     };
+  }
+
+  generateBtn.addEventListener('click', function () {
+    var payload = buildPayload();
 
     showState('loading');
     sourceCards.innerHTML = '';
@@ -412,6 +670,7 @@ Fill in the form and click "Generate Application" to see your drafted RTI applic
     copyTextBtn.disabled = true;
     printBtn.disabled = true;
     providerChip.classList.add('hidden');
+    lastDraftResponse = null;
 
     // Render's free tier spins down after ~15 min idle and warns of 50s+
     // cold-start delays; even a warm instance takes 8-10s (LLM call +
@@ -460,6 +719,7 @@ Fill in the form and click "Generate Application" to see your drafted RTI applic
         renderApplicationText(data.application_text, data.clauses);
         renderWarnings(data.warnings);
         showState('content');
+        lastDraftResponse = data;
 
         downloadBtn.disabled = false;
         copyTextBtn.disabled = false;
