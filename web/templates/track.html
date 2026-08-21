@@ -1,0 +1,476 @@
+{% extends "base.html" %}
+
+{% block title %}Track - RTI Sahayak{% endblock %}
+
+{% block nav %}
+<!-- TopNavBar - same structure as draft.html's/ask.html's. -->
+<nav class="bg-surface docked full-width top-0 border-b border-outline-variant z-50 relative bg-white">
+<div class="flex justify-between items-center px-gutter w-full max-w-max-width mx-auto h-16">
+<div class="flex items-center gap-md">
+<a class="font-headline-md text-headline-md font-bold text-primary" href="/">RTI Sahayak</a>
+<div class="hidden md:flex gap-md ml-lg h-full items-center">
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/" data-i18n="nav.home">Home</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/ask" data-i18n="nav.ask">Ask</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/draft" data-i18n="nav.draft">Draft Application</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/browse" data-i18n="nav.browse">Browse the Act</a>
+<a class="font-body-md text-body-md text-secondary font-bold border-b-2 border-secondary pb-1 h-full flex items-center pt-1 cursor-pointer transition-colors" href="/track">Track</a>
+</div>
+</div>
+<div class="flex items-center gap-md relative">
+<span class="font-caption text-caption text-on-surface-variant hidden lg:block" data-i18n="nav.tagline">Grounded in RTI Act, 2005</span>
+<button class="font-label-mono text-label-mono text-primary px-sm py-xs border border-outline-variant rounded hover:bg-surface-container-low transition-colors" id="lang-pill" type="button">English / हिंदी / मराठी</button>
+<span class="hidden absolute top-full right-0 mt-xs w-64 bg-white border border-outline-variant rounded p-sm font-caption text-caption text-on-surface-variant shadow-[0_4px_20px_rgba(18,33,46,0.08)] z-50" id="lang-note"></span>
+</div>
+</div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<main class="flex-grow flex flex-col items-center px-gutter py-lg gap-md max-w-[900px] w-full mx-auto">
+<section class="w-full max-w-3xl mx-auto text-center space-y-sm">
+<h1 class="font-headline-lg text-headline-lg text-rti-text">Track your RTI filings</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Statutory deadlines computed from the Act's own text, with a section citation for every one. Nothing here is a status board - it's a calculator grounded in what the Act actually says.</p>
+</section>
+
+<!-- localStorage disclosure - same honest-labelling standard as the rest of the app. -->
+<div class="w-full max-w-[700px] border border-warning bg-[#FDF6EC] rounded-sm p-sm flex items-start gap-xs">
+<span class="material-symbols-outlined text-[18px] text-warning shrink-0" data-icon="info">info</span>
+<p class="font-caption text-caption text-on-surface-variant">Filings are stored only in this browser (localStorage) - there is no server-side account or database. Clearing your browser data, switching browsers, or using a different device will lose them. Nothing is uploaded anywhere.</p>
+</div>
+
+<!-- Deadline-rules loading/error state - fetched once on page load, no LLM call. -->
+<div class="hidden font-caption text-caption text-on-surface-variant" id="rules-loading">Loading statutory deadlines from the Act...</div>
+<div class="hidden w-full max-w-[700px] border border-[#93000a] bg-[#FDECEA] rounded-sm p-sm font-caption text-caption text-[#93000a]" id="rules-error"></div>
+<div class="hidden w-full max-w-[700px] border border-warning bg-[#FDF6EC] rounded-sm p-sm" id="rules-warnings">
+<div class="flex items-center gap-xs font-label-mono text-label-mono text-warning tracking-widest uppercase mb-xs">
+<span class="material-symbols-outlined text-[16px]" data-icon="warning">warning</span>
+Some deadlines are unavailable
+</div>
+<ul class="list-disc list-inside font-caption text-caption text-on-surface-variant space-y-xs" id="rules-warnings-list"></ul>
+</div>
+
+<!-- Add a filing -->
+<div class="w-full max-w-[700px] bg-white border border-outline-variant rounded-card p-md space-y-sm">
+<h2 class="font-label-mono text-label-mono text-on-surface-variant tracking-widest border-b border-outline-variant pb-xs">RECORD A FILING</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<div>
+<label class="form-label-mono" for="filing-authority">Public Authority</label>
+<input class="form-input-flat" id="filing-authority" placeholder="e.g. Pune Municipal Corporation" type="text"/>
+</div>
+<div>
+<label class="form-label-mono" for="filing-date">Date Filed</label>
+<input class="form-input-flat" id="filing-date" type="date"/>
+</div>
+<div class="md:col-span-2">
+<label class="form-label-mono" for="filing-subject">Subject</label>
+<input class="form-input-flat" id="filing-subject" placeholder="e.g. Road repair complaint records" type="text"/>
+</div>
+<div>
+<label class="form-label-mono" for="filing-reference">Reference Number (Optional)</label>
+<input class="form-input-flat" id="filing-reference" placeholder="If you have one" type="text"/>
+</div>
+<div class="flex items-end pb-xs">
+<label class="flex items-center gap-sm cursor-pointer">
+<input class="text-primary focus:ring-primary h-4 w-4" id="filing-life-liberty" type="checkbox"/>
+<span class="font-body-md text-body-md">This concerns the life or liberty of a person <span class="font-caption text-caption text-on-surface-variant">(48-hour deadline, Section 7(1) proviso)</span></span>
+</label>
+</div>
+</div>
+<div class="hidden font-caption text-caption text-[#93000a]" id="filing-form-error"></div>
+<button class="amber-button font-label-mono text-label-mono px-lg py-sm rounded transition-colors" id="add-filing-btn" type="button">Add Filing</button>
+</div>
+
+<!-- Filings -->
+<div class="w-full flex flex-col items-center gap-md" id="filings-section">
+<div class="font-headline-lg-mobile text-body-lg text-on-surface-variant italic text-center py-xl" id="filings-empty">
+No filings tracked yet. Add one above once you've submitted an RTI application.
+</div>
+<div class="w-full max-w-[700px] space-y-md" id="filings-list"></div>
+</div>
+
+<!-- Source Cards: grounding evidence for every deadline shown above -->
+<div class="w-full max-w-[700px] space-y-sm shrink-0" id="source-cards"></div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-low w-full bottom-0 border-t border-outline-variant flat no shadows mt-auto">
+<div class="flex flex-col md:flex-row justify-between items-center max-w-max-width mx-auto px-gutter py-lg gap-md">
+<p class="font-caption text-caption text-on-surface-variant max-w-2xl">© {{ current_year }} RTI Sahayak. This AI assistant is an educational tool and does not constitute legal advice. All responses should be verified against the official Right to Information Act, 2005.</p>
+<nav class="flex gap-6 items-center">
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="/legal">Legal Disclaimer</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="/privacy">Privacy Policy</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="/terms">Terms of Service</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-caption text-caption opacity-80 hover:opacity-100" href="/support">Contact Support</a>
+</nav>
+</div>
+</footer>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var STORAGE_KEY = 'rtiSahayakTrackFilings';
+  var MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+  var langPill = document.getElementById('lang-pill');
+  var langNote = document.getElementById('lang-note');
+  if (langPill && langNote) {
+    langPill.addEventListener('click', function () {
+      langNote.classList.toggle('hidden');
+    });
+  }
+
+  var rulesLoading = document.getElementById('rules-loading');
+  var rulesError = document.getElementById('rules-error');
+  var rulesWarnings = document.getElementById('rules-warnings');
+  var rulesWarningsList = document.getElementById('rules-warnings-list');
+  var filingsEmpty = document.getElementById('filings-empty');
+  var filingsList = document.getElementById('filings-list');
+  var sourceCards = document.getElementById('source-cards');
+  var formError = document.getElementById('filing-form-error');
+
+  var deadlineRules = null;   // {response_standard: {...}, response_life_liberty: {...}, ...} keyed by id
+  var deadlineChunks = [];
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // --- localStorage (defensive - private browsing / blocked site data must
+  // never crash the page, just behave as if nothing were saved) ---
+  function loadFilings() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      var parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveFilings(filings) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(filings));
+    } catch (e) {
+      formError.textContent = 'Could not save to this browser\'s storage - it may be full or blocked. Your filing was not saved.';
+      formError.classList.remove('hidden');
+    }
+  }
+
+  // --- Deadline rules (fetched once, no LLM call) ---
+  function loadDeadlineRules() {
+    rulesLoading.classList.remove('hidden');
+    fetch('/api/track/deadline-rules')
+      .then(function (response) {
+        if (!response.ok) {
+          return response.json().then(function (body) {
+            throw new Error(body.detail || body.error || ('Request failed with status ' + response.status));
+          });
+        }
+        return response.json();
+      })
+      .then(function (data) {
+        rulesLoading.classList.add('hidden');
+        deadlineChunks = data.chunks || [];
+        deadlineRules = {};
+        (data.rules || []).forEach(function (r) {
+          deadlineRules[r.id] = r;
+        });
+        renderChunks(deadlineChunks);
+
+        if (data.warnings && data.warnings.length) {
+          rulesWarningsList.innerHTML = '';
+          data.warnings.forEach(function (w) {
+            var li = document.createElement('li');
+            li.textContent = w;
+            rulesWarningsList.appendChild(li);
+          });
+          rulesWarnings.classList.remove('hidden');
+        }
+
+        renderFilings();
+      })
+      .catch(function (err) {
+        rulesLoading.classList.add('hidden');
+        rulesError.textContent = 'Could not load statutory deadlines: ' + err.message + '. Filings are still saved, but deadlines cannot be shown right now.';
+        rulesError.classList.remove('hidden');
+        renderFilings();
+      });
+  }
+
+  function renderChunks(chunks) {
+    sourceCards.innerHTML = '';
+    chunks.forEach(function (chunk, index) {
+      var card = document.createElement('div');
+      card.id = 'source-card-' + index;
+      card.className = 'bg-white border border-outline-variant rounded-sm p-sm transition-shadow';
+
+      var meta = document.createElement('p');
+      meta.className = 'font-label-mono text-label-mono text-secondary';
+      meta.textContent = chunk.section + ' · p.' + chunk.page + ' · distance ' + chunk.distance.toFixed(3);
+
+      var snippet = document.createElement('p');
+      snippet.className = 'font-caption text-caption text-on-surface-variant mt-xs';
+      snippet.textContent = chunk.text.length > 200 ? chunk.text.slice(0, 200) + '...' : chunk.text;
+
+      card.appendChild(meta);
+      card.appendChild(snippet);
+      sourceCards.appendChild(card);
+    });
+  }
+
+  function highlightSourceCard(chunkIndex) {
+    var prev = sourceCards.querySelector('.cite-highlight');
+    if (prev) {
+      prev.classList.remove('cite-highlight', 'ring-2', 'ring-primary');
+    }
+    var card = document.getElementById('source-card-' + chunkIndex);
+    if (!card) {
+      return;
+    }
+    card.classList.add('cite-highlight', 'ring-2', 'ring-primary');
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function citeChip(rule) {
+    if (!rule) {
+      return '';
+    }
+    return ' <span class="cite" data-chunk-index="' + rule.chunk_index + '" role="button" tabindex="0">' + escapeHtml(rule.section) + '</span>';
+  }
+
+  // --- Date math ---
+  function parseFiledDate(dateStr) {
+    // Local midnight, not UTC - a date input's value is a plain "YYYY-MM-DD"
+    // with no timezone, and comparing it against "now" (local time) with a
+    // UTC interpretation would silently shift deadlines by hours depending
+    // on the browser's timezone.
+    var parts = dateStr.split('-');
+    return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  }
+
+  function addDays(date, days) {
+    var d = new Date(date.getTime());
+    d.setDate(d.getDate() + days);
+    return d;
+  }
+
+  function addHours(date, hours) {
+    return new Date(date.getTime() + hours * 60 * 60 * 1000);
+  }
+
+  function formatDate(date) {
+    return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  // urgency: 'overdue' | 'urgent' (<=20% of the window left) | 'ok'
+  function urgency(windowStart, deadline, now) {
+    var totalMs = deadline.getTime() - windowStart.getTime();
+    var remainingMs = deadline.getTime() - now.getTime();
+    if (remainingMs <= 0) {
+      return 'overdue';
+    }
+    if (totalMs <= 0 || remainingMs / totalMs <= 0.2) {
+      return 'urgent';
+    }
+    return 'ok';
+  }
+
+  var URGENCY_STYLE = {
+    ok: 'border-[#1E7A5A] text-[#1E7A5A] bg-[#F7F4EE]',
+    urgent: 'border-warning text-warning bg-[#FDF6EC]',
+    overdue: 'border-[#93000a] text-[#93000a] bg-[#FDECEA]',
+  };
+  var URGENCY_LABEL = {
+    ok: function (days) { return days + ' day' + (days === 1 ? '' : 's') + ' remaining'; },
+    urgent: function (days) { return days <= 0 ? 'Due now' : days + ' day' + (days === 1 ? '' : 's') + ' remaining - urgent'; },
+    overdue: function (days) { return 'Overdue by ' + Math.abs(days) + ' day' + (Math.abs(days) === 1 ? '' : 's'); },
+  };
+
+  function deadlinePill(windowStart, deadline, now, label, ruleForCitation) {
+    var days = Math.ceil((deadline.getTime() - now.getTime()) / MS_PER_DAY);
+    var state = urgency(windowStart, deadline, now);
+    var pill = document.createElement('div');
+    pill.className = 'border rounded-DEFAULT p-sm flex flex-col gap-xs ' + URGENCY_STYLE[state];
+    pill.innerHTML =
+      '<div class="flex justify-between items-baseline gap-sm">' +
+        '<span class="font-body-md text-body-md font-medium">' + escapeHtml(label) + citeChip(ruleForCitation) + '</span>' +
+        '<span class="font-label-mono text-label-mono whitespace-nowrap">' + URGENCY_LABEL[state](days) + '</span>' +
+      '</div>' +
+      '<span class="font-caption text-caption opacity-80">Due ' + formatDate(deadline) + '</span>';
+    return { el: pill, state: state, deadline: deadline };
+  }
+
+  function renderFilingCard(filing) {
+    var card = document.createElement('div');
+    card.className = 'bg-white border border-outline-variant rounded-card p-md space-y-sm';
+
+    var header = document.createElement('div');
+    header.className = 'flex justify-between items-start gap-sm';
+    header.innerHTML =
+      '<div>' +
+        '<p class="font-body-md text-body-md font-medium">' + escapeHtml(filing.subject) + '</p>' +
+        '<p class="font-caption text-caption text-on-surface-variant">' + escapeHtml(filing.authority) +
+          (filing.referenceNumber ? ' · Ref: ' + escapeHtml(filing.referenceNumber) : '') +
+          ' · Filed ' + formatDate(parseFiledDate(filing.dateFiled)) +
+        '</p>' +
+      '</div>' +
+      '<button class="p-xs text-on-surface-variant hover:text-[#93000a] transition-colors" title="Delete filing" data-delete-id="' + escapeHtml(filing.id) + '" type="button">' +
+        '<span class="material-symbols-outlined text-[18px]" data-icon="delete">delete</span>' +
+      '</button>';
+    card.appendChild(header);
+
+    if (!deadlineRules) {
+      var noRules = document.createElement('p');
+      noRules.className = 'font-caption text-caption text-on-surface-variant italic';
+      noRules.textContent = 'Deadlines could not be loaded for this filing.';
+      card.appendChild(noRules);
+      return card;
+    }
+
+    var now = new Date();
+    var filedDate = parseFiledDate(filing.dateFiled);
+    var responseRule = filing.lifeLiberty ? deadlineRules.response_life_liberty : deadlineRules.response_standard;
+    var responseDeadline = null;
+
+    if (responseRule) {
+      responseDeadline = filing.lifeLiberty
+        ? addHours(filedDate, responseRule.offset_hours)
+        : addDays(filedDate, responseRule.offset_days);
+      var responsePill = deadlinePill(
+        filedDate, responseDeadline, now,
+        filing.lifeLiberty ? 'PIO response (life/liberty)' : 'PIO response deadline',
+        responseRule
+      );
+      card.appendChild(responsePill.el);
+    } else {
+      var missing = document.createElement('p');
+      missing.className = 'font-caption text-caption text-on-surface-variant italic';
+      missing.textContent = 'The PIO response deadline could not be grounded in the retrieved Act text for this session - see the warning above.';
+      card.appendChild(missing);
+    }
+
+    // Section 7(6) fee waiver - informational, always shown alongside the
+    // response deadline when grounded, not itself a countdown.
+    if (deadlineRules.fee_waiver) {
+      var feeNote = document.createElement('p');
+      feeNote.className = 'font-caption text-caption text-on-surface-variant';
+      feeNote.innerHTML = 'If this deadline is missed, you are entitled to receive the information free of charge.' + citeChip(deadlineRules.fee_waiver);
+      card.appendChild(feeNote);
+    }
+
+    // Recourse: first appeal, shown only once the response deadline has
+    // actually passed - and only if we have a response deadline to chain from.
+    if (responseDeadline && now.getTime() > responseDeadline.getTime() && deadlineRules.first_appeal) {
+      var firstAppealDeadline = addDays(responseDeadline, deadlineRules.first_appeal.offset_days);
+      var appealHeader = document.createElement('p');
+      appealHeader.className = 'font-label-mono text-label-mono text-warning tracking-widest uppercase pt-xs';
+      appealHeader.textContent = 'Recourse';
+      card.appendChild(appealHeader);
+
+      var firstPill = deadlinePill(responseDeadline, firstAppealDeadline, now, 'File a first appeal', deadlineRules.first_appeal);
+      card.appendChild(firstPill.el);
+
+      // Second appeal - shown once the first-appeal filing deadline has
+      // also passed. No computed date: its 90-day window runs from when
+      // the FIRST APPEAL's own decision was due (Section 19(6)), which
+      // depends on when that appeal was actually filed - not tracked here.
+      // See agent/deadlines.py's module docstring for why this is
+      // deliberately not chained into a fabricated date.
+      if (now.getTime() > firstAppealDeadline.getTime() && deadlineRules.second_appeal) {
+        var secondNote = document.createElement('div');
+        secondNote.className = 'border border-[#93000a] bg-[#FDECEA] rounded-DEFAULT p-sm';
+        secondNote.innerHTML =
+          '<p class="font-body-md text-body-md font-medium text-[#93000a]">Second appeal available' + citeChip(deadlineRules.second_appeal) + '</p>' +
+          '<p class="font-caption text-caption text-on-surface-variant mt-xs">If you filed a first appeal and it was not decided, you have 90 days from when that decision was due to file a second appeal with the Information Commission. This runs from your first appeal\'s own deadline, not from this filing date - track it separately once you\'ve filed.</p>';
+        card.appendChild(secondNote);
+      }
+    }
+
+    return card;
+  }
+
+  function renderFilings() {
+    var filings = loadFilings();
+    if (filings.length === 0) {
+      filingsEmpty.classList.remove('hidden');
+      filingsList.innerHTML = '';
+      return;
+    }
+    filingsEmpty.classList.add('hidden');
+    filingsList.innerHTML = '';
+    // Most recently filed first.
+    filings
+      .slice()
+      .sort(function (a, b) { return b.dateFiled.localeCompare(a.dateFiled); })
+      .forEach(function (filing) {
+        filingsList.appendChild(renderFilingCard(filing));
+      });
+  }
+
+  filingsList.addEventListener('click', function (e) {
+    var deleteBtn = e.target.closest('[data-delete-id]');
+    if (deleteBtn) {
+      var id = deleteBtn.getAttribute('data-delete-id');
+      var filings = loadFilings().filter(function (f) { return f.id !== id; });
+      saveFilings(filings);
+      renderFilings();
+      return;
+    }
+    var chip = e.target.closest('.cite');
+    if (chip) {
+      highlightSourceCard(chip.getAttribute('data-chunk-index'));
+    }
+  });
+
+  document.getElementById('add-filing-btn').addEventListener('click', function () {
+    var authority = document.getElementById('filing-authority').value.trim();
+    var subject = document.getElementById('filing-subject').value.trim();
+    var dateFiled = document.getElementById('filing-date').value;
+    var referenceNumber = document.getElementById('filing-reference').value.trim();
+    var lifeLiberty = document.getElementById('filing-life-liberty').checked;
+
+    formError.classList.add('hidden');
+
+    if (!authority || !subject || !dateFiled) {
+      formError.textContent = 'Public Authority, Subject, and Date Filed are required.';
+      formError.classList.remove('hidden');
+      return;
+    }
+
+    var todayStr = new Date().toISOString().slice(0, 10);
+    if (dateFiled > todayStr) {
+      formError.textContent = 'Date Filed cannot be in the future.';
+      formError.classList.remove('hidden');
+      return;
+    }
+
+    var filing = {
+      id: 'filing_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+      authority: authority,
+      subject: subject,
+      dateFiled: dateFiled,
+      referenceNumber: referenceNumber,
+      lifeLiberty: lifeLiberty,
+      createdAt: new Date().toISOString(),
+    };
+
+    var filings = loadFilings();
+    filings.push(filing);
+    saveFilings(filings);
+
+    document.getElementById('filing-authority').value = '';
+    document.getElementById('filing-subject').value = '';
+    document.getElementById('filing-date').value = '';
+    document.getElementById('filing-reference').value = '';
+    document.getElementById('filing-life-liberty').checked = false;
+
+    renderFilings();
+  });
+
+  // Prevent filing a date in the future at the picker level too.
+  document.getElementById('filing-date').max = new Date().toISOString().slice(0, 10);
+
+  loadDeadlineRules();
+})();
+</script>
+{% endblock %}

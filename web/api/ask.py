@@ -4,6 +4,8 @@ Answers ONLY from retrieved corpus text - see agent/qa.py's module
 docstring for why a retrieval-distance guard on the question itself is the
 right check here, unlike for drafting.
 """
+import time
+
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
@@ -18,6 +20,8 @@ router = APIRouter()
 
 @router.post("/api/ask", response_model=AskResponse)
 def ask_question(req: AskRequest, request: Request):
+    t0 = time.perf_counter()
+
     # Shares is_rate_limited()'s counter with /api/draft rather than
     # tracking a separate budget - both ultimately spend the same Groq/
     # Gemini quota, so the protection has to be on total requests per IP,
@@ -51,11 +55,12 @@ def ask_question(req: AskRequest, request: Request):
     if result.status == "error":
         return JSONResponse(status_code=500, content={"error": "Could not generate an answer. Please try again."})
 
+    latency_ms = int((time.perf_counter() - t0) * 1000)
     return AskResponse(
         answer=result.answer,
         citations=[ClauseOut(text=c["text"], section=c["section"], chunk_index=c["chunk_index"]) for c in result.citations],
         chunks=[ChunkOut(text=c.text, section=c.section, page=c.page, source=c.source, distance=c.distance) for c in result.chunks],
         warnings=[],
         status="ok",
-        meta={"provider": llm_client.LAST_PROVIDER_USED},
+        meta={"provider": llm_client.LAST_PROVIDER_USED, "latency_ms": latency_ms},
     )

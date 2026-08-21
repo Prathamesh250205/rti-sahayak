@@ -21,6 +21,7 @@ from web.api.act import router as act_router
 from web.api.ask import router as ask_router
 from web.api.draft import router as draft_router
 from web.api.system import router as system_router
+from web.api.track import router as track_router
 
 BASE_DIR = Path(__file__).parent
 
@@ -146,6 +147,7 @@ app.include_router(draft_router)
 app.include_router(act_router)
 app.include_router(ask_router)
 app.include_router(system_router)
+app.include_router(track_router)
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -252,7 +254,6 @@ def demo(request: Request):
 # are server-defined (not query-param input) so nothing here can be used to
 # inject arbitrary page content.
 COMING_SOON_FEATURES = {
-    "track": ("Track", "Filing status and statutory deadline tracking is not yet implemented."),
     "login": ("Account Login", "Signing in to save and manage your RTI applications is not yet implemented."),
     "save-draft": ("Save Draft", "Saving a draft to return to later is not yet implemented."),
 }
@@ -363,7 +364,7 @@ def ask(request: Request):
 
 @app.get("/track")
 def track(request: Request):
-    return _coming_soon(request, "track")
+    return templates.TemplateResponse(request, "track.html")
 
 
 @app.get("/legal")

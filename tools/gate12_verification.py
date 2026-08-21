@@ -71,14 +71,14 @@ def run_language_matrix(base_url: str, delay_seconds: float) -> list[dict]:
                 method="POST",
             )
             try:
-                with urllib.request.urlopen(req, timeout=60) as resp:
+                with urllib.request.urlopen(req, timeout=120) as resp:
                     data = json.loads(resp.read().decode("utf-8"))
             except Exception as e:
                 rows.append(
                     {
                         "label": f"{label} [{lang}]", "expected": "ok", "actual": "REQUEST_ERROR",
                         "passed": False, "scope_check_failed": None, "authority": None,
-                        "provider": None, "detail": str(e),
+                        "provider": None, "latency_ms": None, "detail": str(e),
                     }
                 )
                 continue
@@ -90,6 +90,7 @@ def run_language_matrix(base_url: str, delay_seconds: float) -> list[dict]:
             authority_unresolved = any("public authority could not be automatically determined" in w for w in warnings_list)
             authority = data.get("department_guess", "")
             provider = (data.get("meta") or {}).get("provider")
+            latency_ms = (data.get("meta") or {}).get("latency_ms")
             rows.append(
                 {
                     "label": f"{label} [{lang}]",
@@ -99,10 +100,12 @@ def run_language_matrix(base_url: str, delay_seconds: float) -> list[dict]:
                     "scope_check_failed": scope_check_failed,
                     "authority": authority,
                     "provider": provider,
+                    "latency_ms": latency_ms,
                     "detail": (
                         f"chunks_used={data.get('meta', {}).get('chunks_used')} "
                         f"authority={authority[:50]!r} scope_check_failed={scope_check_failed} "
-                        f"authority_unresolved_warning={authority_unresolved} provider={provider}"
+                        f"authority_unresolved_warning={authority_unresolved} provider={provider} "
+                        f"latency_ms={latency_ms}"
                     ),
                 }
             )
@@ -110,15 +113,15 @@ def run_language_matrix(base_url: str, delay_seconds: float) -> list[dict]:
 
 
 def print_combined_table(scope_rows, ask_rows, matrix_rows):
-    print("\n" + "=" * 125)
+    print("\n" + "=" * 140)
     print("COMBINED VERIFICATION TABLE")
-    print("=" * 125)
+    print("=" * 140)
     header = (
         f"{'SUITE':<12} {'PASS/FAIL':<9} {'EXPECTED':<15} {'ACTUAL':<17} {'SCOPE_FAIL':<11} "
-        f"{'PROVIDER':<10} {'AUTHORITY':<40} LABEL"
+        f"{'PROVIDER':<10} {'LATENCY_MS':<11} {'AUTHORITY':<40} LABEL"
     )
     print(header)
-    print("-" * 125)
+    print("-" * 140)
 
     def emit(suite_name, row):
         mark = "PASS" if row["passed"] else "FAIL"
@@ -126,26 +129,31 @@ def print_combined_table(scope_rows, ask_rows, matrix_rows):
         scope_fail_str = "-" if scope_fail is None else str(scope_fail)
         authority = row.get("authority") or "-"
         provider = row.get("provider") or "-"
+        latency = row.get("latency_ms")
+        latency_str = "-" if latency is None else str(latency)
         print(
             f"{suite_name:<12} {mark:<9} {str(row.get('expected', '-')):<15} "
-            f"{str(row.get('actual', '-')):<17} {scope_fail_str:<11} {provider:<10} {authority[:38]:<40} {row['label']}"
+            f"{str(row.get('actual', '-')):<17} {scope_fail_str:<11} {provider:<10} {latency_str:<11} {authority[:38]:<40} {row['label']}"
         )
 
     for row in scope_rows:
         emit("scope", row)
     for row in ask_rows:
         # ask suite rows don't carry expected/actual/scope_check_failed/authority -
-        # only label/passed/provider/detail (it's a grounding check, not a
-        # scope check) - but provider is now real, not a placeholder.
+        # only label/passed/provider/latency_ms/detail (it's a grounding check,
+        # not a scope check) - but provider/latency are now real, not placeholders.
         mark = "PASS" if row["passed"] else "FAIL"
         provider = row.get("provider") or "-"
-        print(f"{'ask':<12} {mark:<9} {'-':<15} {'-':<17} {'-':<11} {provider:<10} {'-':<40} {row['label']}")
+        latency = row.get("latency_ms")
+        latency_str = "-" if latency is None else str(latency)
+        print(f"{'ask':<12} {mark:<9} {'-':<15} {'-':<17} {'-':<11} {provider:<10} {latency_str:<11} {'-':<40} {row['label']}")
     for row in matrix_rows:
         emit("lang_matrix", row)
 
-    print("-" * 125)
-    total = len(scope_rows) + len(ask_rows) + len(matrix_rows)
-    total_passed = sum(r["passed"] for r in scope_rows) + sum(r["passed"] for r in ask_rows) + sum(r["passed"] for r in matrix_rows)
+    print("-" * 140)
+    all_rows = scope_rows + ask_rows + matrix_rows
+    total = len(all_rows)
+    total_passed = sum(r["passed"] for r in all_rows)
     print(f"{total_passed}/{total} passed overall")
 
     scope_checked_rows = [r for r in (scope_rows + matrix_rows) if r.get("scope_check_failed") is not None]
@@ -155,8 +163,28 @@ def print_combined_table(scope_rows, ask_rows, matrix_rows):
     unresolved_authority_rows = [r for r in (scope_rows + matrix_rows) if r.get("authority") == UNKNOWN_AUTHORITY]
     print(f"authority resolved to the Unknown sentinel: {len(unresolved_authority_rows)} row(s) (want 0)")
 
-    providers_seen = sorted({r["provider"] for r in (scope_rows + ask_rows + matrix_rows) if r.get("provider")})
+    providers_seen = sorted({r["provider"] for r in all_rows if r.get("provider")})
     print(f"providers that served at least one request: {providers_seen}")
+
+    # Per-provider latency breakdown - what a live request actually costs in
+    # seconds, broken down by which provider ultimately served it. This is
+    # the number that decides chain ordering for a demo: a 3-hop worst case
+    # (two dead-end providers plus the one that finally answers) costs
+    # dramatically more than a clean first-hop success.
+    print()
+    print("Per-provider latency (server-measured meta.latency_ms, successful requests only):")
+    by_provider: dict[str, list[int]] = {}
+    for r in all_rows:
+        if r.get("provider") and r.get("latency_ms") is not None:
+            by_provider.setdefault(r["provider"], []).append(r["latency_ms"])
+    if not by_provider:
+        print("  (no successful requests with latency data)")
+    for provider in sorted(by_provider):
+        samples = by_provider[provider]
+        avg_s = sum(samples) / len(samples) / 1000
+        min_s = min(samples) / 1000
+        max_s = max(samples) / 1000
+        print(f"  {provider:<10} n={len(samples):<3} avg={avg_s:.2f}s  min={min_s:.2f}s  max={max_s:.2f}s")
 
 
 def main():

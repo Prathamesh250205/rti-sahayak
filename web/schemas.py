@@ -56,3 +56,21 @@ class AskResponse(BaseModel):
     warnings: list[str]
     meta: dict
     status: str = "ok"
+
+
+class DeadlineRuleOut(BaseModel):
+    id: str
+    label: str
+    section: str
+    chunk_index: int
+    offset_days: int | None = None
+    offset_hours: int | None = None
+    anchor: str | None = None
+    applies_when: str
+
+
+class TrackRulesResponse(BaseModel):
+    rules: list[DeadlineRuleOut]
+    chunks: list[ChunkOut]
+    warnings: list[str]
+    status: str = "ok"

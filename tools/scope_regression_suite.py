@@ -110,7 +110,7 @@ def run_case(base_url: str, case: dict) -> dict:
         method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=120) as resp:
             data = json.loads(resp.read().decode("utf-8"))
     except Exception as e:
         return {"error": str(e)}
@@ -139,6 +139,7 @@ def run_suite(base_url: str, delay_seconds: float) -> list[dict]:
                     "authority": None,
                     "info_sought_count": None,
                     "provider": None,
+                    "latency_ms": None,
                     "detail": data["error"],
                 }
             )
@@ -150,9 +151,10 @@ def run_suite(base_url: str, delay_seconds: float) -> list[dict]:
         authority = None
         info_sought_count = None
         provider = (data.get("meta") or {}).get("provider")
+        latency_ms = (data.get("meta") or {}).get("latency_ms")
 
         if actual_status == "out_of_scope":
-            detail = (data.get("meta") or {}).get("scope_reason", "<no reason returned>")
+            detail = (data.get("meta") or {}).get("scope_reason", "<no reason returned>") + f" (provider={provider} latency_ms={latency_ms})"
         elif actual_status == "ok":
             # scope_check_failed distinguishes a genuine in_scope=True verdict
             # from CHECK B's classification call having failed outright (see
@@ -173,7 +175,7 @@ def run_suite(base_url: str, delay_seconds: float) -> list[dict]:
                 f"department_guess={authority[:60]!r} "
                 f"info_sought_count={info_sought_count} "
                 f"scope_check_failed={scope_check_failed} "
-                f"provider={provider}"
+                f"provider={provider} latency_ms={latency_ms}"
             )
         else:
             detail = json.dumps(data)[:200]
@@ -188,6 +190,7 @@ def run_suite(base_url: str, delay_seconds: float) -> list[dict]:
                 "authority": authority,
                 "info_sought_count": info_sought_count,
                 "provider": provider,
+                "latency_ms": latency_ms,
                 "detail": detail,
             }
         )

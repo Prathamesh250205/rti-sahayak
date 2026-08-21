@@ -35,12 +35,24 @@ from llm.client import LLMError
 
 
 def test_fallback_succeeds_after_primary_failure():
+    """Gate 13 lesson: this test used to derive its expected fallback as
+    "groq" if llm_client.PROVIDER == "gemini" else "gemini" - a leftover
+    2-provider assumption that silently broke the moment LLM_PROVIDER_CHAIN
+    was set to anthropic-first in .env (PROVIDER became "anthropic", the
+    hardcoded either/or no longer covered the real chain, and the test
+    crashed the whole verification script before it ever reached the paid
+    endpoints). Fixed by setting an explicit, deterministic PROVIDER_CHAIN
+    for this test's own scope instead of reading whatever chain the
+    environment happens to be configured with - the test's job is to prove
+    generic chain behavior, not to assume any particular .env config.
+    """
     calls = []
-    fallback = "groq" if llm_client.PROVIDER == "gemini" else "gemini"
+    original_chain = llm_client.PROVIDER_CHAIN
+    llm_client.PROVIDER_CHAIN = ("primary_test_provider", "fallback_test_provider")
 
     def fake_dispatch(provider, prompt, system, tools, max_tokens):
         calls.append(provider)
-        if provider == llm_client.PROVIDER:
+        if provider == llm_client.PROVIDER_CHAIN[0]:
             raise LLMError("simulated failure on the primary provider")
         return "COMPLETE FALLBACK RESPONSE"
 
@@ -53,12 +65,13 @@ def test_fallback_succeeds_after_primary_failure():
         log_output = sys.stderr.getvalue()
     finally:
         llm_client._dispatch = original_dispatch
+        llm_client.PROVIDER_CHAIN = original_chain
         sys.stderr = original_stderr
 
     assert result == "COMPLETE FALLBACK RESPONSE", (
         f"expected the fallback's complete response, got: {result!r}"
     )
-    assert calls == [llm_client.PROVIDER, fallback], (
+    assert calls == ["primary_test_provider", "fallback_test_provider"], (
         f"expected primary-then-fallback call order, got: {calls}"
     )
     assert "failed" in log_output and "retrying on" in log_output, (
@@ -146,6 +159,17 @@ def test_raw_response_path_rate_limit_still_triggers_fallback():
     lets generate()'s provider fallback succeed - exercised end-to-end
     through the real _generate_groq()/_generate_gemini(), with only the SDK
     client classes mocked, not llm.client's own dispatch logic.
+
+    Explicitly forces PROVIDER_CHAIN to (groq, gemini) for its own scope -
+    without this, whatever chain the environment happens to be configured
+    with applies, and only Groq/Gemini are mocked here. With Anthropic
+    promoted to chain[0] (Gate 13's anthropic-first config), an unmocked
+    Anthropic would be tried FIRST and this "mocked, zero-cost" test would
+    silently make a real, billed call to the live API before ever reaching
+    the Groq/Gemini mocks below - exactly the class of bug this comment
+    exists to prevent from recurring (see
+    test_fallback_succeeds_after_primary_failure's docstring for the first
+    occurrence).
     """
     import httpx
     import groq as groq_sdk
@@ -187,6 +211,7 @@ def test_raw_response_path_rate_limit_still_triggers_fallback():
 
     original_groq_class = groq_sdk.Groq
     original_flag = llm_client.GROQ_LOG_RATE_LIMITS
+    original_chain = llm_client.PROVIDER_CHAIN
     original_stderr = sys.stderr
     original_groq_key = os.environ.get("GROQ_API_KEY")
     original_gemini_key = os.environ.get("GEMINI_API_KEY")
@@ -197,6 +222,7 @@ def test_raw_response_path_rate_limit_still_triggers_fallback():
     groq_sdk.Groq = FakeGroqClient
     genai.Client = FakeGeminiClient
     llm_client.GROQ_LOG_RATE_LIMITS = True
+    llm_client.PROVIDER_CHAIN = ("groq", "gemini")
     os.environ["GROQ_API_KEY"] = "fake-key-for-test"
     os.environ["GEMINI_API_KEY"] = "fake-key-for-test"
     sys.stderr = io.StringIO()
@@ -207,6 +233,7 @@ def test_raw_response_path_rate_limit_still_triggers_fallback():
         groq_sdk.Groq = original_groq_class
         genai.Client = original_genai_client
         llm_client.GROQ_LOG_RATE_LIMITS = original_flag
+        llm_client.PROVIDER_CHAIN = original_chain
         sys.stderr = original_stderr
         if original_groq_key is None:
             os.environ.pop("GROQ_API_KEY", None)

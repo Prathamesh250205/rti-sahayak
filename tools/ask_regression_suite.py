@@ -64,7 +64,7 @@ def run_case(base_url: str, case: dict) -> dict:
         method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=120) as resp:
             data = json.loads(resp.read().decode("utf-8"))
     except Exception as e:
         return {"error": str(e)}
@@ -106,11 +106,15 @@ def run_suite(base_url: str, delay_seconds: float) -> list[dict]:
 
         data = run_case(base_url, case)
         if "error" in data:
-            rows.append({"label": case["label"], "passed": False, "provider": None, "detail": data["error"]})
+            rows.append({"label": case["label"], "passed": False, "provider": None, "latency_ms": None, "detail": data["error"]})
             continue
         passed, detail = evaluate(case, data)
         provider = (data.get("meta") or {}).get("provider")
-        rows.append({"label": case["label"], "passed": passed, "provider": provider, "detail": detail})
+        latency_ms = (data.get("meta") or {}).get("latency_ms")
+        rows.append({
+            "label": case["label"], "passed": passed, "provider": provider, "latency_ms": latency_ms,
+            "detail": detail + f" (provider={provider} latency_ms={latency_ms})",
+        })
     return rows
 
 

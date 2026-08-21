@@ -320,9 +320,14 @@ def understand_request(
         "record from any public authority, not a topic-specific one, so this is true for almost any "
         "grievance about a government office, service, delay, or decision - a stuck ration card, an "
         "unrepaired road, a stopped pension are all in scope, even though the Act's own text never "
-        "mentions any of those topics by name. It is false only when the citizen isn't actually asking "
-        "for a document/record at all - general advice, a how-to question with no public-authority "
-        "records angle, or something unrelated to any public authority.\n"
+        "mentions any of those topics by name. A record does not stop being a public-authority record "
+        "just because it concerns the citizen personally - Section 6 lets any citizen request any "
+        "information held by a public authority, including records about themselves (their own filed "
+        "return, application, or case file). \"It's my own document\" or \"I could get this some other "
+        "way\" is never a reason to call something out of scope; the only question is whether a public "
+        "authority holds the record. It is false only when the citizen isn't actually asking for a "
+        "document/record at all - general advice, a how-to question with no public-authority records "
+        "angle, or something unrelated to any public authority.\n"
         '2. "reason": one short sentence explaining the in_scope decision.\n\n'
         "If in scope, also work out:\n"
         '3. "information_sought": a list of 2-5 short, specific pieces of information/documents to '
