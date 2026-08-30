@@ -176,6 +176,103 @@ text could never have separated, because both sit in the same topic neighborhood
 the check by *what kind of question it answers*, rather than tuning one threshold harder,
 is what made that distinction possible.
 
+## Evaluation
+
+**Limits first, not last:** this is 113 hand-written cases, self-labelled by the same
+people who built the system being measured, one annotator, no inter-annotator agreement.
+Several slices (Hindi n=10, Marathi n=10, `opinion_prediction` n=10, `service_request`
+n=10) are too small to distinguish a real 0.90 from an observed 1.00. Full dataset,
+labelling convention, and every contested judgment call are in `tools/eval/README.md`.
+An evaluation that overstates its own authority is worse than no evaluation - treat
+every number below as directional evidence from a small, self-authored set, not a proof.
+
+**The finding, stated precisely:** the retrieval-distance gate this project replaced
+(Gates 4-5) was not conservative - it was **lenient in the wrong direction**. Reconstructed
+faithfully from git history (`tools/eval/old_gate.py`, calling today's unchanged
+`retrieve()`) and run on the identical 113 cases, it predicted `in_scope` on **67.3%** of
+requests against an actual base rate of 53.1% - more often than the new design (58.4%),
+not less. It said yes more often *and* was wrong more often, failing in both directions
+at once: 17 legitimate grievances wrongly refused, 33 out-of-scope requests wrongly
+drafted. "The old gate was strict but safe" is not what happened; "the old gate was
+lenient for the wrong reason" is.
+
+The reason is mechanical, not incidental: the gate measured whether the *citizen's own
+words* scored close to the Act's *procedural* language. Those are different vocabularies
+by design (the Act never says "ration card" or "streetlight"), so the same "nothing
+retrieved" signal is produced equally by a legitimate grievance worded in plain language
+and by a request that has nothing to do with the Act at all - checked directly: among the
+37 cases where the old gate retrieved zero chunks, 17 were actually `in_scope` and 20
+`out_of_scope`, a 46/54 split indistinguishable from chance on this sample.
+
+| metric | new (two-check) | old (distance gate) |
+|---|---|---|
+| Precision | 0.909 | 0.566 |
+| Recall | 1.000 | 0.717 |
+| F1 | 0.952 | 0.632 |
+| False refusal rate | **0.000** | 0.283 |
+| Predicted in_scope rate | 0.584 | 0.673 |
+| Confusion matrix | TP=60 FP=6 TN=47 FN=0 | TP=43 FP=33 TN=20 FN=17 |
+
+By `case_type` (`grievance`, n=40, is the slice this redesign was built for):
+
+| case_type | n | new | old |
+|---|---|---|---|
+| explicit_request | 20 | 100.0% | 100.0% |
+| **grievance** | **40** | **100.0%** | **57.5%** |
+| advice_seeking | 33 | 93.9% | 54.5% |
+| opinion_prediction | 10 (underpowered) | 100.0% | 20.0% |
+| service_request | 10 (underpowered) | 60.0% | 0.0% |
+
+No slice, checked programmatically rather than assumed, favoured the old gate.
+
+**The Hindi result, with its caveat attached:** the old gate's false refusal rate was
+0.600 in Hindi versus 0.240 in English (Hindi n=10, English n=93 - the Hindi figure is
+one wrong verdict away from being a different number, and is reported as a fairness
+*observation warranting a larger sample*, not a proven effect). The direction is exactly
+what you'd expect from an English-language procedural corpus measured by embedding
+distance against non-English citizen text, and it would mean the old design failed
+hardest for the citizens with the least alternative recourse - but n=10 cannot carry
+that claim on its own, and isn't asked to here.
+
+**Our own weaknesses, not just the win:**
+
+- **`service_request` is the new design's worst slice at 60% (n=10, underpowered).** The
+  failure mode is specific and worth naming plainly: CHECK B checks whether a request
+  *sounds* record-shaped, not whether the record could plausibly exist or the target is
+  a real public authority. It drafted requests for a private company's internal audit, a
+  private hospital's staff salaries, and an inspection report for construction that
+  hasn't started yet. This is the mirror image of the adversarial-pair design and the
+  hardest direction for an LLM classifier - confirmed, not merely predicted.
+- **The +5.3-point lean toward `in_scope` (58.4% predicted vs. 53.1% base rate) is a
+  deliberate trade, stated as one rather than excused:** a wrongly refused request blocks
+  someone from exercising a legal right; a wrongly accepted one produces a letter they
+  can read and discard. For a citizen-facing tool, erring toward drafting when uncertain
+  is the trade this project chose to make, and the false-refusal-rate headline (0.000) is
+  partly a function of that choice, not precision alone.
+- **The contested-label sensitivity check cut against this project, which is what makes
+  it worth reporting.** 16 cases ("how do I get my land mutated", and 15 more
+  structurally identical) have a real, Section-4(1)(b)-grounded in-scope reading that the
+  dataset deliberately did not adopt as primary (see `tools/eval/README.md`). Scoring all
+  20 contested cases on their documented alternative reading instead makes the new design
+  look *worse* - recall drops from 1.000 to 0.803, false refusal rate rises to 0.197 -
+  because 14 of those 16 cases were already answered correctly under the primary
+  convention. A relabelling that hurts your own numbers when you actually check it is
+  stronger evidence the labelling convention is sound than one that would have helped.
+
+**Future work - a cheap pre-filter is not one of them, and here's why:** the old gate
+costs zero LLM calls; the new one spends one classification call per request (the same
+call that also produces `information_sought`/`likely_authority`, not a pure tax on top of
+drafting). The obvious cost-saving idea is a hybrid - use retrieval distance as a fast
+pre-filter, call the LLM only in an uncertain band. Checked directly rather than assumed:
+it doesn't work, because there is no confident band to filter on. The old gate's single
+most "confident" signal - retrieving *zero* chunks at all - splits 17 `in_scope` to 20
+`out_of_scope` on this set, statistically indistinguishable from a coin flip. A pre-filter
+built on this signal wouldn't approximate CHECK B cheaply; it would reintroduce exactly
+the false-refusal failure mode this project removed, for whatever fraction of traffic it
+touched. (CHECK A already *is* the legitimate version of this pattern - a free,
+deterministic check - but on corpus health, a signal that genuinely has no false-negative
+band, not on scope.)
+
 ## Track and Save Draft (localStorage only)
 
 Both `/track` (statutory deadline tracking) and Save Draft (on `/draft`) persist entirely
@@ -300,6 +397,7 @@ repo declares that the key is required but never carries its value).
 |---|---|
 | **Implemented** | Conversational intake (Streamlit) and one-shot web form (FastAPI); two-check grounded letter drafting with clause-level citations (see above); standalone **Ask** (`/ask`) - retrieval-gated Q&A over the Act with inline `[N]`-marker citations, refuses honestly when nothing retrieves; **multilingual drafting** (English/Hindi/Marathi) - letter boilerplate is statically translated (not LLM-translated, to avoid mistranslating legally-load-bearing text), `information_sought`/`reason` are generated in the selected language, department names are deliberately left untranslated; **Track** (`/track`) - statutory deadline tracker grounded in retrieved Act text (see below); **Save Draft** - save the filled form and a generated letter, citation chips intact, to this browser; PDF export; Browse the Act (real section list + search over the corpus); a static `/demo` sample application that works with neither Chroma nor the LLM available; system telemetry panel; a 3-provider LLM fallback chain (see Architecture); per-IP rate limiting on `/api/draft` and `/api/ask`; real content pages for the legal disclaimer, privacy policy, terms of service, and support. |
 | **Regression-verified** | A single combined run against a live server (`tools/gate12_verification.py`), paced to stay under provider rate limits: `tools/scope_regression_suite.py` 10/10, `tools/ask_regression_suite.py` 5/5 (plus 1 known-failing case tracked separately, see Known limitations), and the 4-homepage-example × 3-language matrix 12/12 - **27/27 core passed**, zero `scope_check_failed` (0/19 checkable rows), and every "ok" row resolved to a real department name in all three languages, never the `Unknown` sentinel. Re-verified locally after every Gate 13-16 change and the subsequent retrieval/chunking fix above. Separately, **against the deployed instance itself on its actual `groq,anthropic,gemini` config** (the 26-case fixture, before the ask-suite additions above): 26/26, 0/19 `scope_check_failed`, 0 unresolved authorities. That run happened to catch Groq mid-throttle (likely from the same testing session's own load) - every one of the 26 requests fell through to Anthropic, averaging **11.25s** (min 4.58s, max 14.24s, n=25). That number is the Groq-fails-then-Anthropic-succeeds fallback cost, not a healthy first-hop Groq request - it's real evidence the fallback works exactly as designed under load, but not yet a clean read on ordinary latency; a re-run once Groq's throttle clears would be expected to show most requests served directly by Groq in a few seconds instead. See Known limitations for a real scope-classification difference the anthropic-first *investigation* surfaced between providers, and Deployment for why the deployed chain isn't anthropic-first. |
+| **Evaluated against the design it replaced** | A 113-case hand-labelled set (`tools/eval/dataset.jsonl`) run through both the live two-check gate and a faithful reconstruction of the old retrieval-distance gate from git history - false refusal rate 0.000 vs 0.283, with the old gate's own failure mode identified as leniency in the wrong direction (in_scope rate 0.673 vs a 0.531 base rate), not excess strictness. See Evaluation above for the full comparison, this project's own weaknesses, and the eval's limits. |
 | **Not implemented** | **Login** was considered and deliberately dropped rather than shipped as a stub - see Track and Save Draft (localStorage only) below for the reasoning. |
 
 ## Known limitations

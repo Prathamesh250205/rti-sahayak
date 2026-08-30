@@ -5,3 +5,4 @@ __pycache__/
 data/chroma/
 data/onnx_model_cache/
 node_modules/
+tools/eval/.cache/
