@@ -391,6 +391,29 @@ normal request. `ANTHROPIC_API_KEY` is a real secret and must be set in Render's
 like `GROQ_API_KEY`/`GEMINI_API_KEY` already are (`sync: false` in `render.yaml` — this
 repo declares that the key is required but never carries its value).
 
+**Cold starts are a known characteristic of free-tier hosting, not a defect.** Render's
+free web services spin down after 15 minutes without inbound traffic and take about a
+minute to spin back up - documented Render behavior, not something this project works
+around. `/demo` exists specifically to give a judge or reviewer a working, fully-rendered
+sample application that needs neither a warm instance, Chroma, nor the LLM available, so
+the worst case (landing on a cold instance) is already covered by a page that has nothing
+to wait on.
+
+`.github/workflows/uptime-monitor.yml` hits `GET /healthz` every 30 minutes, 09:00-22:00
+IST, and fails loudly (fails the run, which GitHub emails on) if the response isn't 200
+with `chroma_chunk_count: 83`. This is **availability monitoring, not a keep-alive** -
+the two were considered separately before building this. A true keep-alive (pinging often
+enough to outrun the 15-minute idle timeout, all day) was checked against Render's own
+free-tier terms and rejected: continuous uptime for a 31-day month costs 744 of the 750
+free instance-hours a workspace gets, leaving 6 hours of slack for anything else in that
+workspace for the entire month, and Render's Acceptable Use Policy's "bypass usage
+restrictions" clause reads ambiguously enough against deliberately defeating the spin-down
+timer that it wasn't worth the risk to a working deployment either way. At a 30-minute
+interval this check cannot reliably prevent spin-down (30 minutes is longer than the
+15-minute idle timeout), and that's fine - keeping the instance warm was never the goal.
+The goal is finding out the deployed site is down before a judge or a resume reader does,
+at roughly 27 requests/day against a 750-hour budget - real margin, not a near-miss.
+
 ## Scope
 
 | | |
