@@ -10,6 +10,15 @@
 <meta property="og:description" content="{% block og_description %}Draft a Right to Information Act, 2005 application with AI assistance - grounded in the Act's actual text, with section-level citations.{% endblock %}"/>
 <meta property="og:url" content="{{ request.url }}"/>
 <link href="/static/favicon.svg" rel="icon" type="image/svg+xml"/>
+<script>
+  // Apply the saved theme (or the system's) before first paint - no light flash.
+  try {
+    var t = localStorage.getItem('theme');
+    if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    }
+  } catch (e) {}
+</script>
 <link href="/static/vendor/tailwind.css" rel="stylesheet"/>
 <link href="/static/vendor/fonts.css" rel="stylesheet"/>
 <style>
@@ -165,7 +174,26 @@
     .acct-ghost { padding: 8px 16px; border-radius: 999px; border: 1px solid #bfc8c5; color: #00352f; font-weight: 600; }
     .acct-hello { flex: 1; color: #404946; }
     /* Make room for the account control on mid-size screens. */
-    @media (max-width: 1439px) { header [data-i18n="nav.tagline"], nav [data-i18n="nav.tagline"] { display: none !important; } }
+    @media (max-width: 1439px) {
+      header [data-i18n="nav.tagline"], nav [data-i18n="nav.tagline"] { display: none !important; }
+      /* Desktop nav only - "Sign in" stays, and its page links to sign-up. */
+      .acct-cta:not(.acct-mobile .acct-cta) { display: none; }
+    }
+    /* /browse's nav also carries a search box - make room for it. */
+    #act-search-input { width: 13rem; }
+    header:has(#act-search-input) .acct-cta { display: none; }
+    /* Tablets (768-1023px) get the hamburger menu too: the desktop menu no
+       longer fits there with the account and theme controls. */
+    @media (min-width: 768px) and (max-width: 1023px) {
+      .md\:flex:has(> a[href="/ask"]) { display: none !important; }
+      #mobile-menu-btn { display: inline-flex !important; }
+      #mobile-nav-links.flex { display: flex !important; }
+    }
+    @media (max-width: 1199px) {
+      #act-search-input { width: 10rem; }
+      header:has(#act-search-input) nav { gap: 14px; }
+    }
+    header nav a, header > div > a[href="/"] { white-space: nowrap; }
 
     /* Site-wide polish: gentle entrance and hover lift on existing cards/buttons. */
     main { animation: page-in .5s cubic-bezier(.2,.7,.2,1) both; }
@@ -177,11 +205,20 @@
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 {% block head_extra %}{% endblock %}
+<link href="/static/css/dark.css" rel="stylesheet"/>
 </head>
 <body class="bg-background">
 {% block nav %}{% endblock %}
 {% block content %}{% endblock %}
 {% block scripts %}{% endblock %}
+<script>
+  // Theme toggle (.theme-toggle buttons in the nav and on auth pages).
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.theme-toggle')) return;
+    var dark = document.documentElement.classList.toggle('dark');
+    try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (err) {}
+  });
+</script>
 <script src="/static/js/i18n.js"></script>
 <script src="/static/js/backup.js"></script>
 </body>

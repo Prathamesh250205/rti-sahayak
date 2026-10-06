@@ -1,0 +1,200 @@
+/* Dark theme. Active when <html> has class "dark" (set by the toggle in
+   partials/account_nav.html and the pre-paint script in base.html). It's
+   the same class Tailwind's prebuilt dark: variants already key off.
+
+   The prebuilt tailwind.css has fixed light hex values and can't be
+   rebuilt here, so this remaps the color utilities the templates actually
+   use, by role. If a template starts using a new color class, add it below. */
+html.dark {
+  --d-bg: #0e1615;
+  --d-surface: #152120;
+  --d-raised: #1b2a28;
+  --d-raised-2: #223331;
+  --d-border: #2d3f3c;
+  --d-text: #e4ece9;
+  --d-muted: #a5b6b1;
+  --d-faint: #7d8f8a;
+  --d-primary: #8fd6c8;
+  --d-amber: #f0a564;
+  --d-error: #ffb4ab;
+  --d-error-bg: #3d1714;
+  color-scheme: dark;
+  background: var(--d-bg);
+  color: var(--d-text);
+}
+
+/* ---------- Backgrounds ---------- */
+html.dark body,
+html.dark .bg-background,
+html.dark .bg-paper-base { background-color: var(--d-bg); }
+html.dark .bg-white,
+html.dark .bg-surface,
+html.dark .bg-surface-container-lowest { background-color: var(--d-surface); }
+html.dark .bg-surface-container-low,
+html.dark .bg-surface-container { background-color: var(--d-raised); }
+html.dark .bg-surface-container-high,
+html.dark .bg-surface-container-highest,
+html.dark .bg-inverse-surface { background-color: var(--d-raised-2); }
+html.dark .hover\:bg-white:hover,
+html.dark .hover\:bg-surface-container-low:hover,
+html.dark .hover\:bg-surface-container-high:hover,
+html.dark .hover\:bg-surface-container-highest:hover,
+html.dark .dark\:hover\:bg-surface-container-highest:hover { background-color: var(--d-raised-2); }
+
+/* ---------- Text ---------- */
+html.dark .text-on-surface,
+html.dark .text-rti-text,
+html.dark .text-custom-ink,
+html.dark .text-paper-text,
+html.dark .text-on-background { color: var(--d-text); }
+html.dark .text-custom-ink\/80 { color: rgba(228, 236, 233, .8); }
+html.dark .text-on-surface-variant { color: var(--d-muted); }
+html.dark .text-outline,
+html.dark .text-outline-variant,
+html.dark .placeholder\:text-outline::placeholder { color: var(--d-faint); }
+html.dark .text-primary,
+html.dark .text-primary-fixed,
+html.dark .hover\:text-primary:hover,
+html.dark .hover\:text-on-surface:hover,
+html.dark .dark\:hover\:text-primary-fixed:hover { color: var(--d-primary); }
+html.dark .text-secondary,
+html.dark .text-secondary-fixed-dim,
+html.dark .text-rti-amber { color: var(--d-amber); }
+html.dark .text-error { color: var(--d-error); }
+
+/* ---------- Borders ---------- */
+html.dark .border-outline-variant,
+html.dark .border-outline,
+html.dark .border-rti-border,
+html.dark .border-custom-border,
+html.dark .border-paper-border,
+html.dark .border-archival-border { border-color: var(--d-border); }
+html.dark .border-custom-ink,
+html.dark .border-rti-text,
+html.dark .focus-within\:border-rti-text:focus-within,
+html.dark .focus\:border-on-surface:focus { border-color: var(--d-muted); }
+html.dark .border-secondary,
+html.dark .border-rti-amber { border-color: var(--d-amber); }
+
+/* Plain form controls (the forms plugin paints them white). */
+html.dark input:not([type=checkbox]):not([type=radio]),
+html.dark textarea,
+html.dark select {
+  background-color: var(--d-surface);
+  color: var(--d-text);
+  border-color: var(--d-border);
+}
+html.dark input::placeholder,
+html.dark textarea::placeholder { color: var(--d-faint); }
+html.dark .bg-transparent { background-color: transparent !important; }
+
+/* ---------- base.html component classes ---------- */
+html.dark .cite { border-color: var(--d-amber); color: var(--d-amber); }
+html.dark .paper-shadow,
+html.dark .ai-input-shadow,
+html.dark .shadow-ambient { box-shadow: 0 4px 24px rgba(0, 0, 0, .45); }
+html.dark .secondary-button { border-color: var(--d-muted); color: var(--d-text); }
+html.dark .secondary-button:hover { background-color: var(--d-raised); }
+html.dark .card-flat,
+html.dark .flat-card,
+html.dark .input-base { background-color: var(--d-surface); border-color: var(--d-border); }
+html.dark .grid-bg-pattern {
+  background-image: linear-gradient(to right, var(--d-border) 1px, transparent 1px),
+                    linear-gradient(to bottom, var(--d-border) 1px, transparent 1px);
+}
+html.dark .status-tag-amber { background-color: var(--d-raised); }
+html.dark .statutory-line-browse { border-left-color: var(--d-primary); }
+html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: var(--d-border); }
+
+/* Account control in the nav */
+html.dark .acct-link { color: var(--d-primary); }
+html.dark .acct-link:hover { background: var(--d-raised); }
+html.dark .acct-avatar { box-shadow: 0 0 0 3px var(--d-bg), 0 0 0 4px var(--d-border); }
+html.dark .acct-pop { background: var(--d-surface); border-color: var(--d-border); }
+html.dark .acct-pop-name { color: var(--d-text); }
+html.dark .acct-pop-mail { color: var(--d-muted); }
+html.dark .acct-pop-link { color: var(--d-primary); }
+html.dark .acct-pop-link:hover { background: var(--d-raised); }
+html.dark .acct-pop button { border-color: var(--d-border); color: var(--d-error); }
+html.dark .acct-pop button:hover { background: var(--d-error-bg); }
+html.dark .acct-mobile { border-color: var(--d-border); }
+html.dark .acct-ghost { border-color: var(--d-border); color: var(--d-primary); }
+html.dark .acct-hello { color: var(--d-muted); }
+
+/* ---------- landing.css (home, auth, account) ---------- */
+html.dark .lp h1 { background-image: linear-gradient(120deg, #f1f5f3 30%, var(--d-primary) 62%, var(--d-amber) 95%); }
+html.dark .lp-sub, html.dark .lp-meta, html.dark .lp-lead,
+html.dark .lp-stat span, html.dark .lp-card p, html.dark .lp-feature p { color: var(--d-muted); }
+html.dark .lp, html.dark .lp-h2, html.dark .lp-card h3, html.dark .lp-feature h3 { color: var(--d-text); }
+html.dark .lp-meta a, html.dark .lp-badge, html.dark .lp-stat b { color: var(--d-primary); }
+html.dark .lp-badge { background: var(--d-surface); border-color: var(--d-border); }
+html.dark .lp-input { background: var(--d-surface); border-color: var(--d-border); box-shadow: 0 24px 50px -28px rgba(0, 0, 0, .8); }
+html.dark .lp-input input { color: var(--d-text); background: transparent; }
+html.dark .lp-chips button { background: rgba(21, 33, 32, .7); border-color: var(--d-border); color: var(--d-text); }
+html.dark .lp-stat, html.dark .lp-card { background: var(--d-surface); border-color: var(--d-border); }
+html.dark .lp-feature { background: linear-gradient(180deg, var(--d-surface), var(--d-raised)); border-color: var(--d-border); }
+html.dark .btn-ghost { background: var(--d-surface); border-color: var(--d-border); color: var(--d-text); }
+html.dark .blob { opacity: .22; }
+/* The 3D letters stay paper-coloured - they're documents. */
+html.dark .doc { background: #f4f1ea; border-color: #d9d2c4; }
+html.dark .doc.d3 { background: #e6e0d4; }
+html.dark .ring-item span { background: var(--d-surface); color: var(--d-primary); border-color: var(--d-border); }
+
+html.dark .auth { color: var(--d-text); }
+html.dark .auth-main { background: var(--d-bg); }
+html.dark .auth-card .sub, html.dark .auth-alt, html.dark .auth-note, html.dark .check,
+html.dark .meter-label, html.dark .auth-back { color: var(--d-muted); }
+html.dark .auth-card .sub a, html.dark .auth-alt a, html.dark .auth-row a,
+html.dark .check a, html.dark .panel a { color: var(--d-primary); }
+html.dark .auth-card .auth-logo { color: var(--d-text); }
+html.dark .field label { color: var(--d-text); }
+html.dark .field input[type=text], html.dark .field input[type=email], html.dark .field input[type=password] {
+  background: var(--d-surface); border-color: var(--d-border); color: var(--d-text);
+}
+html.dark .field input:focus { border-color: var(--d-primary); box-shadow: 0 0 0 4px rgba(143, 214, 200, .18); }
+html.dark .peek:hover { background: var(--d-raised); color: var(--d-primary); }
+html.dark .meter i { background: var(--d-border); }
+html.dark .oauth-btn { background: var(--d-surface); border-color: var(--d-border); color: var(--d-text); }
+html.dark .oauth-btn:hover { border-color: var(--d-primary); }
+html.dark .oauth-or { color: var(--d-muted); }
+html.dark .oauth-or::before, html.dark .oauth-or::after, html.dark .auth-note { border-color: var(--d-border); }
+html.dark .oauth-or::before, html.dark .oauth-or::after { background: var(--d-border); }
+html.dark .alert-error { background: var(--d-error-bg); color: var(--d-error); border-color: #6b2620; }
+html.dark .alert-ok { background: #12302a; color: var(--d-primary); border-color: #2a5a50; }
+
+html.dark .acct-page { color: var(--d-text); }
+html.dark .acct-head p, html.dark .panel > p { color: var(--d-muted); }
+html.dark .panel { background: var(--d-surface); border-color: var(--d-border); }
+html.dark .panel.danger { background: linear-gradient(180deg, var(--d-surface), #22171a); border-color: #6b2620; }
+html.dark .panel.danger h2 { color: var(--d-error); }
+
+/* ---------- Toggle button ---------- */
+.theme-toggle { display: inline-grid; place-items: center; width: 38px; height: 38px; margin-left: 8px; border-radius: 50%;
+  border: 1px solid #E3DDD2; color: #00352f; background: transparent; cursor: pointer; transition: background .2s, transform .3s; }
+.theme-toggle:hover { background: #edeeec; transform: rotate(-15deg); }
+.theme-toggle .material-symbols-outlined { font-size: 20px; }
+.theme-toggle .icon-light { display: none; }
+html.dark .theme-toggle { border-color: var(--d-border); color: var(--d-amber); }
+html.dark .theme-toggle:hover { background: var(--d-raised); }
+html.dark .theme-toggle .icon-light { display: inline; }
+html.dark .theme-toggle .icon-dark { display: none; }
+
+/* ---------- Form components and one-off hex utilities ---------- */
+html.dark .form-label-mono { color: var(--d-muted); }
+html.dark .form-input-flat { background-color: var(--d-surface); border-color: var(--d-border); color: var(--d-text); }
+html.dark .form-input-flat:focus { border-color: var(--d-primary); }
+/* Paper / panel backgrounds */
+html.dark .bg-\[\#F7F4EE\],
+html.dark .bg-\[\#f2f4f2\] { background-color: var(--d-raised); }
+/* Notice banners (amber) */
+html.dark .bg-\[\#FDF6EC\],
+html.dark .bg-\[\#F5EADF\] { background-color: #2b2116; }
+/* Error banners and text */
+html.dark .bg-\[\#FDECEA\] { background-color: var(--d-error-bg); }
+html.dark .text-\[\#93000a\],
+html.dark .hover\:text-\[\#93000a\]:hover { color: var(--d-error); }
+html.dark .border-\[\#93000a\] { border-color: #8a3a32; }
+/* Success green */
+html.dark .text-\[\#1E7A5A\] { color: #7fd6a8; }
+html.dark .border-\[\#1E7A5A\] { border-color: #3c8a66; }
+html.dark .bg-\[\#F7F4EE\]\/95 { background-color: rgba(27, 42, 40, .95); }
