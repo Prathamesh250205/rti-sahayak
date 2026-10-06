@@ -86,12 +86,12 @@ the LLM) → **export/pdf_writer.py** on download.
 
 ### LLM provider chain
 
-`llm/client.py`'s `generate()`/`generate_stream()` walk an ordered `PROVIDER_CHAIN` -
+`llm/client.py`'s `generate()` walks an ordered `PROVIDER_CHAIN` -
 if one provider fails, the next is tried automatically, with the same `LLMError` type
 and the same fallback semantics regardless of which providers are in play. This is the
 code's own default when nothing overrides it; the deployed instance runs a different,
-explicit order (`groq,anthropic,gemini` - see Deployment) for cost reasons, not because
-this default changed. Default chain, in order:
+explicit order (`groq,gemini` - free tiers only, see Deployment), not because this
+default changed. Default chain, in order:
 
 1. **Groq** (`openai/gpt-oss-120b`) - primary. Free tier, 30 RPM / 1,000 RPD.
 2. **Gemini** (`gemini-flash-latest`) - burst absorber, not a safety net. Free tier is a
@@ -307,8 +307,8 @@ band, not on scope.)
 ## Track and Save Draft (localStorage only)
 
 Both `/track` (statutory deadline tracking) and Save Draft (on `/draft`) persist entirely
-in the browser's `localStorage` - there is no server-side account, database, or per-user
-storage behind either one. This is a deliberate constraint, not a missing feature:
+in the browser's `localStorage` - nothing is stored server-side or tied to an account
+for either one. This is a deliberate constraint, not a missing feature:
 serverless hosting has no durable local disk, and neither feature needs a database to be
 useful. (Optional accounts exist - see Deployment - but they don't sync these.) Both pages disclose this plainly in the UI (a warning banner, not a
 buried caveat) - clearing browser data, switching browsers, or using a different device
@@ -459,7 +459,7 @@ always works for a judge or reviewer landing on a cold instance.
 | | |
 |---|---|
 | **Implemented** | One-shot web form (FastAPI); two-check grounded letter drafting with clause-level citations (see above); standalone **Ask** (`/ask`) - retrieval-gated Q&A over the Act with inline `[N]`-marker citations, refuses honestly when nothing retrieves; **multilingual drafting** (English/Hindi/Marathi) - letter boilerplate is statically translated (not LLM-translated, to avoid mistranslating legally-load-bearing text), `information_sought`/`reason` are generated in the selected language, department names are deliberately left untranslated; **Track** (`/track`) - statutory deadline tracker grounded in retrieved Act text (see below); **Save Draft** - save the filled form and a generated letter, citation chips intact, to this browser; PDF export; Browse the Act (real section list + search over the corpus); a static `/demo` sample application that works with neither Chroma nor the LLM available; system telemetry panel; a 3-provider LLM fallback chain (see Architecture); per-IP rate limiting on `/api/draft` and `/api/ask`; real content pages for the legal disclaimer, privacy policy, terms of service, and support; a landing page with a CSS-3D hero; optional accounts (email/password, Google sign-in, forgot/reset password, account settings - see Accounts); light/dark mode; phone and tablet layouts (checked at 320-1366px in both themes). |
-| **Regression-verified** | A single combined run against a live server (`tools/gate12_verification.py`), paced to stay under provider rate limits: `tools/scope_regression_suite.py` 10/10, `tools/ask_regression_suite.py` 5/5 (plus 1 known-failing case tracked separately, see Known limitations), and the 4-homepage-example × 3-language matrix 12/12 - **27/27 core passed**, zero `scope_check_failed` (0/19 checkable rows), and every "ok" row resolved to a real department name in all three languages, never the `Unknown` sentinel. Re-verified locally after every Gate 13-16 change and the subsequent retrieval/chunking fix above. Separately, **against the deployed instance itself on its actual `groq,anthropic,gemini` config** (the 26-case fixture, before the ask-suite additions above): 26/26, 0/19 `scope_check_failed`, 0 unresolved authorities. That run happened to catch Groq mid-throttle (likely from the same testing session's own load) - every one of the 26 requests fell through to Anthropic, averaging **11.25s** (min 4.58s, max 14.24s, n=25). That number is the Groq-fails-then-Anthropic-succeeds fallback cost, not a healthy first-hop Groq request - it's real evidence the fallback works exactly as designed under load, but not yet a clean read on ordinary latency; a re-run once Groq's throttle clears would be expected to show most requests served directly by Groq in a few seconds instead. See Known limitations for a real scope-classification difference the anthropic-first *investigation* surfaced between providers, and Deployment for why the deployed chain isn't anthropic-first. |
+| **Regression-verified** | A single combined run against a live server (`tools/gate12_verification.py`), paced to stay under provider rate limits: `tools/scope_regression_suite.py` 10/10, `tools/ask_regression_suite.py` 5/5 (plus 1 known-failing case tracked separately, see Known limitations), and the 4-homepage-example × 3-language matrix 12/12 - **27/27 core passed**, zero `scope_check_failed` (0/19 checkable rows), and every "ok" row resolved to a real department name in all three languages, never the `Unknown` sentinel. Re-verified locally after every Gate 13-16 change and the subsequent retrieval/chunking fix above. Separately, **against the then-deployed instance itself (the earlier Render deployment, on its `groq,anthropic,gemini` config at the time)** (the 26-case fixture, before the ask-suite additions above): 26/26, 0/19 `scope_check_failed`, 0 unresolved authorities. That run happened to catch Groq mid-throttle (likely from the same testing session's own load) - every one of the 26 requests fell through to Anthropic, averaging **11.25s** (min 4.58s, max 14.24s, n=25). That number is the Groq-fails-then-Anthropic-succeeds fallback cost, not a healthy first-hop Groq request - it's real evidence the fallback works exactly as designed under load, but not yet a clean read on ordinary latency; a re-run once Groq's throttle clears would be expected to show most requests served directly by Groq in a few seconds instead. See Known limitations for a real scope-classification difference the anthropic-first *investigation* surfaced between providers, and Deployment for the chain the current deployment uses. |
 | **Evaluated against the design it replaced** | A 113-case hand-labelled set (`tools/eval/dataset.jsonl`) run through both the live two-check gate and a faithful reconstruction of the old retrieval-distance gate from git history - false refusal rate 0.000 vs 0.283, with the old gate's own failure mode identified as leniency in the wrong direction (in_scope rate 0.673 vs a 0.531 base rate), not excess strictness. See Evaluation above for the full comparison, this project's own weaknesses, and the eval's limits. |
 | **Not implemented** | Syncing saved drafts and tracked filings to an account - both still live in the browser (see Track and Save Draft). |
 
@@ -497,8 +497,8 @@ always works for a judge or reviewer landing on a cold instance.
   automatically"` as the authority and nothing in any log to explain why. Fixed by
   switching `understand_request()` to the buffered `generate()` (which was already safe
   to restart, and which `agent/qa.py` already used) and adding explicit logging to every
-  failure path in both callers. `generate_stream()` itself is untouched and currently has
-  no callers in this app - kept as a primitive for any future genuinely-live-rendered use.
+  failure path in both callers. `generate_stream()` was later removed along with the
+  Streamlit app, its last caller.
 - `GEMINI_MODEL` defaults to `gemini-flash-latest`, a floating alias that has already
   silently repointed to a different underlying model more than once (observed directly:
   `gemini-3-flash-preview` → `gemini-3.5-flash` → `gemini-3.7-flash`), each repoint

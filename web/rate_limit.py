@@ -1,8 +1,8 @@
 """Minimal per-IP rate limiter for /api/draft.
 
-In-memory, single-process, fixed-window - appropriate for this deployment
-(one Render free-tier instance, no shared state across workers) and not a
-general abuse-prevention system. Exists specifically to protect the
+In-memory, per-process, fixed-window - not a general abuse-prevention
+system. On Vercel each function instance keeps its own counts, so the limit
+is per instance, not global (see README > Deployment). Exists specifically to protect the
 Groq/Gemini quota from being burned during judging, per the project's
 explicit ask.
 """

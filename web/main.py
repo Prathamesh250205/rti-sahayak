@@ -33,13 +33,13 @@ def _check_corpus_health() -> None:
     is empty or still carries the pre-Gate-3 "unknown" front-matter label.
 
     Both are silent-degradation failure modes otherwise: a zero-chunk
-    collection (e.g. a Render deploy whose build step skipped ingestion)
+    collection (e.g. a deploy whose build step skipped ingestion)
     doesn't crash anything - every draft just quietly refuses via CHECK A,
     which looks identical to a real corpus-health problem from the outside.
     An "unknown" chunk reappearing would mean the PREAMBLE_ANCHOR split in
     rag/ingest.py regressed (see that module) - the retrieval-quality bug
     Gate 2/3 fixed. Neither condition should ever be true in a healthy
-    deploy; this makes it obvious in Render logs the moment it isn't,
+    deploy; this makes it obvious in the deployment logs the moment it isn't,
     rather than only showing up as vague empty-/browse or refusal
     complaints days later. Never raises - a broken health check must not
     be mistaken for a warm-up failure in the caller's logs.
@@ -111,9 +111,10 @@ async def _warm_up_in_background() -> None:
     # Runs as a fire-and-forget task from lifespan below, off the event
     # loop thread (warm_up_retriever is blocking, synchronous work) so the
     # port is already accepting connections while the embedding model
-    # loads. Render's free tier (0.1 CPU) kills services that don't bind
-    # their port fast - blocking startup on this ~20s+ load risked exactly
-    # that. Never blocks startup on failure - retrieval just surfaces its
+    # loads. Originally for Render's free tier (0.1 CPU), which killed
+    # services that didn't bind their port fast; on Vercel it still keeps a
+    # cold start from blocking the first request on the model load. Never
+    # blocks startup on failure - retrieval just surfaces its
     # own error normally on first real use if this doesn't work.
     t0 = time.perf_counter()
     try:

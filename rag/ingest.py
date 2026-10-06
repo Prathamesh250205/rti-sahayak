@@ -14,12 +14,12 @@ from chromadb.utils import embedding_functions
 CORPUS_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "corpus")
 CHROMA_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "chroma")
 # chromadb's ONNXMiniLM_L6_V2 defaults to caching its model under
-# Path.home()/.cache, outside the project directory. On Render's native
-# Python runtime, buildCommand (which triggers this download during
-# ingest) and startCommand aren't documented to guarantee the same $HOME
-# persists between them - redirecting into the project directory removes
-# that ambiguity: whatever the build writes here is guaranteed to ship
-# with the deploy, the same way data/chroma already does. Must match
+# Path.home()/.cache, outside the project directory. A deploy's build
+# step (which triggers this download during ingest) and its runtime aren't
+# guaranteed to share the same $HOME - redirecting into the project
+# directory removes that ambiguity: whatever the build writes here ships
+# with the deploy, the same way data/chroma already does (see
+# tools/vercel_build.py). Must match
 # rag/retriever.py's override exactly, or a build-time download here
 # won't be found by the runtime process.
 ONNX_CACHE_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "onnx_model_cache")

@@ -77,7 +77,7 @@
 </div>
 <div class="border border-warning bg-[#FDF6EC] rounded-sm p-sm flex items-start gap-xs">
 <span class="material-symbols-outlined text-[16px] text-warning shrink-0" data-icon="info">info</span>
-<p class="font-caption text-caption text-on-surface-variant">Saved drafts are stored only in this browser (localStorage) - there is no server-side account or database. Clearing your browser data, switching browsers, or using a different device will lose them.</p>
+<p class="font-caption text-caption text-on-surface-variant">Saved drafts are stored only in this browser (localStorage) - they are not uploaded or saved to your account. Clearing your browser data, switching browsers, or using a different device will lose them.</p>
 </div>
 {% include "partials/backup_controls.html" %}
 <div class="hidden font-caption text-caption text-[#93000a]" id="saved-drafts-error"></div>
@@ -697,9 +697,8 @@ Fill in the form and click "Generate Application" to see your drafted RTI applic
     providerChip.classList.add('hidden');
     lastDraftResponse = null;
 
-    // Render's free tier spins down after ~15 min idle and warns of 50s+
-    // cold-start delays; even a warm instance takes 8-10s (LLM call +
-    // retrieval). Most requests land in the first message; this escalates
+    // A cold serverless instance loads the embedding model first, adding a
+    // few seconds; even a warm one takes 8-10s (LLM call + retrieval). Most requests land in the first message; this escalates
     // only if one is actually taking the longer, cold-start-shaped path,
     // so a silent multi-second wait never looks like a hang.
     previewLoadingMessage.textContent = 'Drafting your application... (usually 8-10 seconds)';
