@@ -7,9 +7,22 @@ always labeled as a guess. It declines to draft only when the request itself isn
 for a record — not when the topic happens to share no vocabulary with the statute, which
 is most legitimate requests.
 
+**Live site:** https://rti-sahayak-smoky.vercel.app ·
+**Sample application (no LLM/Chroma required):** https://rti-sahayak-smoky.vercel.app/demo ·
 **Demo video:** [add link here]
-**Live deployment:** https://rti-sahayak-smoky.vercel.app
-**Sample application (no LLM/Chroma required):** https://rti-sahayak-smoky.vercel.app/demo
+
+![RTI Sahayak landing page](docs/screenshots/landing-light.png)
+
+**What's in it**
+
+- **Draft** an RTI application from a plain-language problem - every procedural clause cited
+  to the section of the Act that justifies it, exported as a ready-to-file PDF
+- **Ask** questions about the Act, answered only from its text with inline citations
+- **Browse** the Act section by section, and **Track** statutory deadlines for filings
+- English, Hindi and Marathi drafting
+- Optional **accounts**: email + password, **Continue with Google**, forgot / reset
+  password, account settings
+- **Light and dark mode**, and a layout that works on phones from 320px up
 
 ## The problem
 
@@ -18,12 +31,26 @@ and most citizens have never read it. Get the procedure wrong — the wrong fee,
 citation, the wrong Public Information Officer — and the application can be rejected or
 delayed on a technicality that has nothing to do with the actual grievance.
 
-## Screenshot
+## Screenshots
 
 A generated draft, with clause-level citation chips (linking each procedural sentence back
 to the Act section that justifies it) and the retrieved source passages shown below:
 
 ![Draft screen with citation chips and source cards](docs/draft-screen.png)
+
+| Dark mode | How it works |
+|---|---|
+| ![Landing page in dark mode](docs/screenshots/landing-dark.png) | ![How it works and the tools grid](docs/screenshots/landing-how-it-works.png) |
+| **Sign in** (email or Google) | **Browse the Act** |
+| ![Sign-in page](docs/screenshots/login.png) | ![Browsing Section 7 of the Act](docs/screenshots/browse.png) |
+
+**On a phone** - home, Browse (sections become a swipeable row), and Draft in dark mode:
+
+![The site on a phone](docs/screenshots/mobile.png)
+
+**A real generated application** (`/demo`), with its section citations:
+
+![Sample application](docs/screenshots/sample-letter.png)
 
 ## Architecture
 
@@ -40,9 +67,16 @@ llm/      provider-agnostic LLM client (llm/client.py) - a configurable, ordered
 export/   PDF generation (export/pdf_writer.py) - renders the final letter text,
           nothing else
 web/      FastAPI app: routes (web/main.py), the /api/draft, /api/ask, /api/act,
-          and /api/track/deadline-rules endpoints (web/api/), Jinja2 templates,
-          per-IP rate limiting
+          and /api/track/deadline-rules endpoints (web/api/), optional accounts
+          (web/api/auth.py), Jinja2 templates, per-IP rate limiting
+web/static/css/
+          landing.css (landing page, 3D hero, auth pages), dark.css (dark
+          theme), mobile.css (phone/tablet layout) - plain CSS on top of the
+          prebuilt Tailwind build
 index.py  Vercel entrypoint - re-exports web.main:app
+tools/vercel_build.py
+          Vercel build step: ingest the corpus, then drop packages the
+          running app never imports (fits the 500 MB function limit)
 ```
 
 A request flows: **web/api/draft.py** (intake fields) → **CHECK A** (`agent/drafter.py`'s
@@ -306,13 +340,39 @@ already-submitted application's statutory deadlines) differ enough in shape and 
 that sharing would only add coupling between two features that otherwise have nothing to
 do with each other.
 
-**Login was considered and dropped**, not shipped as a stub. Everything an account would
-plausibly have been for - saving progress, tracking deadlines - is already covered by
-Track and Save Draft without one, and a real account system would need the same
-server-side database this project deliberately avoided above. The `/login` route (and the
-separate, now-superseded `/save-draft` stub route) were removed along with the
-now-unreferenced "coming soon" page they rendered; neither had any inbound link from the
-app by the time they were removed.
+**Accounts don't sync these.** Login was originally dropped for exactly that reason - Track
+and Save Draft already cover saving progress without one. Accounts were added later (see
+below) as an optional layer; moving saved drafts and tracked filings onto the account is
+the natural next step, not done yet.
+
+## Accounts (optional)
+
+Every tool works signed out; an account is opt-in (`web/api/auth.py`).
+
+- **Sign up / sign in** with email and password, or **Continue with Google** (GitHub
+  sign-in is also built in and appears once its credentials are set).
+- **Forgot password** emails a single-use link valid for 1 hour (SMTP via the `SMTP_*`
+  settings; without them, the link is printed to the server log, never to the page). The
+  response is identical whether or not the email has an account.
+- **Account settings** (`/account`): change name, change password (signs out other
+  devices), delete the account.
+- **Storage:** Postgres when `DATABASE_URL` is set (Neon on Vercel), a local SQLite file
+  otherwise. Passwords are salted `scrypt` hashes; the session is an HMAC-signed,
+  `HttpOnly`, `SameSite=Lax` cookie whose signature covers the password salt, so a
+  password change or reset invalidates every older session.
+- **Hardening:** login, sign-up and forgot-password requests are rate-limited per IP, `next=` redirects are limited
+  to same-site paths, and signing in with Google to an existing password account that never
+  proved its email resets that password first - so someone who pre-registered another
+  person's address can't keep access.
+
+`python -m tools.auth_selfcheck` exercises the sign-in, linking and settings flows against
+a throwaway database with the Google/GitHub calls stubbed.
+
+**Enabling Google sign-in:** create an OAuth client (type *Web application*) in Google
+Cloud → Google Auth Platform → Clients, with the redirect URI
+`<your site>/auth/google/callback`, publish the app under *Audience*, then set
+`GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. The button appears on `/login` and
+`/signup` automatically.
 
 ## Setup
 
@@ -344,6 +404,10 @@ Run the web app (reads the `data/chroma/` index built above):
 ```bash
 uvicorn web.main:app --host 127.0.0.1 --port 8000        # http://127.0.0.1:8000
 ```
+
+Accounts work locally with no extra setup (a SQLite file at `data/users.db`, gitignored).
+`SESSION_SECRET`, `DATABASE_URL`, `SMTP_*` and `GOOGLE_*` are only needed for a real
+deployment - see `.env.example`.
 
 Warm-up is fast since the embedding model is ONNX-based and the model artifact is cached at
 build/ingest time - under 1s on local dev hardware. The FastAPI app warms this up in a
@@ -395,10 +459,10 @@ always works for a judge or reviewer landing on a cold instance.
 
 | | |
 |---|---|
-| **Implemented** | One-shot web form (FastAPI); two-check grounded letter drafting with clause-level citations (see above); standalone **Ask** (`/ask`) - retrieval-gated Q&A over the Act with inline `[N]`-marker citations, refuses honestly when nothing retrieves; **multilingual drafting** (English/Hindi/Marathi) - letter boilerplate is statically translated (not LLM-translated, to avoid mistranslating legally-load-bearing text), `information_sought`/`reason` are generated in the selected language, department names are deliberately left untranslated; **Track** (`/track`) - statutory deadline tracker grounded in retrieved Act text (see below); **Save Draft** - save the filled form and a generated letter, citation chips intact, to this browser; PDF export; Browse the Act (real section list + search over the corpus); a static `/demo` sample application that works with neither Chroma nor the LLM available; system telemetry panel; a 3-provider LLM fallback chain (see Architecture); per-IP rate limiting on `/api/draft` and `/api/ask`; real content pages for the legal disclaimer, privacy policy, terms of service, and support. |
+| **Implemented** | One-shot web form (FastAPI); two-check grounded letter drafting with clause-level citations (see above); standalone **Ask** (`/ask`) - retrieval-gated Q&A over the Act with inline `[N]`-marker citations, refuses honestly when nothing retrieves; **multilingual drafting** (English/Hindi/Marathi) - letter boilerplate is statically translated (not LLM-translated, to avoid mistranslating legally-load-bearing text), `information_sought`/`reason` are generated in the selected language, department names are deliberately left untranslated; **Track** (`/track`) - statutory deadline tracker grounded in retrieved Act text (see below); **Save Draft** - save the filled form and a generated letter, citation chips intact, to this browser; PDF export; Browse the Act (real section list + search over the corpus); a static `/demo` sample application that works with neither Chroma nor the LLM available; system telemetry panel; a 3-provider LLM fallback chain (see Architecture); per-IP rate limiting on `/api/draft` and `/api/ask`; real content pages for the legal disclaimer, privacy policy, terms of service, and support; a landing page with a CSS-3D hero; optional accounts (email/password, Google sign-in, forgot/reset password, account settings - see Accounts); light/dark mode; phone and tablet layouts (checked at 320-1366px in both themes). |
 | **Regression-verified** | A single combined run against a live server (`tools/gate12_verification.py`), paced to stay under provider rate limits: `tools/scope_regression_suite.py` 10/10, `tools/ask_regression_suite.py` 5/5 (plus 1 known-failing case tracked separately, see Known limitations), and the 4-homepage-example × 3-language matrix 12/12 - **27/27 core passed**, zero `scope_check_failed` (0/19 checkable rows), and every "ok" row resolved to a real department name in all three languages, never the `Unknown` sentinel. Re-verified locally after every Gate 13-16 change and the subsequent retrieval/chunking fix above. Separately, **against the deployed instance itself on its actual `groq,anthropic,gemini` config** (the 26-case fixture, before the ask-suite additions above): 26/26, 0/19 `scope_check_failed`, 0 unresolved authorities. That run happened to catch Groq mid-throttle (likely from the same testing session's own load) - every one of the 26 requests fell through to Anthropic, averaging **11.25s** (min 4.58s, max 14.24s, n=25). That number is the Groq-fails-then-Anthropic-succeeds fallback cost, not a healthy first-hop Groq request - it's real evidence the fallback works exactly as designed under load, but not yet a clean read on ordinary latency; a re-run once Groq's throttle clears would be expected to show most requests served directly by Groq in a few seconds instead. See Known limitations for a real scope-classification difference the anthropic-first *investigation* surfaced between providers, and Deployment for why the deployed chain isn't anthropic-first. |
 | **Evaluated against the design it replaced** | A 113-case hand-labelled set (`tools/eval/dataset.jsonl`) run through both the live two-check gate and a faithful reconstruction of the old retrieval-distance gate from git history - false refusal rate 0.000 vs 0.283, with the old gate's own failure mode identified as leniency in the wrong direction (in_scope rate 0.673 vs a 0.531 base rate), not excess strictness. See Evaluation above for the full comparison, this project's own weaknesses, and the eval's limits. |
-| **Not implemented** | **Login** was considered and deliberately dropped rather than shipped as a stub - see Track and Save Draft (localStorage only) below for the reasoning. |
+| **Not implemented** | Syncing saved drafts and tracked filings to an account - both still live in the browser (see Track and Save Draft). |
 
 ## Known limitations
 
