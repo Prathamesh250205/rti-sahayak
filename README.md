@@ -8,8 +8,7 @@ for a record — not when the topic happens to share no vocabulary with the stat
 is most legitimate requests.
 
 **Live site:** https://rti-sahayak-smoky.vercel.app ·
-**Sample application (no LLM/Chroma required):** https://rti-sahayak-smoky.vercel.app/demo ·
-**Demo video:** [add link here]
+**Sample application (no LLM/Chroma required):** https://rti-sahayak-smoky.vercel.app/demo
 
 ![RTI Sahayak landing page](docs/screenshots/landing-light.png)
 
