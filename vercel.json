@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "python -m rag.ingest && rm -f data/onnx_model_cache/onnx.tar.gz",
+  "buildCommand": "python -m tools.vercel_build",
   "functions": {
     "index.py": {
       "maxDuration": 60,
