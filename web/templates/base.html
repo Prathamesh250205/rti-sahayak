@@ -175,7 +175,6 @@
     .acct-hello { flex: 1; color: #404946; }
     /* Make room for the account control on mid-size screens. */
     @media (max-width: 1439px) {
-      header [data-i18n="nav.tagline"], nav [data-i18n="nav.tagline"] { display: none !important; }
       /* Desktop nav only - "Sign in" stays, and its page links to sign-up. */
       .acct-cta:not(.acct-mobile .acct-cta) { display: none; }
     }
@@ -193,7 +192,10 @@
       #act-search-input { width: 10rem; }
       header:has(#act-search-input) nav { gap: 14px; }
     }
-    header nav a, header > div > a[href="/"] { white-space: nowrap; }
+    header nav a, header > div > a[href="/"], body > nav a { white-space: nowrap; }
+    /* The nav tagline duplicates the landing page's badge and no longer fits
+       beside the account and theme controls. */
+    header [data-i18n="nav.tagline"], nav [data-i18n="nav.tagline"] { display: none !important; }
 
     /* Site-wide polish: gentle entrance and hover lift on existing cards/buttons. */
     main { animation: page-in .5s cubic-bezier(.2,.7,.2,1) both; }
