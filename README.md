@@ -32,8 +32,9 @@ delayed on a technicality that has nothing to do with the actual grievance.
 
 ## Screenshots
 
-A generated draft, with clause-level citation chips (linking each procedural sentence back
-to the Act section that justifies it) and the retrieved source passages shown below:
+A generated draft: each procedural sentence carries a citation chip linking it to the
+section of the Act that justifies it (the retrieved source passages are listed further down
+the preview):
 
 ![Draft screen with citation chips and source cards](docs/draft-screen.png)
 
