@@ -1,0 +1,63 @@
+{% extends "content_page.html" %}
+{# Reuses content_page.html's nav and mobile-menu script; only the body differs. #}
+
+{% block title %}Account settings - RTI Sahayak{% endblock %}
+{% block head_extra %}<link href="/static/css/landing.css" rel="stylesheet"/>{% endblock %}
+
+{% block content %}
+<main class="acct-page">
+<div class="acct-head">
+<span class="acct-avatar">{{ user.name[:1] | upper }}</span>
+<div><h1>{{ user.name }}</h1><p>{{ user.email }}</p></div>
+</div>
+
+<section class="panel">
+<h2>Profile</h2>
+<p>The name shown in the navigation bar.</p>
+{% if profile_error %}<div class="alert alert-error" role="alert"><span class="material-symbols-outlined">error</span><span>{{ profile_error }}</span></div>{% endif %}
+{% if profile_ok %}<div class="alert alert-ok" role="status"><span class="material-symbols-outlined">check_circle</span><span>{{ profile_ok }}</span></div>{% endif %}
+<form method="post" action="/account/profile">
+<div class="field"><label for="name">Full name</label>
+<div class="field-box"><span class="material-symbols-outlined">person</span>
+<input id="name" name="name" type="text" value="{{ user.name }}" required maxlength="80" autocomplete="name"/></div></div>
+<div class="field"><label for="email-ro">Email</label>
+<div class="field-box"><span class="material-symbols-outlined">mail</span>
+<input id="email-ro" type="email" value="{{ user.email }}" disabled/></div></div>
+<button class="btn btn-green" type="submit">Save changes</button>
+</form>
+</section>
+
+<section class="panel">
+<h2>Password</h2>
+<p>Changing it signs you out on every other device.
+Signed up with Google or GitHub? You don't have a password yet - <a href="/forgot-password">set one by email</a>.</p>
+{% if password_error %}<div class="alert alert-error" role="alert"><span class="material-symbols-outlined">error</span><span>{{ password_error }}</span></div>{% endif %}
+{% if password_ok %}<div class="alert alert-ok" role="status"><span class="material-symbols-outlined">check_circle</span><span>{{ password_ok }}</span></div>{% endif %}
+<form method="post" action="/account/password">
+<div class="field"><label for="current">Current password</label>
+<div class="field-box"><span class="material-symbols-outlined">key</span>
+<input id="current" name="current" type="password" required autocomplete="current-password"/>
+<button class="peek" type="button" aria-label="Show password"><span class="material-symbols-outlined">visibility</span></button></div></div>
+{% include "partials/new_password.html" %}
+<button class="btn btn-green" type="submit">Update password</button>
+</form>
+</section>
+
+<section class="panel danger">
+<h2>Delete account</h2>
+<p>Permanently removes your name, email and password from RTI Sahayak. Drafts saved in this browser are not affected. This can't be undone.</p>
+{% if delete_error %}<div class="alert alert-error" role="alert"><span class="material-symbols-outlined">error</span><span>{{ delete_error }}</span></div>{% endif %}
+<form method="post" action="/account/delete">
+<div class="field"><label for="confirm_email">Type <strong>{{ user.email }}</strong> to confirm</label>
+<div class="field-box"><span class="material-symbols-outlined">warning</span>
+<input id="confirm_email" name="confirm_email" type="text" required autocomplete="off"/></div></div>
+<button class="btn btn-danger" type="submit">Delete my account</button>
+</form>
+</section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="/static/js/auth-forms.js" defer></script>
+{% endblock %}

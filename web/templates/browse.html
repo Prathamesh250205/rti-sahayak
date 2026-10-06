@@ -15,6 +15,7 @@
 <a class="text-on-surface-variant hover:text-on-surface transition-colors font-body-md text-body-md" href="/draft" data-i18n="nav.draft">Draft Application</a>
 <a class="text-secondary border-b-2 border-secondary pb-1 font-body-md text-body-md" href="/browse" data-i18n="nav.browse">Browse the Act</a>
 <a class="text-on-surface-variant hover:text-on-surface transition-colors font-body-md text-body-md" href="/track"><span data-i18n="nav.track">Track</span></a>
+{% include "partials/account_nav.html" %}
 </nav>
 <div class="flex items-center gap-4">
 <div class="relative hidden md:block">
@@ -38,6 +39,7 @@
 <a class="block px-gutter py-sm text-on-surface-variant" href="/draft" data-i18n="nav.draft">Draft Application</a>
 <a class="block px-gutter py-sm text-secondary font-bold" href="/browse" data-i18n="nav.browse">Browse the Act</a>
 <a class="block px-gutter py-sm text-on-surface-variant" href="/track"><span data-i18n="nav.track">Track</span></a>
+{% with mobile=true %}{% include "partials/account_nav.html" %}{% endwith %}
 </nav>
 </header>
 {% endblock %}

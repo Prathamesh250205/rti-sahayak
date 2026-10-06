@@ -140,6 +140,41 @@
     .statutory-border { border-left-color: #0E4D45; }
     .cursor-blink { animation: blink 1s step-end infinite; }
     @keyframes blink { 50% { opacity: 0; } }
+
+    /* Account control in every nav (partials/account_nav.html). Plain CSS,
+       like the rest of this block, so it needs no Tailwind rebuild. */
+    .acct-link { padding: 6px 12px; margin-left: 8px; color: #00352f; font-weight: 600; border-radius: 999px; white-space: nowrap; transition: background .2s; }
+    .acct-link:hover { background: #edeeec; }
+    .acct-cta { padding: 8px 16px; border-radius: 999px; color: #fff !important; font-weight: 600; white-space: nowrap;
+      background: linear-gradient(135deg, #0e4d45, #00352f); box-shadow: 0 6px 18px -6px rgba(14,77,69,.6); transition: transform .2s, box-shadow .2s; }
+    .acct-cta:hover { transform: translateY(-1px); box-shadow: 0 10px 24px -8px rgba(14,77,69,.7); }
+    .acct-menu { position: relative; margin-left: 12px; }
+    .acct-menu summary { list-style: none; cursor: pointer; }
+    .acct-menu summary::-webkit-details-marker { display: none; }
+    .acct-avatar { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; color: #fff; font-weight: 700;
+      background: linear-gradient(135deg, #C6742A, #0e4d45); box-shadow: 0 0 0 3px #fff, 0 0 0 4px #E3DDD2; }
+    .acct-pop { position: absolute; right: 0; top: calc(100% + 10px); min-width: 220px; padding: 14px; background: #fff;
+      border: 1px solid #E3DDD2; border-radius: 14px; box-shadow: 0 18px 40px -12px rgba(18,33,46,.25); z-index: 60; }
+    .acct-pop-name { font-weight: 700; color: #12212E; }
+    .acct-pop-mail { font-size: .8rem; color: #404946; margin-bottom: 10px; word-break: break-all; }
+    .acct-pop-link { display: block; padding: 8px 10px; margin: 0 -4px 8px; border-radius: 10px; color: #00352f; font-weight: 600; }
+    .acct-pop-link:hover { background: #f2f4f2; }
+    .acct-pop button { width: 100%; padding: 8px; border-radius: 10px; border: 1px solid #E3DDD2; color: #93000a; font-weight: 600; }
+    .acct-pop button:hover { background: #ffdad6; }
+    .acct-mobile { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 12px 16px; border-top: 1px solid #E3DDD2; }
+    .acct-ghost { padding: 8px 16px; border-radius: 999px; border: 1px solid #bfc8c5; color: #00352f; font-weight: 600; }
+    .acct-hello { flex: 1; color: #404946; }
+    /* Make room for the account control on mid-size screens. */
+    @media (max-width: 1439px) { header [data-i18n="nav.tagline"], nav [data-i18n="nav.tagline"] { display: none !important; } }
+
+    /* Site-wide polish: gentle entrance and hover lift on existing cards/buttons. */
+    main { animation: page-in .5s cubic-bezier(.2,.7,.2,1) both; }
+    @keyframes page-in { from { opacity: 0; transform: translateY(8px); } }
+    .flat-card, .card-flat { transition: transform .25s, box-shadow .25s; }
+    .flat-card:hover, .card-flat:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -18px rgba(18,33,46,.35); }
+    .amber-button { transition: transform .2s, box-shadow .2s, background-color .2s; }
+    .amber-button:hover { transform: translateY(-1px); box-shadow: 0 10px 22px -10px rgba(198,116,42,.8); }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 {% block head_extra %}{% endblock %}
 </head>

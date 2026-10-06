@@ -8,8 +8,8 @@ for a record — not when the topic happens to share no vocabulary with the stat
 is most legitimate requests.
 
 **Demo video:** [add link here]
-**Live deployment:** https://rti-sahayak.onrender.com
-**Sample application (no LLM/Chroma required):** https://rti-sahayak.onrender.com/demo
+**Live deployment:** [add Vercel URL here]
+**Sample application (no LLM/Chroma required):** `<deployment URL>/demo`
 
 ## The problem
 
@@ -42,9 +42,7 @@ export/   PDF generation (export/pdf_writer.py) - renders the final letter text,
 web/      FastAPI app: routes (web/main.py), the /api/draft, /api/ask, /api/act,
           and /api/track/deadline-rules endpoints (web/api/), Jinja2 templates,
           per-IP rate limiting
-app.py    Streamlit conversational-intake interface over the same
-          agent/llm/rag/export pipeline as web/ - see Known limitations for
-          how it differs from the FastAPI app
+index.py  Vercel entrypoint - re-exports web.main:app
 ```
 
 A request flows: **web/api/draft.py** (intake fields) → **CHECK A** (`agent/drafter.py`'s
@@ -277,11 +275,9 @@ band, not on scope.)
 
 Both `/track` (statutory deadline tracking) and Save Draft (on `/draft`) persist entirely
 in the browser's `localStorage` - there is no server-side account, database, or per-user
-storage anywhere in this app. This is a deliberate constraint, not a missing feature:
-Render's free-tier filesystem is ephemeral across deploys and restarts, so anything the
-server itself wrote to disk would be silently lost; doing this properly server-side would
-mean standing up a real database and an account system, which neither feature actually
-needs to be useful. Both pages disclose this plainly in the UI (a warning banner, not a
+storage behind either one. This is a deliberate constraint, not a missing feature:
+serverless hosting has no durable local disk, and neither feature needs a database to be
+useful. (Optional accounts exist - see Deployment - but they don't sync these.) Both pages disclose this plainly in the UI (a warning banner, not a
 buried caveat) - clearing browser data, switching browsers, or using a different device
 loses what's stored.
 
@@ -320,9 +316,6 @@ app by the time they were removed.
 
 ## Setup
 
-Verified end-to-end via a clean clone into a fresh directory, fresh venv, and a fresh
-`pip install` - most recently, against the exact Render build command:
-
 ```bash
 python -m venv .venv
 # Windows: .venv\Scripts\activate      macOS/Linux: source .venv/bin/activate
@@ -346,22 +339,16 @@ gitignored) and prints `Ingested 83 chunks from 1 PDF(s) ... (83/83 tagged with 
 number)`. Re-run it any time the corpus PDF changes; it deletes and replaces the existing
 Chroma collection.
 
-Run either front end (both read the same `data/chroma/` index, built above):
+Run the web app (reads the `data/chroma/` index built above):
 
 ```bash
-streamlit run app.py                                    # conversational intake
-uvicorn web.main:app --host 127.0.0.1 --port 8000        # web UI, http://127.0.0.1:8000
+uvicorn web.main:app --host 127.0.0.1 --port 8000        # http://127.0.0.1:8000
 ```
 
-The FastAPI app (`web/`) is the primary surface; the Streamlit app (`app.py`) is a
-reduced fallback - see Known limitations.
-
 Warm-up is fast since the embedding model is ONNX-based and the model artifact is cached at
-build/ingest time - measured under 1s on local dev hardware, ~8s on the deployed Render
-free-tier instance (0.1 CPU). The FastAPI app warms this up in a background task at
-startup, binding its port immediately so it never blocks Render's health check; Streamlit
-loads it lazily on first use (`st.cache_resource`) and caches it for the life of the
-process.
+build/ingest time - under 1s on local dev hardware. The FastAPI app warms this up in a
+background task at startup so it never blocks the server from accepting requests; the
+loaded collection is cached for the life of the process (`functools.cache`).
 
 **Troubleshooting (Windows):** if `git clone` fails with `Filename too long`, it's hitting
 the 260-character `MAX_PATH` limit — one self-hosted font file has a long, hash-based name.
@@ -370,55 +357,45 @@ Clone to a short path (e.g. `C:\rti-sahayak`) or run
 
 ## Deployment
 
-`render.yaml` targets Render's native Python runtime (no Dockerfile): `buildCommand` runs
-`pip install -r requirements.txt && python -m rag.ingest`, baking the Chroma index and the
-ONNX model cache into the build (the filesystem is otherwise ephemeral across deploys, and
-both are gitignored). `GET /healthz` reports the live chunk count, resolved persist path,
-and configured LLM provider — built specifically to make a zero-chunk deploy (e.g. a build
-that silently skipped ingestion) immediately visible instead of surfacing only as a vague
-empty `/browse` page or a wall of refusals. A startup check independently logs a loud
-`[startup] ERROR` line to Render's logs if the collection is empty or if any chunk still
-carries the pre-fix `"unknown"` front-matter label.
+Hosted on **Vercel** as a single Python function (FastAPI over ASGI):
 
-`LLM_PROVIDER_CHAIN` is set directly as a plain (non-secret) value in `render.yaml` itself,
-currently `groq,anthropic,gemini` — deliberately *not* anthropic-first, unlike the local
-`.env` override used during the Gate 13 investigation below. This is a public deployment:
-anthropic-first would mean every visitor's request bills the deployment owner, all the
-time, not just during a quota crunch. Groq's free tier (1,000 requests/day, resets daily)
-is plenty for a demo; Anthropic sits second so a Groq throttle always has somewhere to
-land instead of becoming a visible failure, without being the provider paying for every
-normal request. `ANTHROPIC_API_KEY` is a real secret and must be set in Render's dashboard
-like `GROQ_API_KEY`/`GEMINI_API_KEY` already are (`sync: false` in `render.yaml` — this
-repo declares that the key is required but never carries its value).
+- `index.py` is the entrypoint Vercel looks for; it just re-exports `web.main:app`.
+- `vercel.json` runs `python -m rag.ingest` as the build command, so the Chroma index and
+  the ONNX model are built fresh on every deploy (both are gitignored) and shipped inside
+  the function. Its `excludeFiles` keeps design files, tools, the corpus PDF and the model
+  archive out of the bundle (limit: 500 MB).
+- The function's filesystem is read-only, so `rag/retriever.py` copies the Chroma index to
+  `/tmp` on first use (Chroma's SQLite needs a writable copy even to read).
+- `/static` is served from Vercel's CDN (FastAPI `StaticFiles` mounts are promoted
+  automatically).
+- `GET /healthz` reports the live chunk count and resolved paths - a zero-chunk deploy
+  (e.g. a build that skipped ingestion) shows up immediately instead of as a wall of
+  refusals. `.github/workflows/uptime-monitor.yml` checks it every 30 minutes, 09:00-22:00
+  IST, once the `SITE_URL` repository variable is set.
 
-**Cold starts are a known characteristic of free-tier hosting, not a defect.** Render's
-free web services spin down after 15 minutes without inbound traffic and take about a
-minute to spin back up - documented Render behavior, not something this project works
-around. `/demo` exists specifically to give a judge or reviewer a working, fully-rendered
-sample application that needs neither a warm instance, Chroma, nor the LLM available, so
-the worst case (landing on a cold instance) is already covered by a page that has nothing
-to wait on.
+**Environment variables** (Vercel > Project > Settings > Environment Variables):
 
-`.github/workflows/uptime-monitor.yml` hits `GET /healthz` every 30 minutes, 09:00-22:00
-IST, and fails loudly (fails the run, which GitHub emails on) if the response isn't 200
-with `chroma_chunk_count: 83`. This is **availability monitoring, not a keep-alive** -
-the two were considered separately before building this. A true keep-alive (pinging often
-enough to outrun the 15-minute idle timeout, all day) was checked against Render's own
-free-tier terms and rejected: continuous uptime for a 31-day month costs 744 of the 750
-free instance-hours a workspace gets, leaving 6 hours of slack for anything else in that
-workspace for the entire month, and Render's Acceptable Use Policy's "bypass usage
-restrictions" clause reads ambiguously enough against deliberately defeating the spin-down
-timer that it wasn't worth the risk to a working deployment either way. At a 30-minute
-interval this check cannot reliably prevent spin-down (30 minutes is longer than the
-15-minute idle timeout), and that's fine - keeping the instance warm was never the goal.
-The goal is finding out the deployed site is down before a judge or a resume reader does,
-at roughly 27 requests/day against a 750-hour budget - real margin, not a near-miss.
+| Variable | Needed for |
+|---|---|
+| `GROQ_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` | LLM providers |
+| `LLM_PROVIDER_CHAIN` | `groq,anthropic,gemini` - deliberately not anthropic-first, so a public demo doesn't bill every request to the paid provider |
+| `SESSION_SECRET` | Accounts - a long random string. Without it logins drop between instances |
+| `DATABASE_URL` | Accounts - add a Neon Postgres database under the project's Storage tab and Vercel sets it |
+| `SMTP_*` | Optional: password-reset emails |
+| `GOOGLE_CLIENT_*`, `GITHUB_CLIENT_*` | Optional: social sign-in |
+
+`.env.example` documents each one.
+
+**Known characteristics:** a cold function loads the embedding model on its first request
+(a few seconds), and the per-IP rate limiter (`web/rate_limit.py`) is in-memory, so it
+limits per instance rather than globally. `/demo` needs neither Chroma nor the LLM, so it
+always works for a judge or reviewer landing on a cold instance.
 
 ## Scope
 
 | | |
 |---|---|
-| **Implemented** | Conversational intake (Streamlit) and one-shot web form (FastAPI); two-check grounded letter drafting with clause-level citations (see above); standalone **Ask** (`/ask`) - retrieval-gated Q&A over the Act with inline `[N]`-marker citations, refuses honestly when nothing retrieves; **multilingual drafting** (English/Hindi/Marathi) - letter boilerplate is statically translated (not LLM-translated, to avoid mistranslating legally-load-bearing text), `information_sought`/`reason` are generated in the selected language, department names are deliberately left untranslated; **Track** (`/track`) - statutory deadline tracker grounded in retrieved Act text (see below); **Save Draft** - save the filled form and a generated letter, citation chips intact, to this browser; PDF export; Browse the Act (real section list + search over the corpus); a static `/demo` sample application that works with neither Chroma nor the LLM available; system telemetry panel; a 3-provider LLM fallback chain (see Architecture); per-IP rate limiting on `/api/draft` and `/api/ask`; real content pages for the legal disclaimer, privacy policy, terms of service, and support. |
+| **Implemented** | One-shot web form (FastAPI); two-check grounded letter drafting with clause-level citations (see above); standalone **Ask** (`/ask`) - retrieval-gated Q&A over the Act with inline `[N]`-marker citations, refuses honestly when nothing retrieves; **multilingual drafting** (English/Hindi/Marathi) - letter boilerplate is statically translated (not LLM-translated, to avoid mistranslating legally-load-bearing text), `information_sought`/`reason` are generated in the selected language, department names are deliberately left untranslated; **Track** (`/track`) - statutory deadline tracker grounded in retrieved Act text (see below); **Save Draft** - save the filled form and a generated letter, citation chips intact, to this browser; PDF export; Browse the Act (real section list + search over the corpus); a static `/demo` sample application that works with neither Chroma nor the LLM available; system telemetry panel; a 3-provider LLM fallback chain (see Architecture); per-IP rate limiting on `/api/draft` and `/api/ask`; real content pages for the legal disclaimer, privacy policy, terms of service, and support. |
 | **Regression-verified** | A single combined run against a live server (`tools/gate12_verification.py`), paced to stay under provider rate limits: `tools/scope_regression_suite.py` 10/10, `tools/ask_regression_suite.py` 5/5 (plus 1 known-failing case tracked separately, see Known limitations), and the 4-homepage-example × 3-language matrix 12/12 - **27/27 core passed**, zero `scope_check_failed` (0/19 checkable rows), and every "ok" row resolved to a real department name in all three languages, never the `Unknown` sentinel. Re-verified locally after every Gate 13-16 change and the subsequent retrieval/chunking fix above. Separately, **against the deployed instance itself on its actual `groq,anthropic,gemini` config** (the 26-case fixture, before the ask-suite additions above): 26/26, 0/19 `scope_check_failed`, 0 unresolved authorities. That run happened to catch Groq mid-throttle (likely from the same testing session's own load) - every one of the 26 requests fell through to Anthropic, averaging **11.25s** (min 4.58s, max 14.24s, n=25). That number is the Groq-fails-then-Anthropic-succeeds fallback cost, not a healthy first-hop Groq request - it's real evidence the fallback works exactly as designed under load, but not yet a clean read on ordinary latency; a re-run once Groq's throttle clears would be expected to show most requests served directly by Groq in a few seconds instead. See Known limitations for a real scope-classification difference the anthropic-first *investigation* surfaced between providers, and Deployment for why the deployed chain isn't anthropic-first. |
 | **Evaluated against the design it replaced** | A 113-case hand-labelled set (`tools/eval/dataset.jsonl`) run through both the live two-check gate and a faithful reconstruction of the old retrieval-distance gate from git history - false refusal rate 0.000 vs 0.283, with the old gate's own failure mode identified as leniency in the wrong direction (in_scope rate 0.673 vs a 0.531 base rate), not excess strictness. See Evaluation above for the full comparison, this project's own weaknesses, and the eval's limits. |
 | **Not implemented** | **Login** was considered and deliberately dropped rather than shipped as a stub - see Track and Save Draft (localStorage only) below for the reasoning. |
@@ -427,20 +404,9 @@ at roughly 27 requests/day against a 750-hour budget - real margin, not a near-m
 
 - **`likely_authority` is a suggestion, not a verified fact.** The department/PIO named in
   a draft is the LLM's best guess at who is likely to hold the requested records - it is
-  never checked against any official directory. Every draft (letter body, and both places
-  Streamlit surfaces it separately) carries "(Best guess — please confirm the correct
+  never checked against any official directory. Every draft carries "(Best guess — please confirm the correct
   Public Information Officer and mailing address before submitting.)" for exactly this
   reason. Confirm the correct office before filing.
-- **The Streamlit app (`app.py`) has no CHECK B scope gate.** It shares the same
-  `agent/drafter.py` pipeline as the FastAPI app, but its conversational flow calls
-  `understand_request()` without acting on the `in_scope` verdict it now returns - so it
-  will draft a letter for a plainly out-of-scope input (e.g. "write me a poem about
-  cricket") where the FastAPI app would decline. This is a deliberate, documented gap (the
-  FastAPI app is the primary surface), not an oversight discovered after the fact.
-- `rag/retriever.py` imports `streamlit` and uses `st.cache_resource` to cache the loaded
-  collection, a pattern built for the Streamlit app. Called from FastAPI, this still works
-  but logs a `missing ScriptRunContext` warning to stderr on every process start — cosmetic,
-  not functional.
 - `gemini-flash-latest` is a reasoning model that spends part of `max_output_tokens` on
   internal reasoning before producing visible output. A low token budget can be entirely
   consumed by reasoning, returning empty text with no error — observed directly with a
@@ -459,7 +425,7 @@ at roughly 27 requests/day against a 750-hour budget - real margin, not a near-m
   daily cap) as the chain's last resort, a subsequent full combined verification run
   passed 26/26 with zero scope-classification failures - see Scope.
 - `understand_request()` previously called the streaming `generate_stream()` purely for
-  a cosmetic live-typing effect in the Streamlit app, despite buffering the whole
+  a cosmetic live-typing effect in the (since removed) Streamlit app, despite buffering the whole
   response before parsing it as JSON anyway. That meant a Groq failure *after* it had
   already started streaming some tokens could not safely fall back to Gemini (restarting
   mid-stream would have duplicated text on screen) - so `generate_stream()` correctly,

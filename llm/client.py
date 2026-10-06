@@ -1,6 +1,6 @@
 """Thin wrapper around the LLM provider.
 
-Every LLM call in this app goes through generate() (or generate_stream()) so
+Every LLM call in this app goes through generate() so
 we can swap providers without touching any other code in the codebase.
 Providers are tried in order along PROVIDER_CHAIN; if one fails, the next is
 tried automatically, so a single provider's outage or throttle never has to
@@ -10,7 +10,6 @@ import json
 import os
 import re
 import sys
-from typing import Iterator
 
 from dotenv import load_dotenv
 
@@ -134,54 +133,12 @@ def generate(
     raise LLMError(f"All LLM providers failed. {' | '.join(errors)}")
 
 
-def generate_stream(
-    prompt: str, system: str | None = None, max_tokens: int | None = None
-) -> Iterator[str]:
-    """Like generate(), but yields text chunks as they arrive instead of
-    blocking for the full response. No tool-calling support (streaming +
-    tool calls need response-shape handling this app doesn't use).
-
-    Tries each provider in PROVIDER_CHAIN in order. Moves to the next
-    provider only if the current one fails before yielding any content —
-    once a stream has started delivering text, a mid-stream failure
-    surfaces as LLMError rather than silently restarting on the next
-    provider with a half-shown answer.
-    """
-    global LAST_PROVIDER_USED
-
-    errors = []
-    for i, provider in enumerate(PROVIDER_CHAIN):
-        try:
-            yielded_any = False
-            for chunk in _dispatch_stream(provider, prompt, system, max_tokens):
-                yielded_any = True
-                yield chunk
-            LAST_PROVIDER_USED = provider
-            return
-        except LLMError as e:
-            if yielded_any:
-                raise
-            errors.append(f"{provider}: {e}")
-            if i + 1 < len(PROVIDER_CHAIN):
-                print(f"[llm] {provider} failed ({e}); retrying on {PROVIDER_CHAIN[i + 1]}...", file=sys.stderr)
-
-    raise LLMError(f"All LLM providers failed. {' | '.join(errors)}")
-
-
 def _dispatch(provider: str, prompt: str, system: str | None, tools: list[dict] | None, max_tokens: int | None):
     if provider == "gemini":
         return _generate_gemini(prompt, system, tools, max_tokens)
     if provider == "anthropic":
         return _generate_anthropic(prompt, system, tools, max_tokens)
     return _generate_groq(prompt, system, tools, max_tokens)
-
-
-def _dispatch_stream(provider: str, prompt: str, system: str | None, max_tokens: int | None) -> Iterator[str]:
-    if provider == "gemini":
-        return _stream_gemini(prompt, system, max_tokens)
-    if provider == "anthropic":
-        return _stream_anthropic(prompt, system, max_tokens)
-    return _stream_groq(prompt, system, max_tokens)
 
 
 def _gemini_config_kwargs(system, tools, max_tokens):
@@ -231,25 +188,6 @@ def _generate_gemini(prompt: str, system: str | None, tools: list[dict] | None, 
     )
 
 
-def _stream_gemini(prompt: str, system: str | None, max_tokens: int | None) -> Iterator[str]:
-    from google import genai
-    from google.genai import errors as genai_errors
-
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        raise LLMError("GEMINI_API_KEY is not set. Copy .env.example to .env and add your key.")
-
-    client = genai.Client(api_key=api_key)
-    config = _gemini_config_kwargs(system, None, max_tokens)
-
-    try:
-        for chunk in client.models.generate_content_stream(model=GEMINI_MODEL, contents=prompt, config=config):
-            if chunk.text:
-                yield chunk.text
-    except genai_errors.APIError as e:
-        raise LLMError(f"Gemini provider error: {e}")
-
-
 def _extract_gemini_tool_calls(response) -> list[dict]:
     calls = []
     for candidate in response.candidates or []:
@@ -273,7 +211,7 @@ def _log_groq_rate_limit(headers) -> None:
     (Gate 12e) - a local trail of remaining budget instead of only finding
     out via a 429. Deliberately isolated from the actual call: if the
     header names or shape ever change, this must degrade to a no-op, never
-    to a broken generate()/generate_stream() call. Single line, only when
+    to a broken generate() call. Single line, only when
     at least one of the two headers is actually present.
     """
     try:
@@ -337,40 +275,6 @@ def _generate_groq(prompt: str, system: str | None, tools: list[dict] | None, ma
     return _format_result(text=message.content or "", tool_calls=tool_calls, tools_requested=tools is not None)
 
 
-def _stream_groq(prompt: str, system: str | None, max_tokens: int | None) -> Iterator[str]:
-    from groq import Groq
-    import groq as groq_sdk
-
-    api_key = os.getenv("GROQ_API_KEY")
-    if not api_key:
-        raise LLMError("GROQ_API_KEY is not set. Copy .env.example to .env and add your key.")
-
-    client = Groq(api_key=api_key, max_retries=GROQ_MAX_RETRIES)
-    kwargs = {"model": GROQ_MODEL, "messages": _groq_messages(system, prompt), "stream": True}
-    if max_tokens is not None:
-        kwargs["max_tokens"] = max_tokens
-
-    try:
-        if GROQ_LOG_RATE_LIMITS:
-            raw_response = client.chat.completions.with_raw_response.create(**kwargs)
-            _log_groq_rate_limit(raw_response.headers)
-            stream = raw_response.parse()
-        else:
-            stream = client.chat.completions.create(**kwargs)
-        for chunk in stream:
-            delta = chunk.choices[0].delta.content
-            if delta:
-                yield delta
-    except groq_sdk.AuthenticationError:
-        raise LLMError("Invalid Groq API key. Check your .env file.")
-    except groq_sdk.RateLimitError:
-        raise LLMError("Rate limited by the LLM provider. Wait a moment and try again.")
-    except groq_sdk.APIConnectionError:
-        raise LLMError("Could not reach the LLM provider. Check your internet connection.")
-    except groq_sdk.APIStatusError as e:
-        raise LLMError(f"Groq provider error ({e.status_code}): {e.message}")
-
-
 # Every real call site in this app always passes an explicit max_tokens, so
 # this is only a defensive fallback - Anthropic's API requires max_tokens on
 # every request, unlike Groq/Gemini where it's optional.
@@ -429,36 +333,6 @@ def _generate_anthropic(prompt: str, system: str | None, tools: list[dict] | Non
             tool_calls.append({"name": block.name, "input": block.input})
 
     return _format_result(text="".join(text_parts), tool_calls=tool_calls, tools_requested=tools is not None)
-
-
-def _stream_anthropic(prompt: str, system: str | None, max_tokens: int | None) -> Iterator[str]:
-    import anthropic as anthropic_sdk
-
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
-        raise LLMError("ANTHROPIC_API_KEY is not set. Copy .env.example to .env and add your key.")
-
-    client = anthropic_sdk.Anthropic(api_key=api_key, max_retries=ANTHROPIC_MAX_RETRIES)
-    kwargs = {
-        "model": ANTHROPIC_MODEL,
-        "max_tokens": max_tokens if max_tokens is not None else _ANTHROPIC_DEFAULT_MAX_TOKENS,
-        "messages": [{"role": "user", "content": prompt}],
-    }
-    if system is not None:
-        kwargs["system"] = system
-
-    try:
-        with client.messages.stream(**kwargs) as stream:
-            for text in stream.text_stream:
-                yield text
-    except anthropic_sdk.AuthenticationError:
-        raise LLMError("Invalid Anthropic API key. Check your .env file.")
-    except anthropic_sdk.RateLimitError:
-        raise LLMError("Rate limited by the LLM provider. Wait a moment and try again.")
-    except anthropic_sdk.APIConnectionError:
-        raise LLMError("Could not reach the LLM provider. Check your internet connection.")
-    except anthropic_sdk.APIStatusError as e:
-        raise LLMError(f"Anthropic provider error ({e.status_code}): {e.message}")
 
 
 def _format_result(text: str, tool_calls: list[dict], tools_requested: bool):

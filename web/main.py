@@ -19,6 +19,8 @@ from rag.retriever import warm_up as warm_up_retriever
 from web import state as web_state
 from web.api.act import router as act_router
 from web.api.ask import router as ask_router
+from web.api.auth import current_user, oauth_providers
+from web.api.auth import router as auth_router
 from web.api.draft import router as draft_router
 from web.api.system import router as system_router
 from web.api.track import router as track_router
@@ -143,11 +145,14 @@ templates = Jinja2Templates(directory=BASE_DIR / "templates")
 # footer's "© {year}" only needs to be right for whatever year this
 # process happens to be running in, which a redeploy refreshes anyway.
 templates.env.globals["current_year"] = date.today().year
+templates.env.globals["current_user"] = current_user
+templates.env.globals["oauth_providers"] = oauth_providers
 app.include_router(draft_router)
 app.include_router(act_router)
 app.include_router(ask_router)
 app.include_router(system_router)
 app.include_router(track_router)
+app.include_router(auth_router)
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -284,7 +289,10 @@ CONTENT_PAGES = {
         "Privacy Policy",
         [
             {"heading": "What this app stores", "paragraphs": [
-                "RTI Sahayak has no user accounts and no session store or database of past requests. "
+                "Accounts are optional. If you create one, RTI Sahayak stores your name, email "
+                "address and a salted scrypt hash of your password (never the password itself) - "
+                "nothing else. If you sign in with Google or GitHub, we receive only your name and "
+                "verified email address from them. There is no database of past requests. "
                 "Each draft request is processed statelessly: the form data you submit is used to "
                 "generate a response and is not saved anywhere by this application once that "
                 "response is returned.",
@@ -297,7 +305,7 @@ CONTENT_PAGES = {
                 "deliberately log, store, or share the content of your request.",
             ]},
             {"heading": "Operational logs", "paragraphs": [
-                "Like most web services, the hosting platform (Render) may keep short-lived "
+                "Like most web services, the hosting platform (Vercel) may keep short-lived "
                 "infrastructure-level logs, such as request timing or error traces, as part of "
                 "running the service.",
             ]},

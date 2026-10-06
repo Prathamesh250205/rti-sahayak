@@ -15,6 +15,7 @@
 <a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm whitespace-nowrap" href="/draft" data-i18n="nav.draft">Draft Application</a>
 <a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm whitespace-nowrap" href="/browse" data-i18n="nav.browse">Browse the Act</a>
 <a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm whitespace-nowrap" href="/track"><span data-i18n="nav.track">Track</span></a>
+{% include "partials/account_nav.html" %}
 </nav>
 <button aria-label="Open menu" class="md:hidden text-primary" id="mobile-menu-btn" type="button">
 <span class="material-symbols-outlined">menu</span>
@@ -26,6 +27,7 @@
 <a class="block px-gutter py-sm text-on-surface-variant" href="/draft" data-i18n="nav.draft">Draft Application</a>
 <a class="block px-gutter py-sm text-on-surface-variant" href="/browse" data-i18n="nav.browse">Browse the Act</a>
 <a class="block px-gutter py-sm text-on-surface-variant" href="/track" data-i18n="nav.track">Track</a>
+{% with mobile=true %}{% include "partials/account_nav.html" %}{% endwith %}
 </nav>
 </header>
 {% endblock %}

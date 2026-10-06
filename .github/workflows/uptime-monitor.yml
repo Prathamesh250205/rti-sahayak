@@ -1,23 +1,17 @@
 name: Uptime monitor
 
-# Availability monitoring for the deployed instance - NOT a keep-alive.
-# Any keep-warm effect is incidental: at a 30-minute interval, this cannot
-# reliably outrun Render's free-tier 15-minute idle spin-down, and that's
-# fine - preventing spin-down was never the point. The point is finding out
-# the deployed site is broken before someone reading the resume does.
+# Availability monitoring for the deployed instance - not a keep-alive.
+# Finds out the deployed site is broken before someone reading the resume
+# does. Checks GET /healthz for HTTP 200 and the expected chunk count.
 #
-# Scheduled 09:00-22:00 IST only, not 24/7 - GitHub Actions cron always
-# runs in UTC, and IST is UTC+5:30, so the window is 03:30-16:30 UTC.
-# Two cron lines because a single cron expression can't say "only :30 on
-# the boundary hour, :00 and :30 on every hour after that":
-#   - "30 3 * * *"       -> 03:30 UTC  = 09:00 IST (the window's start)
+# Set the site to check under repo Settings > Secrets and variables >
+# Actions > Variables as SITE_URL (e.g. https://rti-sahayak.vercel.app).
+# Until it's set, the job skips instead of failing.
+#
+# Scheduled 09:00-22:00 IST only. GitHub Actions cron runs in UTC
+# (IST = UTC+5:30), so the window is 03:30-16:30 UTC:
+#   - "30 3 * * *"       -> 03:30 UTC  = 09:00 IST
 #   - "0,30 4-16 * * *"  -> 04:00-16:30 UTC = 09:30-22:00 IST
-# ~27 runs/day. Chosen specifically to leave real margin against Render's
-# 750 free instance-hours/workspace/month - see README's Deployment
-# section for the full reasoning and the numbers that ruled out a true
-# keep-alive (a 31-day month of continuous uptime uses 744 of those 750
-# hours on its own, with no other free service in the workspace accounted
-# for).
 on:
   schedule:
     - cron: "30 3 * * *"
@@ -27,19 +21,15 @@ on:
 jobs:
   check-healthz:
     runs-on: ubuntu-latest
+    if: vars.SITE_URL != ''
     steps:
       - name: GET /healthz and verify 200 + 83 chunks
         run: |
           set -e
-          # -m 90, not something tighter: Render documents free-tier spin-up
-          # from a cold (spun-down) instance as "about one minute" - a
-          # shorter timeout would fail this check on an ordinary cold start,
-          # not a real outage, which is exactly the false alarm this
-          # workflow exists to avoid. Confirmed directly: a first probe with
-          # -m 30 against a cold instance failed outright; the same request
-          # with room to finish returned 200 in ~12s once past the TLS
-          # handshake.
-          response=$(curl -s -w "\n%{http_code}" -m 90 https://rti-sahayak.onrender.com/healthz)
+          # -m 90: a cold Vercel function loads the embedding model and
+          # copies the Chroma index on first request - give it room so an
+          # ordinary cold start isn't reported as an outage.
+          response=$(curl -s -w "\n%{http_code}" -m 90 "${{ vars.SITE_URL }}/healthz")
           http_code=$(echo "$response" | tail -n1)
           body=$(echo "$response" | sed '$d')
 

@@ -14,6 +14,7 @@
 <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/draft" data-i18n="nav.draft">Draft Application</a>
 <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/browse" data-i18n="nav.browse">Browse the Act</a>
 <a class="font-body-md text-body-md text-secondary font-bold border-b-2 border-secondary pb-1 h-full flex items-center pt-1 cursor-pointer transition-colors" href="/track">Track</a>
+{% include "partials/account_nav.html" %}
 </div>
 </div>
 <div class="flex items-center gap-md relative">
@@ -31,6 +32,7 @@
 <a class="block px-gutter py-sm text-on-surface-variant" href="/draft" data-i18n="nav.draft">Draft Application</a>
 <a class="block px-gutter py-sm text-on-surface-variant" href="/browse" data-i18n="nav.browse">Browse the Act</a>
 <a class="block px-gutter py-sm text-secondary font-bold" href="/track">Track</a>
+{% with mobile=true %}{% include "partials/account_nav.html" %}{% endwith %}
 </nav>
 </nav>
 {% endblock %}

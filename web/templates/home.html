@@ -15,6 +15,7 @@
 <a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm whitespace-nowrap" href="/draft" data-i18n="nav.draft">Draft Application</a>
 <a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm whitespace-nowrap" href="/browse" data-i18n="nav.browse">Browse the Act</a>
 <a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary h-full flex items-center transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm whitespace-nowrap" href="/track"><span data-i18n="nav.track">Track</span></a>
+{% include "partials/account_nav.html" %}
 </nav>
 <div class="hidden md:flex items-center gap-sm font-body-md text-body-md text-primary dark:text-primary-fixed relative shrink-0">
 <span class="cursor-pointer transition-all duration-200 hover:bg-surface-container-low dark:hover:bg-surface-container-highest px-sm py-xs rounded whitespace-nowrap" id="lang-pill">English / हिंदी / मराठी</span>
@@ -31,53 +32,97 @@
 <a class="block px-gutter py-sm text-on-surface-variant" href="/draft" data-i18n="nav.draft">Draft Application</a>
 <a class="block px-gutter py-sm text-on-surface-variant" href="/browse" data-i18n="nav.browse">Browse the Act</a>
 <a class="block px-gutter py-sm text-on-surface-variant" href="/track"><span data-i18n="nav.track">Track</span></a>
+{% with mobile=true %}{% include "partials/account_nav.html" %}{% endwith %}
 </nav>
 </header>
 {% endblock %}
 
+{% block head_extra %}<link href="/static/css/landing.css" rel="stylesheet"/>{% endblock %}
+
 {% block content %}
-<!-- Main Content -->
-<main class="flex-grow flex flex-col items-center justify-center px-gutter py-xl max-w-max-width mx-auto w-full gap-lg">
-<!-- Hero Section -->
-<section class="text-center max-w-3xl mx-auto space-y-md">
-<h1 class="font-display-lg text-display-lg text-rti-text" data-i18n="home.heading">Turn your problem into a grounded RTI application</h1>
-<p class="font-body-lg text-body-lg text-on-surface-variant" data-i18n="home.subtext">Every procedural claim is grounded in the Act's text and cited by section.</p>
-</section>
+<main class="lp">
+<!-- Hero -->
+<section class="lp-hero">
+<div class="blob b1"></div><div class="blob b2"></div>
+<div class="lp-wrap lp-hero-grid">
+<div>
+<span class="lp-badge"><i></i>Grounded in the RTI Act, 2005</span>
+<h1 data-i18n="home.heading">Turn your problem into a grounded RTI application</h1>
+<p class="lp-sub" data-i18n="home.subtext">Every procedural claim is grounded in the Act's text and cited by section.</p>
 <!-- Quick-start into the draft flow: typed/clicked text becomes the
      problem_description prefill on /draft (see goToDraft() below). This is
      not a Q&A feature - it does not answer anything itself. -->
-<section class="w-full max-w-3xl mx-auto space-y-md">
-<div class="relative flex items-center bg-white rounded-lg border border-rti-border focus-within:border-rti-text transition-colors ai-input-shadow p-sm">
-<span aria-hidden="true" class="material-symbols-outlined text-outline ml-sm">edit_note</span>
-<input class="w-full bg-transparent border-none outline-none font-body-md text-body-md px-md py-sm text-rti-text placeholder:text-outline focus:ring-0" id="ask-input" placeholder="e.g. My road repair complaint has been ignored for 3 months" data-i18n-placeholder="home.input_placeholder" type="text"/>
-<button class="bg-rti-amber text-white font-caption text-caption rounded-lg px-md py-sm hover:opacity-90 transition-opacity whitespace-nowrap" id="ask-button" type="button" data-i18n="home.draft_button">Draft</button>
+<div class="lp-input">
+<span aria-hidden="true" class="material-symbols-outlined" style="color:#8a9692">edit_note</span>
+<input id="ask-input" aria-label="Describe your problem" placeholder="e.g. My road repair complaint has been ignored for 3 months" data-i18n-placeholder="home.input_placeholder" type="text"/>
+<button class="btn btn-amber" id="ask-button" type="button"><span data-i18n="home.draft_button">Draft</span><span aria-hidden="true" class="material-symbols-outlined">arrow_forward</span></button>
 </div>
-<!-- Suggestions -->
-<div class="flex flex-wrap gap-base justify-center mt-md">
-<button class="suggestion-chip bg-rti-bg border border-rti-amber rounded-full px-md py-xs font-label-mono text-label-mono text-rti-amber hover:bg-white transition-colors" type="button" data-i18n="home.suggestion1">My road repair complaint has been ignored for months</button>
-<button class="suggestion-chip bg-rti-bg border border-rti-amber rounded-full px-md py-xs font-label-mono text-label-mono text-rti-amber hover:bg-white transition-colors" type="button" data-i18n="home.suggestion2">My ration card renewal is stuck with no update</button>
-<button class="suggestion-chip bg-rti-bg border border-rti-amber rounded-full px-md py-xs font-label-mono text-label-mono text-rti-amber hover:bg-white transition-colors" type="button" data-i18n="home.suggestion3">My pension payments have stopped without explanation</button>
-<button class="suggestion-chip bg-rti-bg border border-rti-amber rounded-full px-md py-xs font-label-mono text-label-mono text-rti-amber hover:bg-white transition-colors" type="button" data-i18n="home.suggestion4">My complaint to the municipal office was never addressed</button>
+<div class="lp-chips">
+<button class="suggestion-chip" type="button" data-i18n="home.suggestion1">My road repair complaint has been ignored for months</button>
+<button class="suggestion-chip" type="button" data-i18n="home.suggestion2">My ration card renewal is stuck with no update</button>
+<button class="suggestion-chip" type="button" data-i18n="home.suggestion3">My pension payments have stopped without explanation</button>
+<button class="suggestion-chip" type="button" data-i18n="home.suggestion4">My complaint to the municipal office was never addressed</button>
 </div>
-<p class="text-center font-caption text-caption text-on-surface-variant mt-sm">
-<a class="text-primary hover:underline" href="/demo" data-i18n="home.sample_link">See a sample application</a> - a real, previously-generated draft with its actual section citations.
-</p>
-</section>
-<!-- Trust Strip -->
-<section class="w-full max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-gutter mt-xl">
-<div class="bg-white border border-rti-border rounded-xl p-md flex flex-col items-center text-center gap-sm">
-<span aria-hidden="true" class="material-symbols-outlined text-rti-amber text-4xl">menu_book</span>
-<p class="font-body-md text-body-md text-rti-text font-medium" data-i18n="home.trust1">Section-level citations</p>
+<p class="lp-meta"><a href="/demo" data-i18n="home.sample_link">See a sample application</a> - a real, previously-generated draft with its actual section citations.</p>
 </div>
-<div class="bg-white border border-rti-border rounded-xl p-md flex flex-col items-center text-center gap-sm">
-<span aria-hidden="true" class="material-symbols-outlined text-rti-amber text-4xl">fact_check</span>
-<p class="font-body-md text-body-md text-rti-text font-medium" data-i18n="home.trust2">Declines requests that aren't asking for a specific record</p>
-</div>
-<div class="bg-white border border-rti-border rounded-xl p-md flex flex-col items-center text-center gap-sm">
-<span aria-hidden="true" class="material-symbols-outlined text-rti-amber text-4xl">edit_document</span>
-<p class="font-body-md text-body-md text-rti-text font-medium" data-i18n="home.trust3">Draft your RTI and export a ready-to-file PDF</p>
+{% include "partials/scene.html" %}
 </div>
 </section>
+
+<div class="lp-wrap">
+<!-- Grounding facts - each one is from the Act itself -->
+<section class="lp-stats reveal">
+<div class="lp-stat"><b>§ 6(1)</b><span>Request in writing or electronically, in English, Hindi or the official language</span></div>
+<div class="lp-stat"><b>30 days</b><span>Response deadline for a PIO under § 7(1)</span></div>
+<div class="lp-stat"><b>48 hours</b><span>When the information concerns life or liberty, § 7(1)</span></div>
+<div class="lp-stat"><b>§ 19(1)</b><span>Your right to a first appeal if there's no reply</span></div>
+</section>
+
+<!-- How it works -->
+<section class="lp-section" style="padding-top:0">
+<div class="reveal">
+<span class="lp-eyebrow">How it works</span>
+<h2 class="lp-h2">From a plain-language problem to a ready-to-file letter</h2>
+<p class="lp-lead">No legal jargon needed. Describe what went wrong - RTI Sahayak works out the record to ask for and cites the Act for every procedural step.</p>
+</div>
+<div class="lp-steps">
+<div class="lp-card reveal"><span class="num">01</span><div class="ico"><span class="material-symbols-outlined">chat</span></div><h3>Describe your problem</h3><p>In your own words - a stalled pension, an ignored complaint, a stuck ration card.</p></div>
+<div class="lp-card reveal" style="transition-delay:.08s"><span class="num">02</span><div class="ico"><span class="material-symbols-outlined">fact_check</span></div><h3 data-i18n="home.trust1">Section-level citations</h3><p>Filing manner, fee and response timeline come from the Act's text and are cited by section - never guessed.</p></div>
+<div class="lp-card reveal" style="transition-delay:.16s"><span class="num">03</span><div class="ico"><span class="material-symbols-outlined">picture_as_pdf</span></div><h3 data-i18n="home.trust3">Draft your RTI and export a ready-to-file PDF</h3><p>Review, edit and download the final letter, then track the statutory deadline.</p></div>
+</div>
+</section>
+
+<!-- Tools -->
+<section class="lp-section" style="padding-top:0">
+<div class="reveal">
+<span class="lp-eyebrow">Everything in one place</span>
+<h2 class="lp-h2">Tools for every step of your RTI</h2>
+</div>
+<div class="lp-features">
+<a class="lp-feature reveal" href="/draft"><span class="material-symbols-outlined">edit_document</span><h3>Draft an application</h3><p>Guided form, grounded letter, PDF export.</p></a>
+<a class="lp-feature reveal" href="/ask"><span class="material-symbols-outlined">forum</span><h3>Ask about the Act</h3><p>Plain-language answers with the sections they come from.</p></a>
+<a class="lp-feature reveal" href="/browse"><span class="material-symbols-outlined">menu_book</span><h3>Browse the Act</h3><p>Read the RTI Act, 2005 section by section.</p></a>
+<a class="lp-feature reveal" href="/track"><span class="material-symbols-outlined">schedule</span><h3>Track deadlines</h3><p>Know when a reply is due and when you can appeal.</p></a>
+<a class="lp-feature reveal" href="/demo"><span class="material-symbols-outlined">description</span><h3>See a sample</h3><p>A real generated draft with its actual citations.</p></a>
+<div class="lp-feature reveal"><span class="material-symbols-outlined">block</span><h3>Honest refusals</h3><p data-i18n="home.trust2">Declines requests that aren't asking for a specific record</p></div>
+</div>
+</section>
+
+<!-- CTA -->
+<section class="lp-cta reveal">
+<h2>Your right to information, drafted in minutes.</h2>
+{% if current_user(request) %}
+<p>Welcome back, {{ current_user(request).name }}. Pick up where you left off.</p>
+<div class="lp-cta-row"><a class="btn btn-amber" href="/draft">Start drafting <span class="material-symbols-outlined">arrow_forward</span></a></div>
+{% else %}
+<p>Create a free account, or start drafting right away - no sign-up required.</p>
+<div class="lp-cta-row">
+<a class="btn btn-amber" href="/signup">Create free account <span class="material-symbols-outlined">arrow_forward</span></a>
+<a class="btn btn-ghost" href="/draft">Draft without an account</a>
+</div>
+{% endif %}
+</section>
+</div>
 </main>
 <!-- Footer -->
 <footer class="bg-surface-container-low dark:bg-surface-container-lowest border-t border-outline-variant dark:border-outline mt-auto">
@@ -99,6 +144,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="/static/js/scene.js" defer></script>
 <script>
 (function () {
   var askInput = document.getElementById('ask-input');

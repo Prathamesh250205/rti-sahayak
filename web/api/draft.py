@@ -1,7 +1,6 @@
 """POST /api/draft - one-shot, stateless wrapper around the existing
-agent.intake / agent.drafter pipeline (the same pipeline app.py drives
-turn-by-turn in the Streamlit UI). This endpoint takes all fields in a
-single request instead: no session store, no agent.intake.process_reply.
+agent.intake / agent.drafter pipeline. This endpoint takes all fields in a
+single request: no session store.
 
 Two independent checks gate a draft, deliberately kept separate because
 they answer different questions and fail in different ways:
@@ -104,12 +103,12 @@ def create_draft(req: DraftRequest, request: Request):
             )
 
         # agent.intake.IntakeState.slots keys, verbatim from
-        # agent/intake.py's REQUIRED_FIELDS (the dict missing_fields() reads):
+        # agent/intake.py's REQUIRED_FIELDS:
         # "full_name", "address", "locality", "timeframe". Only set keys we
         # actually have a value for - _format_letter()'s slots.get(key, default)
         # fallback text only kicks in when the key is absent, not when it's "".
-        # "pio" is not in REQUIRED_FIELDS (optional, not asked during the
-        # Streamlit intake flow) - set the same way, just never required.
+        # "pio" is not in REQUIRED_FIELDS (optional) - set the same way, just
+        # never required.
         state = IntakeState(problem_description=req.problem_description)
         state.slots["full_name"] = req.full_name
         state.slots["address"] = req.address

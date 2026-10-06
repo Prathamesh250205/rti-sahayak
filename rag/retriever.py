@@ -3,11 +3,13 @@
 Every result carries its section/page metadata so callers can cite sources
 and can tell when nothing relevant was found, instead of improvising.
 """
+import functools
 import os
+import shutil
+import threading
 from dataclasses import dataclass
 
 import chromadb
-import streamlit as st
 from chromadb.utils import embedding_functions
 
 CHROMA_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "chroma")
@@ -42,12 +44,22 @@ class RetrievedChunk:
     distance: float
 
 
-@st.cache_resource(show_spinner="Loading the RTI Act knowledge base (one-time, ~20s)...")
+_load_lock = threading.Lock()
+
+
 def _get_collection():
+    # The startup warm-up thread and the first request can arrive together;
+    # functools.cache alone would let both load (and both copy to /tmp).
+    with _load_lock:
+        return _load_collection()
+
+
+@functools.cache
+def _load_collection():
     """Load the embedding model + Chroma collection once per server process.
 
     This is the single biggest latency cost in the app (loading the
-    embedding model from disk) - st.cache_resource means every session
+    embedding model from disk) - functools.cache means every session
     after the first one gets it for free, and every rerun within a session
     is a cache hit rather than a re-load.
 
@@ -59,7 +71,13 @@ def _get_collection():
     """
     embedding_functions.ONNXMiniLM_L6_V2.DOWNLOAD_PATH = ONNX_CACHE_DIR
     embed_fn = embedding_functions.ONNXMiniLM_L6_V2()
-    client = chromadb.PersistentClient(path=CHROMA_DIR)
+    path = CHROMA_DIR
+    if os.getenv("VERCEL") and os.path.isdir(CHROMA_DIR):
+        # Vercel's function bundle is read-only and Chroma's SQLite store
+        # needs to write (locks/WAL) even for reads - work on a /tmp copy.
+        path = "/tmp/chroma"
+        shutil.copytree(CHROMA_DIR, path, dirs_exist_ok=True)
+    client = chromadb.PersistentClient(path=path)
     existing = [c.name for c in client.list_collections()]
     if COLLECTION_NAME not in existing:
         raise RetrieverError(

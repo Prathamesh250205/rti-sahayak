@@ -200,7 +200,7 @@ class DraftResult:
     # clause. Only populated where build_procedural_clauses() actually found a
     # chunk containing the clause's underlying fact-keywords - never fabricated
     # for a clause that was included on aggregate/cross-chunk evidence alone.
-    # Defaults to empty so existing callers (app.py) are unaffected.
+    # Defaults to empty so callers that don't pass it are unaffected.
     clauses: list[dict] = field(default_factory=list)
 
 
@@ -561,7 +561,7 @@ def _format_letter(
     # clause build_procedural_clauses() emits; if that clause isn't present
     # (e.g. Section 6 grounding wasn't verified this time), the exemption
     # claim is appended instead so a BPL applicant never silently loses it.
-    # False (the default - app.py never sets this slot) reproduces today's
+    # False (the default - when the slot is unset) reproduces today's
     # clause list unchanged.
     is_bpl = slots.get("is_bpl", "").strip().lower() == "true"
     rendered_clauses = list(procedural_clauses)

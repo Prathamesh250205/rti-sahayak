@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "python -m rag.ingest",
+  "functions": {
+    "index.py": {
+      "maxDuration": 60,
+      "excludeFiles": "{.venv/**,**/node_modules/**,design/**,docs/**,tools/**,data/corpus/**,data/onnx_model_cache/onnx.tar.gz}"
+    }
+  }
+}

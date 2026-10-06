@@ -1,0 +1,23 @@
+{# 3D hero visual: a floating stack of RTI applications with an orbiting
+   ring of the sections every draft cites. Styles in static/css/landing.css. #}
+<div class="scene" aria-hidden="true">
+<div class="scene-tilt"><div class="scene-float">
+<div class="ring"><div class="ring-spin">
+{% for s in ["§ 6(1)", "§ 7(1)", "§ 6(3)", "§ 8(1)", "§ 19(1)", "§ 7(6)", "§ 4(1)", "§ 2(f)"] %}
+<div class="ring-item" style="--i: {{ loop.index0 }}"><span>{{ s }}</span></div>
+{% endfor %}
+</div></div>
+<div class="doc d3"><div class="doc-head"></div><div class="doc-line"></div><div class="doc-line s"></div><div class="doc-line m"></div></div>
+<div class="doc d2"><div class="doc-head"></div><div class="doc-line m"></div><div class="doc-line"></div><div class="doc-line s"></div></div>
+<div class="doc d1">
+<div class="doc-head"></div>
+<div class="doc-line"></div><div class="doc-line m"></div>
+<span class="doc-chip">§ 6(1)</span><span class="doc-chip">§ 7(1)</span>
+<div class="doc-line"></div><div class="doc-line s"></div><div class="doc-line m"></div>
+<span class="doc-chip">§ 6(3)</span>
+<div class="doc-line s"></div>
+<div class="doc-seal">RTI<br>ACT<br>2005</div>
+<div class="doc-check"><span class="material-symbols-outlined">verified</span>Grounded &amp; cited</div>
+</div>
+</div></div>
+</div>

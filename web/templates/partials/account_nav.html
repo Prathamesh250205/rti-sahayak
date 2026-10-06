@@ -1,0 +1,27 @@
+{# Sign-in / account control, included at the end of every page's desktop
+   and mobile nav. `mobile` is set by the mobile-nav include. #}
+{% set u = current_user(request) %}
+{% if mobile %}
+<div class="acct-mobile">
+{% if u %}
+<a class="acct-hello" href="/account">Signed in as <strong>{{ u.name }}</strong></a>
+<form method="post" action="/logout"><button class="acct-ghost" type="submit">Sign out</button></form>
+{% else %}
+<a class="acct-ghost" href="/login?next={{ request.url.path }}">Sign in</a>
+<a class="acct-cta" href="/signup?next={{ request.url.path }}">Create account</a>
+{% endif %}
+</div>
+{% elif u %}
+<details class="acct-menu">
+<summary aria-label="Account menu"><span class="acct-avatar">{{ u.name[:1] | upper }}</span></summary>
+<div class="acct-pop">
+<p class="acct-pop-name">{{ u.name }}</p>
+<p class="acct-pop-mail">{{ u.email }}</p>
+<a class="acct-pop-link" href="/account">Account settings</a>
+<form method="post" action="/logout"><button type="submit">Sign out</button></form>
+</div>
+</details>
+{% else %}
+<a class="acct-link" href="/login?next={{ request.url.path }}">Sign in</a>
+<a class="acct-cta" href="/signup?next={{ request.url.path }}">Get started</a>
+{% endif %}

@@ -13,7 +13,7 @@ Usage:
 
 base_url defaults to http://127.0.0.1:8000 (a locally running server).
 Pass a deployed URL to run the same suite against production, e.g.:
-    python -m tools.ask_regression_suite https://rti-sahayak.onrender.com
+    python -m tools.ask_regression_suite https://<your-deployment>.vercel.app
 
 delay_seconds (default 6.0) is a pause before each case after the first -
 see tools/scope_regression_suite.py's docstring for why (Gate 12e: a

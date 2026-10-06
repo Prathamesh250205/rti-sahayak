@@ -1,0 +1,10 @@
+# Uploaded by `vercel deploy` from this machine - keep local-only and
+# rebuildable things out (the build regenerates data/chroma and the model).
+.venv
+**/node_modules
+.env
+data/chroma
+data/onnx_model_cache
+data/users.db
+__pycache__
+design

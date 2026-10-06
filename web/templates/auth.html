@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{# One template for login / signup / forgot / reset - `mode` picks the form
+   (see web/api/auth.py). Plain HTML forms: works with JS off. #}
+{% set titles = {"login": "Sign in", "signup": "Create account", "forgot": "Forgot password", "reset": "Set a new password"} %}
+
+{% block title %}{{ titles[mode] }} - RTI Sahayak{% endblock %}
+{% block head_extra %}<link href="/static/css/landing.css" rel="stylesheet"/>{% endblock %}
+
+{% block content %}
+<div class="auth">
+<aside class="auth-art">
+<div class="blob b1"></div><div class="blob b2"></div>
+<a class="auth-logo" href="/">RTI Sahayak</a>
+{% include "partials/scene.html" %}
+<div class="auth-quote">
+<p>"Every citizen shall have the right to information."</p>
+<small>RIGHT TO INFORMATION ACT, 2005 - SECTION 3</small>
+</div>
+</aside>
+
+<section class="auth-main">
+<a class="auth-back" href="/"><span class="material-symbols-outlined" style="font-size:18px">arrow_back</span>Back to home</a>
+<div class="auth-card">
+<a class="auth-logo" href="/">RTI Sahayak</a>
+
+{% if mode == "login" %}
+<h1>Welcome back</h1>
+<p class="sub">New here? <a href="/signup?next={{ next | urlencode }}">Create a free account</a></p>
+{% elif mode == "signup" %}
+<h1>Create your account</h1>
+<p class="sub">Already have one? <a href="/login?next={{ next | urlencode }}">Sign in</a></p>
+{% elif mode == "forgot" %}
+<h1>Forgot your password?</h1>
+<p class="sub">Enter your account email and we'll send you a link to reset it.</p>
+{% else %}
+<h1>Set a new password</h1>
+<p class="sub">Choose a password you haven't used here before.</p>
+{% endif %}
+
+{% if error %}
+<div class="alert alert-error" role="alert"><span class="material-symbols-outlined">error</span><span>{{ error }}</span></div>
+{% endif %}
+
+{% if mode == "login" %}
+{% include "partials/oauth_buttons.html" %}
+<form method="post" action="/login">
+<input type="hidden" name="next" value="{{ next }}"/>
+<div class="field"><label for="email">Email</label>
+<div class="field-box"><span class="material-symbols-outlined">mail</span>
+<input id="email" name="email" type="email" value="{{ email or '' }}" autocomplete="email" required autofocus placeholder="you@example.com"/></div></div>
+<div class="field"><label for="password">Password</label>
+<div class="field-box"><span class="material-symbols-outlined">lock</span>
+<input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Your password"/>
+<button class="peek" type="button" aria-label="Show password"><span class="material-symbols-outlined">visibility</span></button></div></div>
+<div class="auth-row">
+<label class="check"><input type="checkbox" name="remember" value="1" checked/>Remember me</label>
+<a href="/forgot-password">Forgot password?</a>
+</div>
+<button class="btn btn-green" type="submit">Sign in <span class="material-symbols-outlined">arrow_forward</span></button>
+</form>
+
+{% elif mode == "signup" %}
+{% include "partials/oauth_buttons.html" %}
+<form method="post" action="/signup">
+<input type="hidden" name="next" value="{{ next }}"/>
+<div class="field"><label for="name">Full name</label>
+<div class="field-box"><span class="material-symbols-outlined">person</span>
+<input id="name" name="name" type="text" value="{{ name or '' }}" autocomplete="name" required maxlength="80" autofocus placeholder="e.g. Ramesh Kumar"/></div></div>
+<div class="field"><label for="email">Email</label>
+<div class="field-box"><span class="material-symbols-outlined">mail</span>
+<input id="email" name="email" type="email" value="{{ email or '' }}" autocomplete="email" required placeholder="you@example.com"/></div></div>
+{% include "partials/new_password.html" %}
+<label class="check" style="margin:4px 0 22px"><input type="checkbox" name="agree" value="1" required/>
+<span>I agree to the <a href="/terms" target="_blank">Terms</a> and <a href="/privacy" target="_blank">Privacy Policy</a></span></label>
+<button class="btn btn-green" type="submit">Create account <span class="material-symbols-outlined">arrow_forward</span></button>
+</form>
+
+{% elif mode == "forgot" %}
+{% if sent %}
+<div class="alert alert-ok" role="status"><span class="material-symbols-outlined">mark_email_read</span>
+<span>If an account exists for <strong>{{ email }}</strong>, a reset link is on its way. It expires in 1 hour - check your spam folder too.</span></div>
+<a class="btn btn-green" href="/login">Back to sign in</a>
+{% else %}
+<form method="post" action="/forgot-password">
+<div class="field"><label for="email">Email</label>
+<div class="field-box"><span class="material-symbols-outlined">mail</span>
+<input id="email" name="email" type="email" value="{{ email or '' }}" autocomplete="email" required autofocus placeholder="you@example.com"/></div></div>
+<button class="btn btn-green" type="submit">Send reset link <span class="material-symbols-outlined">send</span></button>
+</form>
+{% endif %}
+<p class="auth-alt">Remembered it? <a href="/login">Sign in</a></p>
+
+{% else %}
+{% if invalid %}
+<div class="alert alert-error" role="alert"><span class="material-symbols-outlined">link_off</span>
+<span>This reset link is invalid or has expired. Links work once and last 1 hour.</span></div>
+<a class="btn btn-green" href="/forgot-password">Request a new link</a>
+{% else %}
+<form method="post" action="/reset-password">
+<input type="hidden" name="token" value="{{ token }}"/>
+{% include "partials/new_password.html" %}
+<button class="btn btn-green" type="submit">Update password <span class="material-symbols-outlined">check</span></button>
+</form>
+{% endif %}
+{% endif %}
+
+<p class="auth-note">Accounts are optional - every tool works without one.<br/>We store only your name, email and a salted password hash.</p>
+</div>
+</section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/scene.js" defer></script>
+<script src="/static/js/auth-forms.js" defer></script>
+{% endblock %}
