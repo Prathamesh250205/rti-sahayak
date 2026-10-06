@@ -548,7 +548,13 @@ Fill in the form and click "Generate Application" to see your drafted RTI applic
     outOfScope.classList.add('hidden');
     previewContent.classList.add('hidden');
     if (state === 'empty') previewEmpty.classList.remove('hidden');
-    if (state === 'loading') previewLoading.classList.remove('hidden');
+    if (state === 'loading') {
+      previewLoading.classList.remove('hidden');
+      // Below lg the preview sits under the form - bring it into view.
+      if (window.matchMedia('(max-width: 1023px)').matches) {
+        previewLoading.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
     if (state === 'error') previewError.classList.remove('hidden');
     if (state === 'no-grounding') noGrounding.classList.remove('hidden');
     if (state === 'out-of-scope') outOfScope.classList.remove('hidden');

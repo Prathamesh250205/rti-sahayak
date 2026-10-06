@@ -1,0 +1,91 @@
+/* Phone and tablet fixes. Plain CSS (the prebuilt tailwind.css can't be
+   rebuilt here), loaded after tailwind.css by base.html. Everything is
+   inside a max-width query, so desktop layouts are untouched. */
+
+/* ---------- Below lg (1024px): the desktop split panes stack ---------- */
+@media (max-width: 1023px) {
+  /* /draft - each pane was a fixed-height, internally scrolling column.
+     Stacked, that trapped the form in a short box; let the page scroll. */
+  .h-\[calc\(100vh-64px\)\] { height: auto !important; }
+  .h-\[calc\(100vh-64px\)\] > .overflow-y-auto { overflow: visible; }
+  /* Keep Save / Generate reachable while filling in the long form. */
+  .h-\[calc\(100vh-64px\)\] > .border-t.z-10 { position: sticky; bottom: 0; }
+
+  /* /browse - the section list was hidden below lg (no way to pick a
+     section). Show it as a swipeable row of chips above the text. */
+  main:has(> aside #section-nav) { flex-direction: column; }
+  aside:has(#section-nav) {
+    display: block !important; width: 100% !important; height: auto !important;
+    border-right: 0 !important; border-bottom: 1px solid #E3DDD2; padding: 10px 0 12px !important;
+  }
+  aside:has(#section-nav) > div { margin-bottom: 8px !important; }
+  #section-nav {
+    flex-direction: row !important; gap: 8px; overflow-x: auto; padding: 2px 16px 4px;
+    scroll-snap-type: x proximity; scrollbar-width: none;
+  }
+  #section-nav::-webkit-scrollbar { display: none; }
+  #section-nav a {
+    flex: none; white-space: nowrap; scroll-snap-align: start;
+    border: 1px solid #E3DDD2 !important; border-radius: 999px; padding: 8px 14px !important;
+  }
+  #section-nav a.border-custom-amber { border-color: #C6742A !important; }
+  article[style*="100vh"] { height: auto !important; min-height: 60vh; overflow: visible !important; }
+  html.dark aside:has(#section-nav) { border-bottom-color: var(--d-border); }
+  html.dark #section-nav a { border-color: var(--d-border) !important; }
+  html.dark #section-nav a.border-custom-amber { border-color: var(--d-amber) !important; }
+}
+
+/* ---------- Phones ---------- */
+@media (max-width: 640px) {
+  /* The letter "paper" (/draft preview, /demo): desktop padding left a
+     strip about four words wide. */
+  .paper-shadow.p-xl { padding: 20px 18px !important; }
+  .min-h-\[800px\] { min-height: 320px !important; }
+
+  /* Header: logo on one line; drop the dev-only telemetry icon to make room. */
+  header > div > a[href="/"], body > nav > div a[href="/"] { white-space: nowrap; }
+  button[aria-label="System telemetry"] { display: none !important; }
+  #lang-pill { white-space: nowrap; min-height: 36px; }
+
+  /* /draft action bar: Generate fills the row next to Save Draft instead of
+     its fixed desktop padding pushing it off a 360px screen. */
+  .h-\[calc\(100vh-64px\)\] > .border-t.z-10 { gap: 10px; padding-left: 12px; padding-right: 12px; }
+  #generate-btn { flex: 1; justify-content: center; padding-left: 12px; padding-right: 12px; }
+  #save-draft-btn { flex: none; }
+
+  /* Tap targets: at least ~40px, per mobile accessibility guidelines. */
+  #mobile-menu-btn { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  footer a { display: inline-block; padding: 10px 6px; }
+  footer nav, footer .flex:has(> a) { flex-wrap: wrap; justify-content: center; column-gap: 8px; row-gap: 0; }
+  input[type=checkbox], input[type=radio] { width: 20px; height: 20px; }
+  .lp-chips button { padding: 9px 12px; }
+  #mobile-nav-links > a { padding-top: 12px; padding-bottom: 12px; }
+
+  /* Landing: tighter hero, buttons full width in the CTA. */
+  .lp-hero { padding: 28px 0 40px; }
+  .lp-section { padding: 48px 0; }
+  .lp-stats { margin-bottom: 48px; gap: 10px; }
+  .lp-stat { padding: 16px; }
+  .lp-stat b { font-size: 1.45rem; }
+  .lp-cta { padding: 32px 20px; border-radius: 22px; margin-bottom: 48px; }
+  .lp-cta-row .btn { width: 100%; }
+
+  /* Auth pages: room for the top-right controls above the form. */
+  .auth-main { padding: 72px 16px 32px; place-items: start center; }
+  .auth-back { top: 14px; right: 16px; }
+
+  /* Account settings */
+  .acct-page { padding: 28px 16px 56px; }
+  .panel { padding: 20px 16px; }
+  .acct-head h1 { font-size: 1.7rem; }
+}
+
+/* ---------- Smallest phones (320-360px) ---------- */
+@media (max-width: 360px) {
+  header > div, header > div > div, body > nav > div, body > nav > div > div { gap: 8px !important; }
+  header .px-gutter, header > div.px-gutter, body > nav > div { padding-left: 14px !important; padding-right: 10px !important; }
+  header a[href="/"].font-headline-md, body > nav a[href="/"].font-headline-md { font-size: 1.2rem; }
+  #lang-pill { padding-left: 6px; padding-right: 6px; }
+  #generate-btn { min-width: 0; text-align: center; line-height: 1.25; }
+  #generate-btn [data-icon] { display: none; }
+}

@@ -113,6 +113,8 @@
       a.classList.toggle('font-bold', isActive);
       a.classList.toggle('border-transparent', !isActive);
       a.classList.toggle('text-outline', !isActive);
+      // Phones show the list as a sideways-scrolling row - keep the active chip visible.
+      if (isActive) a.scrollIntoView({ block: 'nearest', inline: 'center' });
     });
   }
 
