@@ -377,8 +377,8 @@ Hosted on **Vercel** as a single Python function (FastAPI over ASGI):
 
 | Variable | Needed for |
 |---|---|
-| `GROQ_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` | LLM providers |
-| `LLM_PROVIDER_CHAIN` | `groq,anthropic,gemini` - deliberately not anthropic-first, so a public demo doesn't bill every request to the paid provider |
+| `GROQ_API_KEY`, `GEMINI_API_KEY` | LLM providers - both free tiers. Groq is primary (fast, ~1,000 requests/day); Gemini absorbs overflow |
+| `LLM_PROVIDER_CHAIN` | `groq,gemini` |
 | `SESSION_SECRET` | Accounts - a long random string. Without it logins drop between instances |
 | `DATABASE_URL` | Accounts - add a Neon Postgres database under the project's Storage tab and Vercel sets it |
 | `SMTP_*` | Optional: password-reset emails |

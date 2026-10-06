@@ -8,3 +8,4 @@ node_modules/
 tools/eval/.cache/
 data/users.db
 .vercel
+.env.local
