@@ -8,8 +8,8 @@ for a record — not when the topic happens to share no vocabulary with the stat
 is most legitimate requests.
 
 **Demo video:** [add link here]
-**Live deployment:** [add Vercel URL here]
-**Sample application (no LLM/Chroma required):** `<deployment URL>/demo`
+**Live deployment:** https://rti-sahayak-smoky.vercel.app
+**Sample application (no LLM/Chroma required):** https://rti-sahayak-smoky.vercel.app/demo
 
 ## The problem
 
