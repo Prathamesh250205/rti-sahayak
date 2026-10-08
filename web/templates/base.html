@@ -11,10 +11,10 @@
 <meta property="og:url" content="{{ request.url }}"/>
 <link href="/static/favicon.svg" rel="icon" type="image/svg+xml"/>
 <script>
-  // Apply the saved theme (or the system's) before first paint - no light flash.
+  // Light by default; dark only if the visitor chose it with the toggle.
+  // Runs before first paint, so a dark choice never flashes light.
   try {
-    var t = localStorage.getItem('theme');
-    if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme: dark)').matches)) {
+    if (localStorage.getItem('theme') === 'dark') {
       document.documentElement.classList.add('dark');
     }
   } catch (e) {}
