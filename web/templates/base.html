@@ -12,9 +12,10 @@
 <link href="/static/favicon.svg" rel="icon" type="image/svg+xml"/>
 <script>
   // Light by default; dark only if the visitor chose it with the toggle.
-  // Runs before first paint, so a dark choice never flashes light.
+  // Runs before first paint, so a dark choice never flashes light. The key was
+  // renamed from 'theme' when light became the default, to reset older choices.
   try {
-    if (localStorage.getItem('theme') === 'dark') {
+    if (localStorage.getItem('rti-theme') === 'dark') {
       document.documentElement.classList.add('dark');
     }
   } catch (e) {}
@@ -219,7 +220,7 @@
   document.addEventListener('click', function (e) {
     if (!e.target.closest('.theme-toggle')) return;
     var dark = document.documentElement.classList.toggle('dark');
-    try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (err) {}
+    try { localStorage.setItem('rti-theme', dark ? 'dark' : 'light'); } catch (err) {}
   });
 </script>
 <script src="/static/js/i18n.js"></script>
