@@ -1,29 +1,20 @@
-"""One-shot CLI script: chunk the PDFs in data/corpus/ and embed them into Chroma.
+"""One-shot CLI script: chunk the PDFs in data/corpus/, embed them, and write
+the search index to data/index/ (committed to the repo - deploys don't
+re-run this).
 
-Run this whenever the corpus changes:
+Run this whenever the corpus changes, then commit data/index/:
+    pip install -r requirements-dev.txt   # pymupdf, for reading the PDF
     python -m rag.ingest
 """
 import bisect
 import os
 import re
 
-import chromadb
 import pymupdf as fitz
-from chromadb.utils import embedding_functions
+
+from rag.retriever import INDEX_DIR, _Embedder, ensure_model, save_index
 
 CORPUS_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "corpus")
-CHROMA_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "chroma")
-# chromadb's ONNXMiniLM_L6_V2 defaults to caching its model under
-# Path.home()/.cache, outside the project directory. A deploy's build
-# step (which triggers this download during ingest) and its runtime aren't
-# guaranteed to share the same $HOME - redirecting into the project
-# directory removes that ambiguity: whatever the build writes here ships
-# with the deploy, the same way data/chroma already does (see
-# tools/vercel_build.py). Must match
-# rag/retriever.py's override exactly, or a build-time download here
-# won't be found by the runtime process.
-ONNX_CACHE_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "onnx_model_cache")
-COLLECTION_NAME = "rti_corpus"
 
 # A section becomes a single chunk when its full text is <= CHUNK_MAX_CHARS.
 # Longer sections are sub-split into ~CHUNK_TARGET_CHARS pieces (all carrying
@@ -222,17 +213,10 @@ def ingest() -> int:
         print(f"No PDFs found in {CORPUS_DIR}. Add the RTI Act 2005 PDF there first.")
         return 0
 
-    # ONNX runtime, not sentence-transformers/torch - same model
-    # (all-MiniLM-L6-v2) and same output vectors, but without pulling in a
-    # ~500MB PyTorch runtime just to run inference. Must match
-    # rag/retriever.py's embedding function exactly, or query-time vectors
-    # won't be comparable to what's stored here.
-    embedding_functions.ONNXMiniLM_L6_V2.DOWNLOAD_PATH = ONNX_CACHE_DIR
-    embed_fn = embedding_functions.ONNXMiniLM_L6_V2()
-    client = chromadb.PersistentClient(path=CHROMA_DIR)
-    if COLLECTION_NAME in [c.name for c in client.list_collections()]:
-        client.delete_collection(COLLECTION_NAME)
-    collection = client.create_collection(name=COLLECTION_NAME, embedding_function=embed_fn)
+    # The same embedder rag/retriever.py uses for queries, so stored and
+    # query vectors are comparable.
+    ensure_model()
+    embed = _Embedder()
 
     documents, metadatas, ids = [], [], []
     chunk_id = 0
@@ -275,11 +259,11 @@ def ingest() -> int:
             chunk_id += 1
 
     if documents:
-        collection.add(documents=documents, metadatas=metadatas, ids=ids)
+        save_index(ids, documents, metadatas, embed(documents))
 
     with_section = sum(1 for m in metadatas if m["section"] != "unknown")
     print(
-        f"Ingested {len(documents)} chunks from {len(pdf_files)} PDF(s) into {CHROMA_DIR} "
+        f"Ingested {len(documents)} chunks from {len(pdf_files)} PDF(s) into {INDEX_DIR} "
         f"({with_section}/{len(documents)} tagged with a section number)"
     )
     return len(documents)

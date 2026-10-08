@@ -1,5 +1,5 @@
 """GET endpoints for browsing the RTI Act corpus - read directly from the
-same Chroma collection rag/retriever.py uses (via its _get_collection()),
+same corpus index rag/retriever.py uses (via its _get_collection()),
 without modifying that module. Nothing here is hardcoded: every section name,
 chunk count, and piece of text comes straight out of the collection that
 rag/ingest.py populated from the actual corpus PDF(s).

@@ -8,7 +8,7 @@ for a record — not when the topic happens to share no vocabulary with the stat
 is most legitimate requests.
 
 **Live site:** https://rti-sahayak-smoky.vercel.app ·
-**Sample application (no LLM/Chroma required):** https://rti-sahayak-smoky.vercel.app/demo
+**Sample application (no LLM or search index required):** https://rti-sahayak-smoky.vercel.app/demo
 
 ![RTI Sahayak landing page](docs/screenshots/landing-light.png)
 
@@ -60,7 +60,8 @@ agent/    intake slot-filling (agent/intake.py), letter drafting/composition
           clause-provenance logic both live here - and statutory deadline
           grounding for Track (agent/deadlines.py)
 rag/      corpus ingestion (rag/ingest.py) and retrieval (rag/retriever.py) -
-          the Chroma vector store and its embedding function
+          an 83-chunk index (data/index/, committed) searched with numpy,
+          embedded with all-MiniLM-L6-v2 on onnxruntime
 llm/      provider-agnostic LLM client (llm/client.py) - a configurable, ordered
           provider chain (default: Groq -> Gemini -> Anthropic, see below),
           automatic retry on the next provider in the chain if one fails
@@ -75,8 +76,7 @@ web/static/css/
           prebuilt Tailwind build
 index.py  Vercel entrypoint - re-exports web.main:app
 tools/vercel_build.py
-          Vercel build step: ingest the corpus, then drop packages the
-          running app never imports (fits the 500 MB function limit)
+          Vercel build step: download the embedding model into the bundle
 ```
 
 A request flows: **web/api/draft.py** (intake fields) → **CHECK A** (`agent/drafter.py`'s
@@ -184,8 +184,8 @@ suited to it.**
   procedural text that backs the Section 6/7 clauses and the citation chips? This runs
   `gather_grounding()`'s two fixed retrieval queries (filing manner + fee, response
   timeline) - unrelated to the citizen's topic, so it succeeds for every real request against
-  a healthy corpus and only fails if Chroma itself is empty or broken (e.g. a deploy that
-  skipped ingestion). It's not a relevance filter; it's a corpus-health check, and it's
+  a healthy corpus and only fails if the index itself is empty or broken (e.g. a deploy that
+  shipped without it). It's not a relevance filter; it's a corpus-health check, and it's
   cheap enough to run before any LLM call.
 - **CHECK B - scope (LLM classification, explicit verdict).** Is this genuinely a request
   for records held by an Indian public authority? Semantic similarity to the Act's own text
@@ -388,18 +388,18 @@ cp .env.example .env
 `LLM_PROVIDER` in `.env` selects the primary provider (`groq` or `gemini`); the other is
 used automatically as a fallback. See `.env.example` for every variable the app reads.
 
-Build the knowledge base (not committed — see Architecture):
+The search index (`data/index/`) is committed, so there's nothing to build first. The
+embedding model downloads on first use of `rag.ingest` or `tools.vercel_build`
+(`python -m tools.vercel_build`, cached under `data/onnx_model_cache/`, gitignored).
+
+Only if the corpus PDF changes, rebuild the index and commit `data/index/`:
 
 ```bash
-python -m rag.ingest
+pip install -r requirements-dev.txt      # adds pymupdf, for reading the PDF
+python -m rag.ingest                     # "Ingested 83 chunks from 1 PDF(s) ..."
 ```
 
-This downloads the embedding model on first run (cached under `data/onnx_model_cache/`,
-gitignored) and prints `Ingested 83 chunks from 1 PDF(s) ... (83/83 tagged with a section
-number)`. Re-run it any time the corpus PDF changes; it deletes and replaces the existing
-Chroma collection.
-
-Run the web app (reads the `data/chroma/` index built above):
+Run the web app:
 
 ```bash
 uvicorn web.main:app --host 127.0.0.1 --port 8000        # http://127.0.0.1:8000
@@ -409,10 +409,18 @@ Accounts work locally with no extra setup (a SQLite file at `data/users.db`, git
 `SESSION_SECRET`, `DATABASE_URL`, `SMTP_*` and `GOOGLE_*` are only needed for a real
 deployment - see `.env.example`.
 
-Warm-up is fast since the embedding model is ONNX-based and the model artifact is cached at
-build/ingest time - under 1s on local dev hardware. The FastAPI app warms this up in a
+Warm-up is fast since the embedding model is ONNX-based - under 1s on local dev hardware. The FastAPI app warms this up in a
 background task at startup so it never blocks the server from accepting requests; the
-loaded collection is cached for the life of the process (`functools.cache`).
+loaded index is cached for the life of the process (`functools.cache`).
+
+**Why there's no vector database:** the corpus is 83 chunks, so search is a brute-force
+numpy scan over their stored vectors (`rag/retriever.py`). This replaced chromadb, whose
+~200 MB of dependencies (kubernetes, grpc, ...) overflowed the space Vercel gives a function
+to install packages at startup and took the site down. The swap was verified to be
+exact: the stored vectors were exported from the old Chroma collection, the re-implemented
+embedder reproduces them (max difference 1.5e-8), and across 119 queries (the 113-case eval
+set plus extras) the top results come back in the same order with the same distances
+(max difference 2.4e-7) and identical relevance-cutoff decisions.
 
 **Troubleshooting (Windows):** if `git clone` fails with `Filename too long`, it's hitting
 the 260-character `MAX_PATH` limit — one self-hosted font file has a long, hash-based name.
@@ -424,15 +432,16 @@ Clone to a short path (e.g. `C:\rti-sahayak`) or run
 Hosted on **Vercel** as a single Python function (FastAPI over ASGI):
 
 - `index.py` is the entrypoint Vercel looks for; it just re-exports `web.main:app`.
-- `vercel.json` runs `python -m rag.ingest` as the build command, so the Chroma index and
-  the ONNX model are built fresh on every deploy (both are gitignored) and shipped inside
-  the function. Its `excludeFiles` keeps design files, tools, the corpus PDF and the model
-  archive out of the bundle (limit: 500 MB).
-- The function's filesystem is read-only, so `rag/retriever.py` copies the Chroma index to
-  `/tmp` on first use (Chroma's SQLite needs a writable copy even to read).
+- `vercel.json` runs `python -m tools.vercel_build` as the build command, which downloads
+  the ONNX embedding model (sha256-checked) into the bundle. The search index is committed
+  in `data/index/`, so deploys don't re-ingest or need the PDF reader. `excludeFiles` keeps
+  design files, tools and the corpus PDF out of the bundle.
+- Keep `requirements.txt` lean: above Vercel's standard bundle size, packages are installed
+  into the function's small temporary disk when an instance starts, and a heavy dependency
+  tree there fails with "No space left on device".
 - `/static` is served from Vercel's CDN (FastAPI `StaticFiles` mounts are promoted
   automatically).
-- `GET /healthz` reports the live chunk count and resolved paths - a zero-chunk deploy
+- `GET /healthz` reports the live chunk count (`chunk_count`) and resolved index path - a zero-chunk deploy
   (e.g. a build that skipped ingestion) shows up immediately instead of as a wall of
   refusals. `.github/workflows/uptime-monitor.yml` checks it every 30 minutes, 09:00-22:00
   IST, once the `SITE_URL` repository variable is set.
@@ -452,14 +461,14 @@ Hosted on **Vercel** as a single Python function (FastAPI over ASGI):
 
 **Known characteristics:** a cold function loads the embedding model on its first request
 (a few seconds), and the per-IP rate limiter (`web/rate_limit.py`) is in-memory, so it
-limits per instance rather than globally. `/demo` needs neither Chroma nor the LLM, so it
+limits per instance rather than globally. `/demo` needs neither the search index nor the LLM, so it
 always works for a judge or reviewer landing on a cold instance.
 
 ## Scope
 
 | | |
 |---|---|
-| **Implemented** | One-shot web form (FastAPI); two-check grounded letter drafting with clause-level citations (see above); standalone **Ask** (`/ask`) - retrieval-gated Q&A over the Act with inline `[N]`-marker citations, refuses honestly when nothing retrieves; **multilingual drafting** (English/Hindi/Marathi) - letter boilerplate is statically translated (not LLM-translated, to avoid mistranslating legally-load-bearing text), `information_sought`/`reason` are generated in the selected language, department names are deliberately left untranslated; **Track** (`/track`) - statutory deadline tracker grounded in retrieved Act text (see below); **Save Draft** - save the filled form and a generated letter, citation chips intact, to this browser; PDF export; Browse the Act (real section list + search over the corpus); a static `/demo` sample application that works with neither Chroma nor the LLM available; system telemetry panel; a 3-provider LLM fallback chain (see Architecture); per-IP rate limiting on `/api/draft` and `/api/ask`; real content pages for the legal disclaimer, privacy policy, terms of service, and support; a landing page with a CSS-3D hero; optional accounts (email/password, Google sign-in, forgot/reset password, account settings - see Accounts); light/dark mode; phone and tablet layouts (checked at 320-1366px in both themes). |
+| **Implemented** | One-shot web form (FastAPI); two-check grounded letter drafting with clause-level citations (see above); standalone **Ask** (`/ask`) - retrieval-gated Q&A over the Act with inline `[N]`-marker citations, refuses honestly when nothing retrieves; **multilingual drafting** (English/Hindi/Marathi) - letter boilerplate is statically translated (not LLM-translated, to avoid mistranslating legally-load-bearing text), `information_sought`/`reason` are generated in the selected language, department names are deliberately left untranslated; **Track** (`/track`) - statutory deadline tracker grounded in retrieved Act text (see below); **Save Draft** - save the filled form and a generated letter, citation chips intact, to this browser; PDF export; Browse the Act (real section list + search over the corpus); a static `/demo` sample application that works with neither the search index nor the LLM available; system telemetry panel; a 3-provider LLM fallback chain (see Architecture); per-IP rate limiting on `/api/draft` and `/api/ask`; real content pages for the legal disclaimer, privacy policy, terms of service, and support; a landing page with a CSS-3D hero; optional accounts (email/password, Google sign-in, forgot/reset password, account settings - see Accounts); light/dark mode; phone and tablet layouts (checked at 320-1366px in both themes). |
 | **Regression-verified** | A single combined run against a live server (`tools/gate12_verification.py`), paced to stay under provider rate limits: `tools/scope_regression_suite.py` 10/10, `tools/ask_regression_suite.py` 5/5 (plus 1 known-failing case tracked separately, see Known limitations), and the 4-homepage-example × 3-language matrix 12/12 - **27/27 core passed**, zero `scope_check_failed` (0/19 checkable rows), and every "ok" row resolved to a real department name in all three languages, never the `Unknown` sentinel. Re-verified locally after every Gate 13-16 change and the subsequent retrieval/chunking fix above. Separately, **against the then-deployed instance itself (the earlier Render deployment, on its `groq,anthropic,gemini` config at the time)** (the 26-case fixture, before the ask-suite additions above): 26/26, 0/19 `scope_check_failed`, 0 unresolved authorities. That run happened to catch Groq mid-throttle (likely from the same testing session's own load) - every one of the 26 requests fell through to Anthropic, averaging **11.25s** (min 4.58s, max 14.24s, n=25). That number is the Groq-fails-then-Anthropic-succeeds fallback cost, not a healthy first-hop Groq request - it's real evidence the fallback works exactly as designed under load, but not yet a clean read on ordinary latency; a re-run once Groq's throttle clears would be expected to show most requests served directly by Groq in a few seconds instead. See Known limitations for a real scope-classification difference the anthropic-first *investigation* surfaced between providers, and Deployment for the chain the current deployment uses. |
 | **Evaluated against the design it replaced** | A 113-case hand-labelled set (`tools/eval/dataset.jsonl`) run through both the live two-check gate and a faithful reconstruction of the old retrieval-distance gate from git history - false refusal rate 0.000 vs 0.283, with the old gate's own failure mode identified as leniency in the wrong direction (in_scope rate 0.673 vs a 0.531 base rate), not excess strictness. See Evaluation above for the full comparison, this project's own weaknesses, and the eval's limits. |
 | **Not implemented** | Syncing saved drafts and tracked filings to an account - both still live in the browser (see Track and Save Draft). |

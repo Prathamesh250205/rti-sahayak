@@ -14,7 +14,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import llm.client as llm_client
-from rag.retriever import CHROMA_DIR, COLLECTION_NAME, RetrieverError, _get_collection
+from rag.retriever import EMBEDDING_MODEL, INDEX_DIR, RetrieverError, _get_collection
 from rag.retriever import warm_up as warm_up_retriever
 from web import state as web_state
 from web.api.act import router as act_router
@@ -181,20 +181,17 @@ def health():
 
 @app.get("/healthz")
 def healthz():
-    """Deployment diagnostics for the Chroma corpus - built to make a
+    """Deployment diagnostics for the corpus index - built to make a
     zero-chunk deploy (e.g. a build step that silently failed to run
     ingestion) immediately visible instead of surfacing only as a vague
     empty /browse page or a universal insufficient_grounding refusal.
 
-    chroma_persist_path is resolved with Path.resolve() specifically so
-    this reports the real absolute filesystem location the process is
-    actually reading, not the unresolved "rag/../data/chroma" string the
-    code constructs it from - the two can look identical relative to the
-    repo but only the resolved form proves what's genuinely on disk.
+    index_path is resolved with Path.resolve() specifically so this
+    reports the real absolute filesystem location the process is actually
+    reading, not the unresolved "rag/../data/index" string the code
+    constructs it from - only the resolved form proves what's on disk.
     """
-    from chromadb.utils import embedding_functions
-
-    resolved_path = Path(CHROMA_DIR).resolve()
+    resolved_path = Path(INDEX_DIR).resolve()
     path_exists = resolved_path.exists()
 
     chunk_count = None
@@ -207,16 +204,15 @@ def healthz():
         except Exception as e:
             collection_error = f"{type(e).__name__}: {e}"
     else:
-        collection_error = "Persist path does not exist on disk."
+        collection_error = "Index path does not exist on disk."
 
     return {
-        "chroma_collection_name": COLLECTION_NAME,
-        "chroma_chunk_count": chunk_count,
-        "chroma_persist_path": str(resolved_path),
-        "chroma_persist_path_exists": path_exists,
+        "chunk_count": chunk_count,
+        "index_path": str(resolved_path),
+        "index_path_exists": path_exists,
         "collection_error": collection_error,
         "llm_provider": llm_client.PROVIDER,
-        "embedding_model": embedding_functions.ONNXMiniLM_L6_V2.MODEL_NAME,
+        "embedding_model": EMBEDDING_MODEL,
     }
 
 

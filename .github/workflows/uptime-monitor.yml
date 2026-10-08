@@ -26,8 +26,8 @@ jobs:
       - name: GET /healthz and verify 200 + 83 chunks
         run: |
           set -e
-          # -m 90: a cold Vercel function loads the embedding model and
-          # copies the Chroma index on first request - give it room so an
+          # -m 90: a cold Vercel function loads the embedding model on its
+          # first request - give it room so an
           # ordinary cold start isn't reported as an outage.
           response=$(curl -s -w "\n%{http_code}" -m 90 "${{ vars.SITE_URL }}/healthz")
           http_code=$(echo "$response" | tail -n1)
@@ -41,10 +41,10 @@ jobs:
             exit 1
           fi
 
-          chunk_count=$(echo "$body" | grep -o '"chroma_chunk_count":[0-9]*' | grep -o '[0-9]*$')
+          chunk_count=$(echo "$body" | grep -o '"chunk_count":[0-9]*' | grep -o '[0-9]*$')
 
           if [ "$chunk_count" != "83" ]; then
-            echo "::error::chroma_chunk_count=${chunk_count:-<missing>}, expected 83"
+            echo "::error::chunk_count=${chunk_count:-<missing>}, expected 83"
             exit 1
           fi
 

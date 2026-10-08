@@ -1,0 +1,4 @@
+# Only for rebuilding the search index (python -m rag.ingest) - the deployed app
+# reads the committed data/index/ and never opens the PDF.
+-r requirements.txt
+pymupdf==1.28.2
