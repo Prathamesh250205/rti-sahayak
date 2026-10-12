@@ -11,7 +11,7 @@
 <div class="hidden md:flex gap-md ml-lg h-full items-center">
 <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/" data-i18n="nav.home">Home</a>
 <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/ask" data-i18n="nav.ask">Ask</a>
-<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/draft" data-i18n="nav.draft">Draft Application</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/draft" data-i18n="nav.draft">Draft application</a>
 <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/browse" data-i18n="nav.browse">Browse the Act</a>
 <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/track"><span data-i18n="nav.track">Track</span></a>
 {% include "partials/account_nav.html" %}
@@ -24,7 +24,7 @@
 <nav class="hidden flex-col md:hidden border-t border-outline-variant bg-white" id="mobile-nav-links">
 <a class="block px-gutter py-sm text-on-surface-variant" href="/" data-i18n="nav.home">Home</a>
 <a class="block px-gutter py-sm text-on-surface-variant" href="/ask" data-i18n="nav.ask">Ask</a>
-<a class="block px-gutter py-sm text-on-surface-variant" href="/draft" data-i18n="nav.draft">Draft Application</a>
+<a class="block px-gutter py-sm text-on-surface-variant" href="/draft" data-i18n="nav.draft">Draft application</a>
 <a class="block px-gutter py-sm text-on-surface-variant" href="/browse" data-i18n="nav.browse">Browse the Act</a>
 <a class="block px-gutter py-sm text-on-surface-variant" href="/track"><span data-i18n="nav.track">Track</span></a>
 {% with mobile=true %}{% include "partials/account_nav.html" %}{% endwith %}
@@ -36,7 +36,7 @@
 <main class="flex-grow flex flex-col items-center px-gutter py-lg gap-md max-w-[900px] w-full mx-auto">
 <div class="w-full bg-surface-container-lowest border border-outline-variant rounded-card p-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-sm">
 <div>
-<p class="font-label-mono text-label-mono uppercase tracking-widest text-secondary">Sample application</p>
+<h1 class="font-headline-lg text-headline-lg text-rti-text">Sample application</h1>
 <p class="font-caption text-caption text-on-surface-variant mt-xs">Pre-generated from a real run of this app's own pipeline - not connected to the live system, so it renders even if the LLM provider or the corpus is unavailable.</p>
 </div>
 <a class="shrink-0 amber-button font-label-mono text-label-mono px-lg py-sm rounded transition-colors flex items-center gap-xs" href="/draft">Try it yourself</a>
@@ -45,7 +45,7 @@
 <div class="w-full flex flex-col items-center gap-md">
 <!-- Validation Warnings -->
 <div class="hidden w-full max-w-[700px] border border-warning bg-[#FDF6EC] rounded-sm p-sm shrink-0" id="draft-warnings">
-<div class="flex items-center gap-xs font-label-mono text-label-mono text-warning tracking-widest uppercase mb-xs">
+<div class="flex items-center gap-xs font-label-mono text-label-mono text-warning mb-xs">
 <span class="material-symbols-outlined text-[16px]" data-icon="warning">warning</span>
 Review before submitting
 </div>

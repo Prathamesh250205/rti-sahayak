@@ -66,7 +66,6 @@
   .lp-section { padding: 48px 0; }
   .lp-stats { margin-bottom: 48px; gap: 10px; }
   .lp-stat { padding: 16px; }
-  .lp-stat b { font-size: 1.45rem; }
   .lp-cta { padding: 32px 20px; border-radius: 22px; margin-bottom: 48px; }
   .lp-cta-row .btn { width: 100%; }
 
@@ -77,15 +76,14 @@
   /* Account settings */
   .acct-page { padding: 28px 16px 56px; }
   .panel { padding: 20px 16px; }
-  .acct-head h1 { font-size: 1.7rem; }
 }
 
 /* ---------- Smallest phones (320-360px) ---------- */
 @media (max-width: 360px) {
   header > div, header > div > div, body > nav > div, body > nav > div > div { gap: 8px !important; }
   header .px-gutter, header > div.px-gutter, body > nav > div { padding-left: 14px !important; padding-right: 10px !important; }
-  header a[href="/"].font-headline-md, body > nav a[href="/"].font-headline-md { font-size: 1.2rem; }
+  header a[href="/"].font-headline-md, body > nav a[href="/"].font-headline-md { font-size: var(--text-subhead); }
   #lang-pill { padding-left: 6px; padding-right: 6px; }
-  #generate-btn { min-width: 0; text-align: center; line-height: 1.25; }
+  #generate-btn { min-width: 0; text-align: center; line-height: var(--leading-ui); }
   #generate-btn [data-icon] { display: none; }
 }

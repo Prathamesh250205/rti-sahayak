@@ -11,7 +11,7 @@
 <div class="hidden md:flex gap-md ml-lg h-full items-center">
 <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/" data-i18n="nav.home">Home</a>
 <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/ask" data-i18n="nav.ask">Ask</a>
-<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/draft" data-i18n="nav.draft">Draft Application</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/draft" data-i18n="nav.draft">Draft application</a>
 <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/browse" data-i18n="nav.browse">Browse the Act</a>
 <a class="font-body-md text-body-md text-secondary font-bold border-b-2 border-secondary pb-1 h-full flex items-center pt-1 cursor-pointer transition-colors" href="/track">Track</a>
 {% include "partials/account_nav.html" %}
@@ -29,7 +29,7 @@
 <nav class="hidden flex-col md:hidden border-t border-outline-variant bg-white" id="mobile-nav-links">
 <a class="block px-gutter py-sm text-on-surface-variant" href="/" data-i18n="nav.home">Home</a>
 <a class="block px-gutter py-sm text-on-surface-variant" href="/ask" data-i18n="nav.ask">Ask</a>
-<a class="block px-gutter py-sm text-on-surface-variant" href="/draft" data-i18n="nav.draft">Draft Application</a>
+<a class="block px-gutter py-sm text-on-surface-variant" href="/draft" data-i18n="nav.draft">Draft application</a>
 <a class="block px-gutter py-sm text-on-surface-variant" href="/browse" data-i18n="nav.browse">Browse the Act</a>
 <a class="block px-gutter py-sm text-secondary font-bold" href="/track">Track</a>
 {% with mobile=true %}{% include "partials/account_nav.html" %}{% endwith %}
@@ -58,7 +58,7 @@
 <div class="hidden font-caption text-caption text-on-surface-variant" id="rules-loading">Loading statutory deadlines from the Act...</div>
 <div class="hidden w-full max-w-[700px] border border-[#93000a] bg-[#FDECEA] rounded-sm p-sm font-caption text-caption text-[#93000a]" id="rules-error"></div>
 <div class="hidden w-full max-w-[700px] border border-warning bg-[#FDF6EC] rounded-sm p-sm" id="rules-warnings">
-<div class="flex items-center gap-xs font-label-mono text-label-mono text-warning tracking-widest uppercase mb-xs">
+<div class="flex items-center gap-xs font-label-mono text-label-mono text-warning mb-xs">
 <span class="material-symbols-outlined text-[16px]" data-icon="warning">warning</span>
 Some deadlines are unavailable
 </div>
@@ -67,14 +67,14 @@ Some deadlines are unavailable
 
 <!-- Add a filing -->
 <div class="w-full max-w-[700px] bg-white border border-outline-variant rounded-card p-md space-y-sm">
-<h2 class="font-label-mono text-label-mono text-on-surface-variant tracking-widest border-b border-outline-variant pb-xs">RECORD A FILING</h2>
+<h2 class="font-label-mono text-label-mono text-on-surface-variant border-b border-outline-variant pb-xs">Record a filing</h2>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
 <div>
-<label class="form-label-mono" for="filing-authority">Public Authority</label>
+<label class="form-label-mono" for="filing-authority">Public authority</label>
 <input class="form-input-flat" id="filing-authority" placeholder="e.g. Pune Municipal Corporation" type="text"/>
 </div>
 <div>
-<label class="form-label-mono" for="filing-date">Date Filed</label>
+<label class="form-label-mono" for="filing-date">Date filed</label>
 <input class="form-input-flat" id="filing-date" type="date"/>
 </div>
 <div class="md:col-span-2">
@@ -82,7 +82,7 @@ Some deadlines are unavailable
 <input class="form-input-flat" id="filing-subject" placeholder="e.g. Road repair complaint records" type="text"/>
 </div>
 <div>
-<label class="form-label-mono" for="filing-reference">Reference Number (Optional)</label>
+<label class="form-label-mono" for="filing-reference">Reference number (optional)</label>
 <input class="form-input-flat" id="filing-reference" placeholder="If you have one" type="text"/>
 </div>
 <div class="flex items-end pb-xs">
@@ -93,7 +93,7 @@ Some deadlines are unavailable
 </div>
 </div>
 <div class="hidden font-caption text-caption text-[#93000a]" id="filing-form-error"></div>
-<button class="amber-button font-label-mono text-label-mono px-lg py-sm rounded transition-colors" id="add-filing-btn" type="button">Add Filing</button>
+<button class="amber-button font-label-mono text-label-mono px-lg py-sm rounded transition-colors" id="add-filing-btn" type="button">Add filing</button>
 </div>
 
 <!-- Filings -->
@@ -388,7 +388,7 @@ No filings tracked yet. Add one above once you've submitted an RTI application.
     if (responseDeadline && now.getTime() > responseDeadline.getTime() && deadlineRules.first_appeal) {
       var firstAppealDeadline = addDays(responseDeadline, deadlineRules.first_appeal.offset_days);
       var appealHeader = document.createElement('p');
-      appealHeader.className = 'font-label-mono text-label-mono text-warning tracking-widest uppercase pt-xs';
+      appealHeader.className = 'font-label-mono text-label-mono text-warning   pt-xs';
       appealHeader.textContent = 'Recourse';
       card.appendChild(appealHeader);
 
@@ -457,14 +457,14 @@ No filings tracked yet. Add one above once you've submitted an RTI application.
     formError.classList.add('hidden');
 
     if (!authority || !subject || !dateFiled) {
-      formError.textContent = 'Public Authority, Subject, and Date Filed are required.';
+      formError.textContent = 'Public authority, Subject, and Date filed are required.';
       formError.classList.remove('hidden');
       return;
     }
 
     var todayStr = new Date().toISOString().slice(0, 10);
     if (dateFiled > todayStr) {
-      formError.textContent = 'Date Filed cannot be in the future.';
+      formError.textContent = 'Date filed cannot be in the future.';
       formError.classList.remove('hidden');
       return;
     }

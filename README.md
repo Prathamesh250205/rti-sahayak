@@ -65,12 +65,15 @@ rag/      corpus ingestion (rag/ingest.py) and retrieval (rag/retriever.py) -
 llm/      provider-agnostic LLM client (llm/client.py) - a configurable, ordered
           provider chain (default: Groq -> Gemini -> Anthropic, see below),
           automatic retry on the next provider in the chain if one fails
-export/   PDF generation (export/pdf_writer.py) - renders the final letter text,
-          nothing else
+export/   PDF generation (export/pdf_writer.py) - renders the final letter text in
+          embedded Inter + Noto Sans Devanagari (export/fonts/, SIL OFL) with
+          HarfBuzz shaping, so Hindi/Marathi letters export correctly
 web/      FastAPI app: routes (web/main.py), the /api/draft, /api/ask, /api/act,
           and /api/track/deadline-rules endpoints (web/api/), optional accounts
           (web/api/auth.py), Jinja2 templates, per-IP rate limiting
 web/static/css/
+          typography.css (the one type system: Inter, a rem scale, spacing
+          tokens - every Tailwind font/text class resolves to it),
           landing.css (landing page, 3D hero, auth pages), dark.css (dark
           theme), mobile.css (phone/tablet layout) - plain CSS on top of the
           prebuilt Tailwind build

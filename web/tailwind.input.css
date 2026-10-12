@@ -11,7 +11,7 @@
     @apply w-full bg-surface-container-lowest border border-outline-variant rounded-DEFAULT py-sm px-md font-body-md text-on-surface focus:outline-none focus:border-on-surface focus:ring-0 transition-colors;
   }
   .form-label-mono {
-    @apply block mb-xs font-label-mono text-label-mono text-on-surface-variant uppercase;
+    @apply block mb-xs font-label-mono text-label-mono text-on-surface-variant;
   }
 }
 

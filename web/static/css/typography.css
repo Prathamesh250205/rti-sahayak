@@ -1,0 +1,97 @@
+/* Typography for the whole site: one family (Inter), one scale, one set of
+   spacing tokens. The Tailwind font-* / text-* utilities in
+   static/vendor/tailwind.css and web/tailwind.config.js resolve to these
+   tokens, so this file is the single place to change type. rem units, so
+   browser zoom and the user's default font size are respected. Icons keep
+   their own font (.material-symbols-outlined in vendor/fonts.css). */
+:root {
+  /* Inter for Latin text; Inter has no Devanagari, so Hindi/Marathi glyphs
+     fall through to Noto Sans Devanagari, then the system sans. */
+  --font-sans: "Inter", "Noto Sans Devanagari", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --text-hero: 3rem;          /* 48px, homepage hero */
+  --text-hero-mobile: 2rem;   /* 32px */
+  --text-title: 2rem;         /* 32px, page titles */
+  --text-title-mobile: 1.75rem; /* 28px */
+  --text-section: 1.5rem;     /* 24px, section headings */
+  --text-subhead: 1.125rem;   /* 18px, subheadings, card titles */
+  --text-lead: 1.125rem;      /* 18px, hero intro paragraph only */
+  --text-body: 1rem;          /* 16px, body, answers, legal text, inputs */
+  --text-ui: 0.9375rem;       /* 15px, buttons */
+  --text-label: 0.875rem;     /* 14px, form labels */
+  --text-small: 0.875rem;     /* 14px, helper text, citations, metadata */
+
+  --leading-hero: 1.15;
+  --leading-title: 1.2;
+  --leading-section: 1.3;
+  --leading-subhead: 1.35;
+  --leading-body: 1.6;
+  --leading-small: 1.5;
+  --leading-ui: 1.25;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Spacing between a heading and what it introduces, and between blocks. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  --measure: 70ch; /* comfortable reading line length */
+}
+
+/* Devanagari needs a little more vertical room for its marks. */
+:lang(hi), :lang(mr) { --leading-body: 1.75; --leading-small: 1.65; }
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  font-weight: var(--weight-regular);
+  letter-spacing: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Form controls don't inherit font by default in every browser. */
+button, input, select, textarea, optgroup { font-family: inherit; letter-spacing: normal; }
+
+/* Phones: hero and page titles step down. */
+@media (max-width: 640px) {
+  :root { --text-hero: var(--text-hero-mobile); --text-title: var(--text-title-mobile); }
+}
+
+/* ---- Roles that the utility classes alone don't express ---- */
+
+/* Buttons: 15px, semibold - whatever text utility the template gave them. */
+button:is(.text-label-mono, .text-caption, .text-body-md, .text-sm),
+.amber-button, .secondary-button {
+  font-size: var(--text-ui);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-ui);
+}
+
+/* Top navigation links (desktop list and mobile menu): 16px medium; the
+   current page's link semibold rather than bold. */
+:is(#mobile-nav-links, .md\:flex:has(> a[href="/ask"])) > a { font-weight: var(--weight-medium); }
+:is(#mobile-nav-links, .md\:flex:has(> a[href="/ask"])) > a.font-bold { font-weight: var(--weight-semibold); }
+
+/* Small group headings inside forms and panels ("Your details", "Backup",
+   "Record a filing"): subheading size, so they read as headings, not labels. */
+:is(h2, h3, h4).text-label-mono { font-size: var(--text-subhead); line-height: var(--leading-subhead); font-weight: var(--weight-semibold); }
+
+/* Long reading content keeps a comfortable line length. */
+.measure, .measure > p { max-width: var(--measure); }
+
+/* A page title that's in the document outline but not drawn (pages whose
+   visible design has no title, e.g. /draft). */
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}

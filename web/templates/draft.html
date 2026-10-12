@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Draft Application - RTI Sahayak{% endblock %}
+{% block title %}Draft application - RTI Sahayak{% endblock %}
 
 {% block head_extra %}
 <style>
@@ -33,7 +33,7 @@
 <div class="hidden md:flex gap-md ml-lg h-full items-center">
 <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/" data-i18n="nav.home">Home</a>
 <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/ask" data-i18n="nav.ask">Ask</a>
-<a class="font-body-md text-body-md text-secondary font-bold border-b-2 border-secondary pb-1 h-full flex items-center pt-1 cursor-pointer transition-colors" href="/draft" data-i18n="nav.draft">Draft Application</a>
+<a class="font-body-md text-body-md text-secondary font-bold border-b-2 border-secondary pb-1 h-full flex items-center pt-1 cursor-pointer transition-colors" href="/draft" data-i18n="nav.draft">Draft application</a>
 <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/browse" data-i18n="nav.browse">Browse the Act</a>
 <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="/track"><span data-i18n="nav.track">Track</span></a>
 {% include "partials/account_nav.html" %}
@@ -56,7 +56,7 @@
 <nav class="hidden flex-col md:hidden border-t border-outline-variant bg-white" id="mobile-nav-links">
 <a class="block px-gutter py-sm text-on-surface-variant" href="/" data-i18n="nav.home">Home</a>
 <a class="block px-gutter py-sm text-on-surface-variant" href="/ask" data-i18n="nav.ask">Ask</a>
-<a class="block px-gutter py-sm text-secondary font-bold" href="/draft" data-i18n="nav.draft">Draft Application</a>
+<a class="block px-gutter py-sm text-secondary font-bold" href="/draft" data-i18n="nav.draft">Draft application</a>
 <a class="block px-gutter py-sm text-on-surface-variant" href="/browse" data-i18n="nav.browse">Browse the Act</a>
 <a class="block px-gutter py-sm text-on-surface-variant" href="/track"><span data-i18n="nav.track">Track</span></a>
 {% with mobile=true %}{% include "partials/account_nav.html" %}{% endwith %}
@@ -67,13 +67,14 @@
 {% block content %}
 <!-- Main Content Area - 50/50 Split -->
 <main class="flex-grow flex flex-col lg:flex-row w-full max-w-[1440px] mx-auto bg-[#F7F4EE]">
+<h1 class="visually-hidden">Draft application</h1>
 <!-- LEFT COLUMN (Form) -->
 <div class="w-full lg:w-1/2 flex flex-col h-[calc(100vh-64px)] bg-white border-r border-outline-variant">
 <div class="flex-grow overflow-y-auto custom-scrollbar p-md lg:p-lg space-y-lg relative">
 <!-- Saved Drafts -->
 <section class="space-y-sm">
 <div class="flex justify-between items-baseline border-b border-outline-variant pb-xs">
-<h2 class="font-label-mono text-label-mono text-on-surface-variant tracking-widest">SAVED DRAFTS</h2>
+<h2 class="font-label-mono text-label-mono text-on-surface-variant">Saved drafts</h2>
 </div>
 <div class="border border-warning bg-[#FDF6EC] rounded-sm p-sm flex items-start gap-xs">
 <span class="material-symbols-outlined text-[16px] text-warning shrink-0" data-icon="info">info</span>
@@ -81,57 +82,57 @@
 </div>
 {% include "partials/backup_controls.html" %}
 <div class="hidden font-caption text-caption text-[#93000a]" id="saved-drafts-error"></div>
-<p class="font-caption text-caption text-on-surface-variant italic" id="saved-drafts-empty">No saved drafts yet. Fill in the form (and generate a letter, if you like), then click "Save Draft" below to keep your progress.</p>
+<p class="font-caption text-caption text-on-surface-variant italic" id="saved-drafts-empty">No saved drafts yet. Fill in the form (and generate a letter, if you like), then click "Save draft" below to keep your progress.</p>
 <div class="space-y-sm" id="saved-drafts-list"></div>
 </section>
-<!-- Section 1: YOUR DETAILS -->
+<!-- Section 1: Your details -->
 <section class="space-y-md">
-<h2 class="font-label-mono text-label-mono text-on-surface-variant tracking-widest border-b border-outline-variant pb-xs" data-i18n="draft.section_your_details">YOUR DETAILS</h2>
+<h2 class="font-label-mono text-label-mono text-on-surface-variant border-b border-outline-variant pb-xs" data-i18n="draft.section_your_details">Your details</h2>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
 <div class="md:col-span-2">
-<label class="form-label-mono" for="fullName" data-i18n="draft.label_full_name">Full Name</label>
+<label class="form-label-mono" for="fullName" data-i18n="draft.label_full_name">Full name</label>
 <input class="form-input-flat" id="fullName" name="full_name" placeholder="e.g. Ramesh Kumar" type="text"/>
 </div>
 <div class="md:col-span-2">
-<label class="form-label-mono" for="address" data-i18n="draft.label_address">Mailing Address</label>
+<label class="form-label-mono" for="address" data-i18n="draft.label_address">Mailing address</label>
 <textarea class="form-input-flat resize-none" id="address" name="address" placeholder="Complete address for correspondence" rows="2"></textarea>
 </div>
 <div>
-<label class="form-label-mono" for="phone" data-i18n="draft.label_phone">Phone Number</label>
+<label class="form-label-mono" for="phone" data-i18n="draft.label_phone">Phone number</label>
 <input class="form-input-flat" id="phone" name="phone" placeholder="+91" type="tel"/>
 </div>
 <div>
-<label class="form-label-mono" for="email" data-i18n="draft.label_email">Email Address (Optional)</label>
+<label class="form-label-mono" for="email" data-i18n="draft.label_email">Email address (optional)</label>
 <input class="form-input-flat" id="email" name="email" placeholder="Included in the application if provided" type="email"/>
 </div>
 <div>
-<label class="form-label-mono" for="locality" data-i18n="draft.label_locality">Locality / Ward / Area</label>
+<label class="form-label-mono" for="locality" data-i18n="draft.label_locality">Locality / ward / area</label>
 <input class="form-input-flat" id="locality" name="locality" placeholder="e.g. Kothrud, Ward 12" type="text"/>
 </div>
 <div>
-<label class="form-label-mono" for="timeframe" data-i18n="draft.label_timeframe">Time Period</label>
+<label class="form-label-mono" for="timeframe" data-i18n="draft.label_timeframe">Time period</label>
 <input class="form-input-flat" id="timeframe" name="timeframe" placeholder="e.g. last 3 months" type="text"/>
 </div>
 </div>
 </section>
-<!-- Section 2: PUBLIC AUTHORITY -->
+<!-- Section 2: Public authority -->
 <section class="space-y-md pt-md">
-<h2 class="font-label-mono text-label-mono text-on-surface-variant tracking-widest border-b border-outline-variant pb-xs" data-i18n="draft.section_public_authority">PUBLIC AUTHORITY</h2>
+<h2 class="font-label-mono text-label-mono text-on-surface-variant border-b border-outline-variant pb-xs" data-i18n="draft.section_public_authority">Public authority</h2>
 <div class="space-y-md">
 <div class="relative">
-<label class="form-label-mono" for="department" data-i18n="draft.label_department">Select Department / Public Authority</label>
+<label class="form-label-mono" for="department" data-i18n="draft.label_department">Select department / public authority</label>
 <input class="form-input-flat" id="department" name="public_authority" placeholder="e.g. Pune Municipal Corporation" type="text"/>
 </div>
 <div>
-<label class="form-label-mono" for="pio" data-i18n="draft.label_pio">Public Information Officer (Optional)</label>
+<label class="form-label-mono" for="pio" data-i18n="draft.label_pio">Public Information Officer (optional)</label>
 <input class="form-input-flat" id="pio" name="pio" placeholder="Designation of the PIO (if known)" type="text"/>
 </div>
 </div>
 </section>
-<!-- Section 3: WHAT YOU WANT TO KNOW -->
+<!-- Section 3: What you want to know -->
 <section class="space-y-md pt-md">
 <div class="flex justify-between items-baseline border-b border-outline-variant pb-xs">
-<h2 class="font-label-mono text-label-mono text-on-surface-variant tracking-widest" data-i18n="draft.section_what_you_want">WHAT YOU WANT TO KNOW</h2>
+<h2 class="font-label-mono text-label-mono text-on-surface-variant" data-i18n="draft.section_what_you_want">What you want to know</h2>
 <span class="font-caption text-caption text-on-surface-variant" data-i18n="draft.max_words">Max 500 words</span>
 </div>
 <p class="font-caption text-caption text-on-surface-variant italic" data-i18n="draft.helper_text">Ask for specific documents, records, or orders. Do not ask for opinions or reasons (e.g., "Why was my application rejected?").</p>
@@ -154,7 +155,7 @@
 </section>
 <!-- Section 4: FEE -->
 <section class="space-y-md pt-md pb-xl">
-<h2 class="font-label-mono text-label-mono text-on-surface-variant tracking-widest border-b border-outline-variant pb-xs" data-i18n="draft.section_fee">FEE PAYMENT</h2>
+<h2 class="font-label-mono text-label-mono text-on-surface-variant border-b border-outline-variant pb-xs" data-i18n="draft.section_fee">Fee payment</h2>
 <div class="space-y-sm">
 <label class="flex items-center gap-sm cursor-pointer p-sm border border-outline-variant rounded-DEFAULT hover:bg-surface-container-low transition-colors">
 <input checked="" class="text-primary focus:ring-primary h-4 w-4" name="is_bpl" type="radio" value="false"/>
@@ -172,10 +173,10 @@
 <div class="bg-white border-t border-outline-variant p-md flex justify-between items-center shadow-[0_-4px_20px_rgba(18,33,46,0.05)] z-10">
 <button class="secondary-button font-label-mono text-label-mono px-md py-sm rounded flex items-center gap-xs transition-colors" id="save-draft-btn" title="Save this form and letter to this browser" type="button">
 <span class="material-symbols-outlined text-[18px]" data-icon="save">save</span>
-<span data-i18n="draft.save_draft_button">Save Draft</span>
+<span data-i18n="draft.save_draft_button">Save draft</span>
 </button>
 <button class="amber-button font-label-mono text-label-mono px-lg py-sm rounded transition-colors flex items-center gap-xs" id="generate-btn" type="button">
-<span data-i18n="draft.generate_button">Generate Application</span>
+<span data-i18n="draft.generate_button">Generate application</span>
 <span class="material-symbols-outlined text-[18px]" data-icon="arrow_forward">arrow_forward</span>
 </button>
 </div>
@@ -206,7 +207,7 @@
 <div class="flex-grow overflow-y-auto custom-scrollbar p-md lg:p-lg flex flex-col items-center gap-md">
 <!-- Validation Warnings: issues found in the drafted letter that need review before submitting -->
 <div class="hidden w-full max-w-[700px] border border-warning bg-[#FDF6EC] rounded-sm p-sm shrink-0" id="draft-warnings">
-<div class="flex items-center gap-xs font-label-mono text-label-mono text-warning tracking-widest uppercase mb-xs">
+<div class="flex items-center gap-xs font-label-mono text-label-mono text-warning mb-xs">
 <span class="material-symbols-outlined text-[16px]" data-icon="warning">warning</span>
 Review before submitting
 </div>
@@ -215,7 +216,7 @@ Review before submitting
 <!-- The Paper -->
 <div class="bg-white w-full max-w-[700px] min-h-[800px] p-xl paper-shadow rounded-sm relative shrink-0">
 <div class="font-headline-lg-mobile text-body-lg text-on-surface-variant italic text-center py-xl" id="preview-empty" data-i18n="draft.preview_empty">
-Fill in the form and click "Generate Application" to see your drafted RTI application here.
+Fill in the form and click "Generate application" to see your drafted RTI application here.
 </div>
 <div class="hidden text-center py-xl" id="preview-loading">
 <p class="font-label-mono text-label-mono text-on-surface-variant" id="preview-loading-message">Drafting your application... (usually 8-10 seconds)</p>
@@ -234,7 +235,7 @@ Fill in the form and click "Generate Application" to see your drafted RTI applic
 <footer class="bg-surface-container-low full-width bottom-0 border-t border-outline-variant bg-[#f2f4f2]">
 <div class="w-full py-xl px-gutter max-w-max-width mx-auto flex flex-col md:flex-row justify-between items-center gap-base">
 <div class="text-center md:text-left space-y-sm">
-<p class="font-label-mono text-label-mono uppercase tracking-widest text-on-surface-variant font-bold">RTI Sahayak</p>
+<p class="font-label-mono text-label-mono text-on-surface-variant font-bold">RTI Sahayak</p>
 <p class="font-caption text-caption text-on-surface-variant max-w-2xl">© {{ current_year }} RTI Sahayak. This AI assistant is an educational tool and does not constitute legal advice. All responses should be verified against the official Right to Information Act, 2005.</p>
 </div>
 <div class="flex flex-wrap justify-center md:justify-end gap-md">
@@ -281,7 +282,7 @@ Fill in the form and click "Generate Application" to see your drafted RTI applic
   var lastApplicationText = '';
   // The full last successful /api/draft response (chunks, clauses,
   // warnings, meta, department_guess, information_sought) - kept
-  // alongside lastApplicationText so Save Draft can persist the whole
+  // alongside lastApplicationText so Save draft can persist the whole
   // rendered letter, not just its plain text.
   var lastDraftResponse = null;
 
@@ -666,7 +667,7 @@ Fill in the form and click "Generate Application" to see your drafted RTI applic
     highlightSourceCard(chip.getAttribute('data-chunk-index'));
   });
 
-  // Shared by the Generate Application request and Save Draft, so a saved
+  // Shared by the Generate application request and Save draft, so a saved
   // draft's form snapshot is always exactly what a re-generate would send.
   function buildPayload() {
     var isBplInput = document.querySelector('[name="is_bpl"]:checked');

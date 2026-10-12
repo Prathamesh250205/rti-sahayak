@@ -99,56 +99,30 @@ module.exports = {
         "xl": "80px",
         "xs": "4px"
       },
+      // Every font key is Inter via the --font-sans token, and every size a
+      // token from web/static/css/typography.css (one family, one scale).
+      // The key names are historical (e.g. "label-mono" is no longer mono).
       fontFamily: {
-        "headline-md": ["\"Source Serif 4\"", "serif"],
-        "label-mono": ["JetBrains Mono", "monospace"],
-        "body-lg": ["Inter", "sans-serif"],
-        "body-hindi": ["Noto Sans", "sans-serif"],
-        "display-lg": ["\"Source Serif 4\"", "serif"],
-        "headline-lg": ["\"Source Serif 4\"", "serif"],
-        "body-md": ["Inter", "sans-serif"],
-        "caption": ["Inter", "sans-serif"],
-        "headline-lg-mobile": ["\"Source Serif 4\"", "serif"]
+        "display-lg": ["var(--font-sans)"],
+        "headline-lg": ["var(--font-sans)"],
+        "headline-lg-mobile": ["var(--font-sans)"],
+        "headline-md": ["var(--font-sans)"],
+        "body-lg": ["var(--font-sans)"],
+        "body-md": ["var(--font-sans)"],
+        "body-hindi": ["var(--font-sans)"],
+        "caption": ["var(--font-sans)"],
+        "label-mono": ["var(--font-sans)"]
       },
       fontSize: {
-        "headline-md": ["24px", {
-            "lineHeight": "32px",
-            "fontWeight": "600"
-          }],
-        "label-mono": ["13px", {
-            "lineHeight": "16px",
-            "letterSpacing": "0.05em",
-            "fontWeight": "500"
-          }],
-        "body-lg": ["18px", {
-            "lineHeight": "28px",
-            "fontWeight": "400"
-          }],
-        "body-hindi": ["18px", {
-            "lineHeight": "30px",
-            "fontWeight": "400"
-          }],
-        "display-lg": ["48px", {
-            "lineHeight": "60px",
-            "letterSpacing": "-0.02em",
-            "fontWeight": "700"
-          }],
-        "headline-lg": ["32px", {
-            "lineHeight": "40px",
-            "fontWeight": "600"
-          }],
-        "body-md": ["16px", {
-            "lineHeight": "26px",
-            "fontWeight": "400"
-          }],
-        "caption": ["14px", {
-            "lineHeight": "20px",
-            "fontWeight": "500"
-          }],
-        "headline-lg-mobile": ["28px", {
-            "lineHeight": "36px",
-            "fontWeight": "600"
-          }]
+        "display-lg": ["var(--text-hero)", { "lineHeight": "var(--leading-hero)", "fontWeight": "700", "letterSpacing": "-0.02em" }],
+        "headline-lg": ["var(--text-title)", { "lineHeight": "var(--leading-title)", "fontWeight": "700" }],
+        "headline-lg-mobile": ["var(--text-title-mobile)", { "lineHeight": "var(--leading-title)", "fontWeight": "700" }],
+        "headline-md": ["var(--text-section)", { "lineHeight": "var(--leading-section)", "fontWeight": "600" }],
+        "body-lg": ["var(--text-body)", { "lineHeight": "var(--leading-body)", "fontWeight": "400" }],
+        "body-md": ["var(--text-body)", { "lineHeight": "var(--leading-body)", "fontWeight": "400" }],
+        "body-hindi": ["var(--text-body)", { "lineHeight": "var(--leading-body)", "fontWeight": "400" }],
+        "caption": ["var(--text-small)", { "lineHeight": "var(--leading-small)", "fontWeight": "400" }],
+        "label-mono": ["var(--text-label)", { "lineHeight": "var(--leading-small)", "fontWeight": "500" }]
       },
       boxShadow: {
         "ask-bar": "0 4px 20px rgba(18, 33, 46, 0.08)"

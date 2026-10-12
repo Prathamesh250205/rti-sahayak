@@ -21,12 +21,12 @@
   } catch (e) {}
 </script>
 <link href="/static/vendor/tailwind.css" rel="stylesheet"/>
+<link href="/static/css/typography.css" rel="stylesheet"/>
 <link href="/static/vendor/fonts.css" rel="stylesheet"/>
 <style>
-    .cite { font-family:"JetBrains Mono",monospace; font-size:.75rem;
-      padding:.05rem .4rem; margin:0 .15rem; border:1px solid #924c00;
+    .cite { font-size: var(--text-small); line-height: 1.4; font-weight: var(--weight-medium);
+      padding:.05rem .45rem; margin:0 .15rem; border:1px solid #924c00;
       border-radius:999px; color:#924c00; white-space:nowrap; cursor:pointer; }
-    :lang(hi), :lang(mr), .devanagari { font-family:"Noto Sans Devanagari",sans-serif; }
 
     /* Component classes below, ported from each screen's <head><style> block in
        design/stitch_rti_sahayak_ai_assistant/*/code.html. Verbatim per screen -
@@ -153,6 +153,7 @@
 
     /* Account control in every nav (partials/account_nav.html). Plain CSS,
        like the rest of this block, so it needs no Tailwind rebuild. */
+    .acct-link, .acct-cta, .acct-ghost { font-size: var(--text-ui); }
     .acct-link { padding: 6px 12px; margin-left: 8px; color: #00352f; font-weight: 600; border-radius: 999px; white-space: nowrap; transition: background .2s; }
     .acct-link:hover { background: #edeeec; }
     .acct-cta { padding: 8px 16px; border-radius: 999px; color: #fff !important; font-weight: 600; white-space: nowrap;
@@ -166,7 +167,7 @@
     .acct-pop { position: absolute; right: 0; top: calc(100% + 10px); min-width: 220px; padding: 14px; background: #fff;
       border: 1px solid #E3DDD2; border-radius: 14px; box-shadow: 0 18px 40px -12px rgba(18,33,46,.25); z-index: 60; }
     .acct-pop-name { font-weight: 700; color: #12212E; }
-    .acct-pop-mail { font-size: .8rem; color: #404946; margin-bottom: 10px; word-break: break-all; }
+    .acct-pop-mail { font-size: var(--text-small); color: #404946; margin-bottom: 10px; word-break: break-all; }
     .acct-pop-link { display: block; padding: 8px 10px; margin: 0 -4px 8px; border-radius: 10px; color: #00352f; font-weight: 600; }
     .acct-pop-link:hover { background: #f2f4f2; }
     .acct-pop button { width: 100%; padding: 8px; border-radius: 10px; border: 1px solid #E3DDD2; color: #93000a; font-weight: 600; }
@@ -193,7 +194,7 @@
       #act-search-input { width: 10rem; }
       header:has(#act-search-input) nav { gap: 14px; }
     }
-    header nav a, header > div > a[href="/"], body > nav a { white-space: nowrap; }
+    header nav a, header > div > a[href="/"], body > nav a, #lang-pill { white-space: nowrap; }
     /* The nav tagline duplicates the landing page's badge and no longer fits
        beside the account and theme controls. */
     header [data-i18n="nav.tagline"], nav [data-i18n="nav.tagline"] { display: none !important; }

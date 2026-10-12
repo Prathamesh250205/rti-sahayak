@@ -1,5 +1,5 @@
 /* Export/import for RTI Sahayak's two localStorage-only datasets (Track's
- * filings, Save Draft's drafts) as one combined JSON backup file. Pure
+ * filings, Save draft's drafts) as one combined JSON backup file. Pure
  * client-side - no server involvement, no new API route. Shared by /track
  * and /draft via web/templates/partials/backup_controls.html, which owns
  * the UI; this file owns the data logic only.

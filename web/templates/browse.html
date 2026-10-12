@@ -12,7 +12,7 @@
 <nav class="hidden md:flex gap-6 items-center">
 <a class="text-on-surface-variant hover:text-on-surface transition-colors font-body-md text-body-md" href="/" data-i18n="nav.home">Home</a>
 <a class="text-on-surface-variant hover:text-on-surface transition-colors font-body-md text-body-md" href="/ask" data-i18n="nav.ask">Ask</a>
-<a class="text-on-surface-variant hover:text-on-surface transition-colors font-body-md text-body-md" href="/draft" data-i18n="nav.draft">Draft Application</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-body-md text-body-md" href="/draft" data-i18n="nav.draft">Draft application</a>
 <a class="text-secondary border-b-2 border-secondary pb-1 font-body-md text-body-md" href="/browse" data-i18n="nav.browse">Browse the Act</a>
 <a class="text-on-surface-variant hover:text-on-surface transition-colors font-body-md text-body-md" href="/track"><span data-i18n="nav.track">Track</span></a>
 {% include "partials/account_nav.html" %}
@@ -20,7 +20,7 @@
 <div class="flex items-center gap-4">
 <div class="relative hidden md:block">
 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm" data-icon="search">search</span>
-<input class="pl-10 pr-4 py-2 border border-custom-border rounded bg-white text-custom-ink focus:border-custom-ink focus:ring-0 w-80 font-body-md text-sm placeholder:text-outline-variant transition-colors" id="act-search-input" placeholder="Search the Act — try 'third party' or 'section 8'" type="text"/>
+<input class="pl-10 pr-4 py-2 border border-custom-border rounded bg-white text-custom-ink focus:border-custom-ink focus:ring-0 w-80 font-body-md text-body-md placeholder:text-outline-variant transition-colors" id="act-search-input" placeholder="Search the Act — try 'third party' or 'section 8'" type="text"/>
 </div>
 <div class="relative hidden sm:block">
 <button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors flex" id="lang-pill" type="button">
@@ -36,7 +36,7 @@
 <nav class="hidden flex-col md:hidden border-t border-outline-variant bg-white" id="mobile-nav-links">
 <a class="block px-gutter py-sm text-on-surface-variant" href="/" data-i18n="nav.home">Home</a>
 <a class="block px-gutter py-sm text-on-surface-variant" href="/ask" data-i18n="nav.ask">Ask</a>
-<a class="block px-gutter py-sm text-on-surface-variant" href="/draft" data-i18n="nav.draft">Draft Application</a>
+<a class="block px-gutter py-sm text-on-surface-variant" href="/draft" data-i18n="nav.draft">Draft application</a>
 <a class="block px-gutter py-sm text-secondary font-bold" href="/browse" data-i18n="nav.browse">Browse the Act</a>
 <a class="block px-gutter py-sm text-on-surface-variant" href="/track"><span data-i18n="nav.track">Track</span></a>
 {% with mobile=true %}{% include "partials/account_nav.html" %}{% endwith %}
@@ -51,7 +51,7 @@
      grouping is rendered here since the ingested metadata has no chapter field to group by) -->
 <aside class="w-[280px] shrink-0 border-r border-custom-border bg-white hidden lg:flex flex-col py-md overflow-y-auto" style="height: calc(100vh - 65px);">
 <div class="px-md mb-4">
-<h2 class="font-label-mono text-label-mono text-outline uppercase tracking-widest">Sections</h2>
+<h2 class="font-label-mono text-label-mono text-outline">Sections</h2>
 </div>
 <nav class="flex flex-col" id="section-nav">
 <p class="px-md text-sm text-outline italic" id="section-nav-loading">Loading sections...</p>
@@ -70,7 +70,7 @@
                 </button>
 </div>
 <!-- Content Area -->
-<div class="max-w-[800px] mx-auto px-lg py-xl" id="section-content">
+<div class="max-w-[800px] mx-auto px-lg py-xl measure" id="section-content">
 <p class="text-on-surface-variant italic" id="section-content-empty">Select a section from the left, or search the Act above.</p>
 </div>
 </article>
@@ -140,7 +140,7 @@
           a.href = 'javascript:void(0)';
           a.setAttribute('data-section', s.section);
           a.className = 'px-md py-1.5 text-sm text-outline hover:text-custom-ink font-label-mono text-label-mono flex justify-between items-center gap-2 border-l-4 border-transparent';
-          a.innerHTML = '<span>' + escapeHtml(s.section) + '</span><span class="text-xs opacity-60">' + s.chunk_count + '</span>';
+          a.innerHTML = '<span>' + escapeHtml(s.section) + '</span><span class="text-caption opacity-60">' + s.chunk_count + '</span>';
           a.addEventListener('click', function () {
             loadSection(s.section);
           });
@@ -167,7 +167,7 @@
         return r.json();
       })
       .then(function (data) {
-        var html = '<div class="mb-lg"><h1 class="font-label-mono text-[32px] font-bold text-custom-ink">' + escapeHtml(data.section) + '</h1></div>';
+        var html = '<div class="mb-lg"><h1 class="font-headline-lg text-headline-lg text-custom-ink">' + escapeHtml(data.section) + '</h1></div>';
         html += '<div class="font-headline-lg text-body-lg text-custom-ink leading-relaxed statutory-line-browse">';
         data.chunks.forEach(function (chunk) {
           html += '<p class="mb-2 font-headline-md text-body-lg whitespace-pre-wrap">' + escapeHtml(chunk.text) + '</p>';

@@ -22,7 +22,7 @@
 <div class="hidden fixed inset-0 z-50 modal-overlay items-center justify-center p-md" id="telemetry-modal">
 <div class="bg-paper-base border border-paper-border w-full max-w-[720px] shadow-[0_4px_20px_rgba(18,33,46,0.08)] rounded-lg overflow-hidden flex flex-col max-h-[90vh]">
 <div class="flex items-center justify-between p-md border-b border-paper-border bg-white shrink-0">
-<h2 class="font-label-mono text-label-mono text-paper-text uppercase tracking-widest">System Telemetry</h2>
+<h2 class="font-label-mono text-label-mono text-paper-text">System telemetry</h2>
 <button aria-label="Close modal" class="text-on-surface-variant hover:text-paper-text transition-colors flex items-center justify-center w-8 h-8 rounded hover:bg-surface-container-low" id="telemetry-close" type="button">
 <span class="material-symbols-outlined" data-icon="close">close</span>
 </button>
@@ -49,9 +49,9 @@
 
   function tile(label, value, extra) {
     return '<div class="border border-paper-border bg-paper-base p-sm rounded flex flex-col justify-center">'
-      + '<div class="font-label-mono text-[11px] text-on-surface-variant uppercase mb-xs">' + escapeHtml(label) + '</div>'
+      + '<div class="font-label-mono text-caption text-on-surface-variant mb-xs">' + escapeHtml(label) + '</div>'
       + '<div class="font-label-mono text-sm text-paper-text font-semibold">' + escapeHtml(value) + '</div>'
-      + (extra ? '<div class="font-label-mono text-[10px] text-on-surface-variant mt-1">' + escapeHtml(extra) + '</div>' : '')
+      + (extra ? '<div class="font-label-mono text-caption text-on-surface-variant mt-1">' + escapeHtml(extra) + '</div>' : '')
       + '</div>';
   }
 
