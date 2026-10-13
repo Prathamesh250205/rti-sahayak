@@ -1,5 +1,7 @@
 """FastAPI entry point for the web/ UI layer."""
 import asyncio
+import functools
+import hashlib
 import json
 import sys
 import time
@@ -162,6 +164,17 @@ templates = Jinja2Templates(directory=BASE_DIR / "templates")
 # footer's "© {year}" only needs to be right for whatever year this
 # process happens to be running in, which a redeploy refreshes anyway.
 templates.env.globals["current_year"] = date.today().year
+
+
+@functools.cache
+def static_url(path: str) -> str:
+    """/static URL stamped with a hash of the file, so browsers can keep it
+    for a year (vercel.json) and still get a changed file at once."""
+    digest = hashlib.sha256((BASE_DIR / "static" / path).read_bytes()).hexdigest()[:10]
+    return f"/static/{path}?v={digest}"
+
+
+templates.env.globals["static"] = static_url
 templates.env.globals["current_user"] = current_user
 templates.env.globals["oauth_providers"] = oauth_providers
 app.include_router(draft_router)

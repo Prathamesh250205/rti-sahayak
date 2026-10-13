@@ -37,7 +37,7 @@
 </header>
 {% endblock %}
 
-{% block head_extra %}<link href="/static/css/landing.css" rel="stylesheet"/>{% endblock %}
+{% block head_extra %}<link href="{{ static('css/landing.css') }}" rel="stylesheet"/>{% endblock %}
 
 {% block content %}
 <main class="lp">
@@ -146,7 +146,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/scene.js" defer></script>
+<script src="{{ static('js/scene.js') }}" defer></script>
 <script>
 (function () {
   var askInput = document.getElementById('ask-input');

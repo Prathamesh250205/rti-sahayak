@@ -4,7 +4,7 @@
 {% set titles = {"login": "Sign in", "signup": "Create account", "forgot": "Forgot password", "reset": "Set a new password"} %}
 
 {% block title %}{{ titles[mode] }} - RTI Sahayak{% endblock %}
-{% block head_extra %}<link href="/static/css/landing.css" rel="stylesheet"/>{% endblock %}
+{% block head_extra %}<link href="{{ static('css/landing.css') }}" rel="stylesheet"/>{% endblock %}
 
 {% block content %}
 <div class="auth">
@@ -111,6 +111,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/scene.js" defer></script>
-<script src="/static/js/auth-forms.js" defer></script>
+<script src="{{ static('js/scene.js') }}" defer></script>
+<script src="{{ static('js/auth-forms.js') }}" defer></script>
 {% endblock %}

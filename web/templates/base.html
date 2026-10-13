@@ -9,7 +9,7 @@
 <meta property="og:title" content="{% block og_title %}RTI Sahayak{% endblock %}"/>
 <meta property="og:description" content="{% block og_description %}Draft a Right to Information Act, 2005 application with AI assistance - grounded in the Act's actual text, with section-level citations.{% endblock %}"/>
 <meta property="og:url" content="{{ request.url }}"/>
-<link href="/static/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="{{ static('favicon.svg') }}" rel="icon" type="image/svg+xml"/>
 <script>
   // Light by default; dark only if the visitor chose it with the toggle.
   // Runs before first paint, so a dark choice never flashes light. The key was
@@ -20,9 +20,9 @@
     }
   } catch (e) {}
 </script>
-<link href="/static/vendor/tailwind.css" rel="stylesheet"/>
-<link href="/static/css/typography.css" rel="stylesheet"/>
-<link href="/static/vendor/fonts.css" rel="stylesheet"/>
+<link href="{{ static('vendor/tailwind.css') }}" rel="stylesheet"/>
+<link href="{{ static('css/typography.css') }}" rel="stylesheet"/>
+<link href="{{ static('vendor/fonts.css') }}" rel="stylesheet"/>
 <style>
     .cite { font-size: var(--text-small); line-height: 1.4; font-weight: var(--weight-medium);
       padding:.05rem .45rem; margin:0 .15rem; border:1px solid #924c00;
@@ -209,8 +209,8 @@
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 {% block head_extra %}{% endblock %}
-<link href="/static/css/dark.css" rel="stylesheet"/>
-<link href="/static/css/mobile.css" rel="stylesheet"/>
+<link href="{{ static('css/dark.css') }}" rel="stylesheet"/>
+<link href="{{ static('css/mobile.css') }}" rel="stylesheet"/>
 </head>
 <body class="bg-background">
 {% block nav %}{% endblock %}
@@ -224,9 +224,9 @@
     try { localStorage.setItem('rti-theme', dark ? 'dark' : 'light'); } catch (err) {}
   });
 </script>
-<script src="/static/js/phrases.js"></script>
-<script src="/static/js/i18n.js"></script>
-<script src="/static/js/backup.js"></script>
-<script src="/static/js/account.js"></script>
+<script src="{{ static('js/phrases.js') }}"></script>
+<script src="{{ static('js/i18n.js') }}"></script>
+<script src="{{ static('js/backup.js') }}"></script>
+<script src="{{ static('js/account.js') }}"></script>
 </body>
 </html>
