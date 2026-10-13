@@ -235,6 +235,9 @@
     if (pill) {
       pill.textContent = LANG_NAMES[lang] + ' ▾';
     }
+    if (typeof applyPhrases === 'function') {
+      applyPhrases(lang);
+    }
   }
 
   // The lang-pill's dropdown menu reuses whatever tooltip span already sits
@@ -278,9 +281,193 @@
     }
   }
 
+  // ---- Phrase translation: everything not tagged with data-i18n ----
+  // English UI text in text nodes and in placeholder/title/aria-label is
+  // looked up in window.RTI_PHRASES (static/js/phrases.js); strings with a
+  // variable part (section numbers, dates, counts, error details) go through
+  // PATTERNS. Each node's English original is remembered, so switching back to
+  // English restores it, and a MutationObserver translates text that page
+  // scripts add later. Unknown strings are left as they are - that's how the
+  // Act's own text, generated letters and user data stay untouched.
+  var PHRASES = window.RTI_PHRASES || {};
+  var LANG_INDEX = { hi: 0, mr: 1 };
+  var activeLang = 'en';
+  var SKIP = 'script, style, noscript, textarea, code, .material-symbols-outlined, [data-i18n], ' +
+    '[data-i18n-skip], [data-title-el], #preview-content, #answer-content, #lang-pill, #lang-note';
+  var ATTRS = ['placeholder', 'title', 'aria-label'];
+
+  var SECTION = { hi: 'धारा', mr: 'कलम' };
+  var PAGE = 'पृ.';
+  var DISTANCE = { hi: 'दूरी', mr: 'अंतर' };
+  var MONTHS = {
+    hi: { Jan: 'जन॰', Feb: 'फ़र॰', Mar: 'मार्च', Apr: 'अप्रैल', May: 'मई', Jun: 'जून', Jul: 'जुल॰', Aug: 'अग॰', Sep: 'सित॰', Oct: 'अक्तू॰', Nov: 'नव॰', Dec: 'दिस॰' },
+    mr: { Jan: 'जाने.', Feb: 'फेब्रु.', Mar: 'मार्च', Apr: 'एप्रि.', May: 'मे', Jun: 'जून', Jul: 'जुलै', Aug: 'ऑग.', Sep: 'सप्टें.', Oct: 'ऑक्टो.', Nov: 'नोव्हें.', Dec: 'डिसें.' },
+  };
+  function months(s, l) {
+    return s.replace(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/g, function (m) { return MONTHS[l][m]; });
+  }
+  function pick(l, hi, mr) { return l === 'hi' ? hi : mr; }
+  function prefixed(hi, mr) {
+    return function (m, l) { return pick(l, hi, mr) + m[1]; };
+  }
+  var STRENGTH = {
+    hi: { Weak: 'कमज़ोर', Fair: 'ठीक-ठाक', Good: 'अच्छा', Strong: 'मज़बूत' },
+    mr: { Weak: 'कमकुवत', Fair: 'ठीक', Good: 'चांगला', Strong: 'मजबूत' },
+  };
+
+  var PATTERNS = [
+    [/^Section (\d+[A-Z]?(?:\([0-9a-z]+\))*)$/, function (m, l) { return SECTION[l] + ' ' + m[1]; }],
+    [/^Section (\S+) · p\.(\d+) · distance ([\d.]+)$/, function (m, l) { return SECTION[l] + ' ' + m[1] + ' · ' + PAGE + ' ' + m[2] + ' · ' + DISTANCE[l] + ' ' + m[3]; }],
+    [/^p\.(\d+) · distance ([\d.]+)$/, function (m, l) { return PAGE + ' ' + m[1] + ' · ' + DISTANCE[l] + ' ' + m[2]; }],
+    [/^p\.(\d+) · (\S+\.pdf)$/, function (m) { return PAGE + ' ' + m[1] + ' · ' + m[2]; }],
+    [/^Search results for "(.*)"$/, function (m, l) { return pick(l, '"' + m[1] + '" के लिए खोज परिणाम', '"' + m[1] + '" साठी शोध परिणाम'); }],
+    [/^Served by (.+)$/, function (m, l) { return pick(l, m[1] + ' द्वारा तैयार', m[1] + ' द्वारे तयार'); }],
+    [/^Saved (.+?) · (Letter generated|Form only)$/, function (m, l) {
+      var kind = m[2] === 'Letter generated' ? pick(l, 'पत्र तैयार', 'पत्र तयार') : pick(l, 'केवल फ़ॉर्म', 'फक्त फॉर्म');
+      return pick(l, 'सहेजा गया: ', 'जतन: ') + months(m[1], l) + ' · ' + kind;
+    }],
+    [/^Due (.+)$/, function (m, l) { return pick(l, 'अंतिम तिथि: ', 'अंतिम तारीख: ') + months(m[1], l); }],
+    [/^(.*) · Filed (.+)$/, function (m, l) { return m[1] + ' · ' + pick(l, 'दाखिल: ', 'दाखल: ') + months(m[2], l); }],
+    [/^Overdue by (\d+) days?$/, function (m, l) { return pick(l, m[1] + ' दिन की देरी', m[1] + ' दिवस उशीर'); }],
+    [/^(\d+) days? remaining - urgent$/, function (m, l) { return pick(l, m[1] + ' दिन शेष - तत्काल', m[1] + ' दिवस शिल्लक - तातडीचे'); }],
+    [/^(\d+) days? remaining$/, function (m, l) { return pick(l, m[1] + ' दिन शेष', m[1] + ' दिवस शिल्लक'); }],
+    [/^© (\d{4}) RTI Sahayak\. (.+)$/, function (m, l) { var rest = PHRASES[m[2]]; return '© ' + m[1] + ' RTI Sahayak. ' + (rest ? rest[LANG_INDEX[l]] : m[2]); }],
+    [/^Welcome back, (.+)\. Pick up where you left off\.$/, function (m, l) { return pick(l, 'फिर से स्वागत है, ' + m[1] + '। जहाँ छोड़ा था वहीं से शुरू करें।', 'पुन्हा स्वागत आहे, ' + m[1] + '. जिथे थांबला होता तिथून सुरू करा.'); }],
+    [/^Could not draft the application: (.*)$/, prefixed('आवेदन तैयार नहीं हो सका: ', 'अर्ज तयार होऊ शकला नाही: ')],
+    [/^Could not download the PDF: (.*)$/, prefixed('पीडीएफ डाउनलोड नहीं हो सका: ', 'पीडीएफ डाउनलोड होऊ शकली नाही: ')],
+    [/^Could not copy the text: (.*)$/, prefixed('टेक्स्ट कॉपी नहीं हो सका: ', 'मजकूर कॉपी होऊ शकला नाही: ')],
+    [/^Could not get an answer: (.*)$/, prefixed('उत्तर नहीं मिल सका: ', 'उत्तर मिळू शकले नाही: ')],
+    [/^Could not load statutory deadlines: (.*)\. Filings are still saved, but deadlines cannot be shown right now\.$/, function (m, l) {
+      return pick(l, 'वैधानिक समय-सीमाएं लोड नहीं हो सकीं: ' + m[1] + '। फाइलिंग सहेजी हुई हैं, लेकिन अभी समय-सीमाएं नहीं दिखाई जा सकतीं।',
+        'वैधानिक मुदती लोड होऊ शकल्या नाहीत: ' + m[1] + '. प्रकरणे जतन आहेत, पण सध्या मुदती दाखवता येत नाहीत.');
+    }],
+    [/^Could not verify (.+) in the retrieved grounding text - this deadline is omitted rather than shown unverified\.$/, function (m, l) {
+      return pick(l, 'प्राप्त आधार पाठ में ' + m[1] + ' की पुष्टि नहीं हो सकी - इसलिए यह समय-सीमा बिना पुष्टि के दिखाने के बजाय छोड़ दी गई है।',
+        'मिळालेल्या आधार मजकुरात ' + m[1] + ' ची पडताळणी होऊ शकली नाही - म्हणून ही मुदत पडताळणीशिवाय दाखवण्याऐवजी वगळली आहे.');
+    }],
+    [/^Couldn't reach (.+)\. Please try again\.$/, function (m, l) { return pick(l, m[1] + ' से संपर्क नहीं हो सका। कृपया फिर कोशिश करें।', m[1] + ' शी संपर्क होऊ शकला नाही. कृपया पुन्हा प्रयत्न करा.'); }],
+    [/^Your (.+) account has no verified email address\.$/, function (m, l) { return pick(l, 'आपके ' + m[1] + ' खाते में कोई सत्यापित ईमेल पता नहीं है।', 'तुमच्या ' + m[1] + ' खात्यात सत्यापित ईमेल पत्ता नाही.'); }],
+    [/^(Weak|Fair|Good|Strong)( - use at least 8 characters)?$/, function (m, l) {
+      return STRENGTH[l][m[1]] + (m[2] ? pick(l, ' - कम से कम 8 अक्षर रखें', ' - किमान 8 अक्षरे वापरा') : '');
+    }],
+    [/^This backup contains (\d+) filing\(s\) and (\d+) draft\(s\)(?: \(saved (.+?)\))?\. Merge with what's already on this device, or replace it entirely\?$/, function (m, l) {
+      var saved = m[3] ? pick(l, ' (सहेजा गया ' + m[3] + ')', ' (जतन ' + m[3] + ')') : '';
+      return pick(l, 'इस बैकअप में ' + m[1] + ' फाइलिंग और ' + m[2] + ' ड्राफ्ट हैं' + saved + '। इस डिवाइस पर पहले से मौजूद डेटा के साथ मिलाएं, या उसे पूरी तरह बदल दें?',
+        'या बॅकअपमध्ये ' + m[1] + ' प्रकरणे आणि ' + m[2] + ' मसुदे आहेत' + saved + '. या डिव्हाइसवरील विद्यमान डेटामध्ये विलीन करायचे, की तो पूर्णपणे बदलायचा?');
+    }],
+    [/^(Replaced existing data\.|Merged\.) (\d+) filing\(s\) imported(?: \((\d+) skipped as duplicates\))?, (\d+) draft\(s\) imported(?: \((\d+) skipped as duplicates\))?\.$/, function (m, l) {
+      var replaced = m[1].indexOf('Replaced') === 0;
+      if (l === 'hi') {
+        return (replaced ? 'मौजूदा डेटा बदल दिया गया। ' : 'मिला दिया गया। ') + m[2] + ' फाइलिंग आयात की गईं' +
+          (m[3] ? ' (' + m[3] + ' डुप्लिकेट होने से छोड़ी गईं)' : '') + ', ' + m[4] + ' ड्राफ्ट आयात किए गए' +
+          (m[5] ? ' (' + m[5] + ' डुप्लिकेट होने से छोड़े गए)' : '') + '।';
+      }
+      return (replaced ? 'विद्यमान डेटा बदलला. ' : 'विलीन केले. ') + m[2] + ' प्रकरणे आयात केली' +
+        (m[3] ? ' (' + m[3] + ' डुप्लिकेट म्हणून वगळली)' : '') + ', ' + m[4] + ' मसुदे आयात केले' +
+        (m[5] ? ' (' + m[5] + ' डुप्लिकेट म्हणून वगळले)' : '') + '.';
+    }],
+  ];
+
+  function phrase(text, lang) {
+    var hit = PHRASES[text];
+    if (hit) { return hit[LANG_INDEX[lang]]; }
+    for (var i = 0; i < PATTERNS.length; i++) {
+      var m = text.match(PATTERNS[i][0]);
+      if (m) { return PATTERNS[i][1](m, lang); }
+    }
+    return null;
+  }
+
+  // English original -> string in `lang` (the original itself if unknown).
+  function translateString(original, lang) {
+    if (lang === 'en' || !original) { return original; }
+    var core = original.replace(/\s+/g, ' ').trim();
+    if (!core) { return original; }
+    var out = phrase(core, lang);
+    if (out === null) { return original; }
+    return (/^\s/.test(original) ? ' ' : '') + out + (/\s$/.test(original) ? ' ' : '');
+  }
+
+  // Per node/attribute: the English original, and the last value written,
+  // so a later change by a page script is recognised as a new original.
+  var ORIG = new WeakMap();
+  var LAST = new WeakMap();
+
+  function translateText(node, lang) {
+    var parent = node.parentElement;
+    if (!parent || parent.closest(SKIP)) { return; }
+    var current = node.nodeValue;
+    var orig = ORIG.get(node);
+    if (orig === undefined || LAST.get(node) !== current) { orig = current; ORIG.set(node, orig); }
+    var out = translateString(orig, lang);
+    if (out !== current) { node.nodeValue = out; }
+    LAST.set(node, out);
+  }
+
+  function translateAttr(el, attr, lang) {
+    if (!el.hasAttribute(attr) || el.closest('#lang-pill, #lang-note, [data-i18n-skip]')) { return; }
+    if (attr === 'placeholder' && el.hasAttribute('data-i18n-placeholder')) { return; }
+    var current = el.getAttribute(attr);
+    var origs = ORIG.get(el) || {};
+    var lasts = LAST.get(el) || {};
+    if (origs[attr] === undefined || lasts[attr] !== current) { origs[attr] = current; }
+    var out = translateString(origs[attr], lang);
+    if (out !== current) { el.setAttribute(attr, out); }
+    lasts[attr] = out;
+    ORIG.set(el, origs);
+    LAST.set(el, lasts);
+  }
+
+  function translateTree(root, lang) {
+    if (root.nodeType === 3) { translateText(root, lang); return; }
+    if (root.nodeType !== 1) { return; }
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    var n;
+    while ((n = walker.nextNode())) { translateText(n, lang); }
+    var els = [root].concat(Array.prototype.slice.call(root.querySelectorAll('[placeholder], [title], [aria-label]')));
+    els.forEach(function (el) {
+      ATTRS.forEach(function (a) { if (el.hasAttribute && el.hasAttribute(a)) { translateAttr(el, a, lang); } });
+    });
+  }
+
+  var ORIGINAL_TITLE = document.title;
+  function translateTitle(lang) {
+    // "Page - RTI Sahayak", or the home page's "RTI Sahayak - Home"
+    var m = ORIGINAL_TITLE.match(/^(.+) - RTI Sahayak$/) || ORIGINAL_TITLE.match(/^RTI Sahayak - (.+)$/);
+    document.title = m ? ORIGINAL_TITLE.replace(m[1], translateString(m[1], lang)) : ORIGINAL_TITLE;
+  }
+
+  var observer = new MutationObserver(function (records) {
+    observer.disconnect(); // our own writes below must not re-trigger this
+    records.forEach(function (r) {
+      if (r.type === 'childList') {
+        r.addedNodes.forEach(function (node) { translateTree(node, activeLang); });
+      } else if (r.type === 'characterData') {
+        translateText(r.target, activeLang);
+      } else if (r.type === 'attributes') {
+        translateAttr(r.target, r.attributeName, activeLang);
+      }
+    });
+    observe();
+  });
+  function observe() {
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ATTRS });
+  }
+
+  function applyPhrases(lang) {
+    activeLang = lang;
+    observer.disconnect();
+    translateTree(document.body, lang);
+    translateTitle(lang);
+    observe();
+  }
+
   window.RTISahayakI18n = {
     getLanguage: getLanguage,
     setLanguage: setLanguage,
+    // English UI string -> current language (for text that never enters the
+    // DOM, e.g. setCustomValidity messages).
+    t: function (english) { return translateString(english, activeLang); },
   };
 
   var currentLang = getLanguage();

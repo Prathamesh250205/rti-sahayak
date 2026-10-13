@@ -86,4 +86,6 @@
   #lang-pill { padding-left: 6px; padding-right: 6px; }
   #generate-btn { min-width: 0; text-align: center; line-height: var(--leading-ui); }
   #generate-btn [data-icon] { display: none; }
+  /* Backup buttons: longer Marathi/Hindi labels need to wrap. */
+  #backup-panel .shrink-0 { flex-wrap: wrap; flex-shrink: 1; max-width: 100%; }
 }

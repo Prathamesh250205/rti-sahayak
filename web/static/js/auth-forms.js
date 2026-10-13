@@ -29,7 +29,8 @@
 
   var confirm = document.getElementById('confirm');
   if (pw && confirm) {
-    var check = function () { confirm.setCustomValidity(confirm.value && confirm.value !== pw.value ? "Passwords don't match" : ''); };
+    var check = function () { var msg = "Passwords don't match";
+      confirm.setCustomValidity(confirm.value && confirm.value !== pw.value ? (window.RTISahayakI18n ? window.RTISahayakI18n.t(msg) : msg) : ''); };
     pw.addEventListener('input', check);
     confirm.addEventListener('input', check);
   }
