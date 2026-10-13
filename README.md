@@ -446,11 +446,19 @@ Hosted on **Vercel** as a single Python function (FastAPI over ASGI):
   the ONNX embedding model (sha256-checked) into the bundle. The search index is committed
   in `data/index/`, so deploys don't re-ingest or need the PDF reader. `excludeFiles` keeps
   design files, tools and the corpus PDF out of the bundle.
-- Keep `requirements.txt` lean: above Vercel's standard bundle size, packages are installed
-  into the function's small temporary disk when an instance starts, and a heavy dependency
-  tree there fails with "No space left on device".
-- `/static` is served from Vercel's CDN (FastAPI `StaticFiles` mounts are promoted
-  automatically).
+- The bundle (~364 MB, 90 MB of it the model) is over the Python builder's 225 MiB
+  threshold, above which Vercel moves packages out and pip-installs them into `/tmp` on
+  every cold start (~2.8s, and the model then took 5-25s to load from there).
+  `VERCEL_SUPPORT_LARGE_FUNCTIONS=1` plus `VERCEL_PYTHON_DISABLE_RUNTIME_INSTALL=1` ship
+  everything in the bundle instead: a cold start is ~2.5s and the model loads in ~0.7s.
+- **Pages come from Vercel's CDN, not Python.** The main pages are identical for every
+  visitor (language, theme and the account menu are applied in the browser -
+  `static/js/account.js` fetches `/api/auth/me` only when the `rti_signed_in` hint cookie
+  is set), so `web/main.py` gives them `s-maxage`; Browse's Act data (`/api/act/*`) is
+  cached the same way. Templates on those pages must never render user data -
+  `tools/auth_selfcheck.py` fails if they do. The CDN copy is per deployment.
+- CSS/JS are linked through `static('path')`, which adds `?v=<content hash>`; `vercel.json`
+  lets browsers keep those URLs for a year.
 - `GET /healthz` reports the live chunk count (`chunk_count`) and resolved index path - a zero-chunk deploy
   (e.g. a build that skipped ingestion) shows up immediately instead of as a wall of
   refusals. `.github/workflows/uptime-monitor.yml` checks it every 30 minutes, 09:00-22:00
@@ -466,6 +474,7 @@ Hosted on **Vercel** as a single Python function (FastAPI over ASGI):
 | `DATABASE_URL` | Accounts - add a Neon Postgres database under the project's Storage tab and Vercel sets it |
 | `SMTP_*` | Optional: password-reset emails |
 | `GOOGLE_CLIENT_*`, `GITHUB_CLIENT_*` | Optional: social sign-in |
+| `VERCEL_SUPPORT_LARGE_FUNCTIONS`, `VERCEL_PYTHON_DISABLE_RUNTIME_INSTALL` | `1` and `1` - fast cold starts (see above) |
 
 `.env.example` documents each one.
 
