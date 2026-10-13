@@ -136,7 +136,10 @@ Ask a question about the RTI Act's procedure, rights, or exemptions.
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
+  var lastChunks = [];
+
   function renderChunks(chunks) {
+    lastChunks = chunks || [];
     sourceCards.innerHTML = '';
     (chunks || []).forEach(function (chunk, index) {
       var card = document.createElement('div');
@@ -149,10 +152,17 @@ Ask a question about the RTI Act's procedure, rights, or exemptions.
 
       var snippet = document.createElement('p');
       snippet.className = 'font-caption text-caption text-on-surface-variant mt-xs';
-      snippet.textContent = chunk.text.length > 200 ? chunk.text.slice(0, 200) + '...' : chunk.text;
+      var act = window.RTISahayakI18n ? window.RTISahayakI18n.actText(chunk) : { text: chunk.text, translated: false };
+      snippet.textContent = act.text.length > 200 ? act.text.slice(0, 200) + '...' : act.text;
 
       card.appendChild(meta);
       card.appendChild(snippet);
+      if (act.translated) {
+        var tag = document.createElement('p');
+        tag.className = 'font-caption text-caption text-outline italic mt-xs';
+        tag.textContent = 'Unofficial AI translation';
+        card.appendChild(tag);
+      }
       sourceCards.appendChild(card);
     });
   }
@@ -260,6 +270,11 @@ Ask a question about the RTI Act's procedure, rights, or exemptions.
     if (e.key === 'Enter') {
       submitQuestion();
     }
+  });
+  // Source cards follow the language pill (the answer itself stays in the
+  // language it was asked in).
+  window.addEventListener('rtisahayak:languagechange', function () {
+    renderChunks(lastChunks);
   });
 })();
 </script>

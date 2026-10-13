@@ -987,5 +987,9 @@ window.RTI_PHRASES = {
  "Show translation": [
   "अनुवाद दिखाएं",
   "अनुवाद दाखवा"
+ ],
+ "Unofficial AI translation": [
+  "अनौपचारिक एआई अनुवाद",
+  "अनधिकृत एआय अनुवाद"
  ]
 };

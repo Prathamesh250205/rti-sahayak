@@ -40,6 +40,12 @@ def _id_by_text() -> dict:
     result = _get_collection().get(include=["documents"])
     return dict(zip(result["documents"], result["ids"]))
 
+
+def chunk_translations(text: str) -> dict:
+    """{lang: translation} for an indexed chunk's text (Ask/Draft source cards)."""
+    chunk_id = _id_by_text().get(text)
+    return {lang: by_id[chunk_id] for lang, by_id in _translations().items() if chunk_id in by_id}
+
 # rag/ingest.py ids chunks "{filename}-c{chunk_id}", where chunk_id increments
 # in the order chunks were sliced out of the document - i.e. true reading
 # order, which page/section metadata alone can't give us (a section can span

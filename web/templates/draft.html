@@ -583,10 +583,17 @@ Fill in the form and click "Generate application" to see your drafted RTI applic
 
       var snippet = document.createElement('p');
       snippet.className = 'font-caption text-caption text-on-surface-variant mt-xs';
-      snippet.textContent = chunk.text.length > 200 ? chunk.text.slice(0, 200) + '...' : chunk.text;
+      var act = window.RTISahayakI18n ? window.RTISahayakI18n.actText(chunk) : { text: chunk.text, translated: false };
+      snippet.textContent = act.text.length > 200 ? act.text.slice(0, 200) + '...' : act.text;
 
       card.appendChild(meta);
       card.appendChild(snippet);
+      if (act.translated) {
+        var tag = document.createElement('p');
+        tag.className = 'font-caption text-caption text-outline italic mt-xs';
+        tag.textContent = 'Unofficial AI translation';
+        card.appendChild(tag);
+      }
       sourceCards.appendChild(card);
     });
   }

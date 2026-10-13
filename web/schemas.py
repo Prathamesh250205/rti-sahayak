@@ -1,5 +1,5 @@
 """Pydantic request/response models for the web/ API layer."""
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 
 class DraftRequest(BaseModel):
@@ -22,6 +22,14 @@ class ChunkOut(BaseModel):
     page: int
     source: str
     distance: float
+    translations: dict[str, str] = {}  # unofficial hi/mr text, filled in below
+
+    @model_validator(mode="after")
+    def _add_translations(self):
+        if not self.translations:
+            from web.api.act import chunk_translations
+            self.translations = chunk_translations(self.text)
+        return self
 
 
 class ClauseOut(BaseModel):

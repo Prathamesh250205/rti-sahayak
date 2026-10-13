@@ -468,6 +468,12 @@
     // English UI string -> current language (for text that never enters the
     // DOM, e.g. setCustomValidity messages).
     t: function (english) { return translateString(english, activeLang); },
+    // An Act chunk from the API -> {text, translated}: its unofficial
+    // translation in the current language when one exists, else the English.
+    actText: function (chunk) {
+      var translated = (chunk.translations || {})[getLanguage()];
+      return { text: translated || chunk.text, translated: !!translated };
+    },
   };
 
   var currentLang = getLanguage();
