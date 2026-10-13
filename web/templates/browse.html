@@ -99,6 +99,56 @@
   var searchInput = document.getElementById('act-search-input');
 
   var currentSection = null;
+  var lastQuery = null;
+  // The Act text comes back in the reader's language when an (unofficial, AI)
+  // translation exists - see tools/translate_act.py. showOriginal flips it back.
+  var showOriginal = false;
+  var OFFICIAL_PDF = {
+    hi: ['https://rti.dopt.gov.in/Writereaddata/RTI-ActinHindi.pdf', 'Official Hindi text (PDF)'],
+    mr: ['https://sic.maharashtra.gov.in/Site/PDF/rtiActs_MR.pdf', 'Official Marathi text (PDF)'],
+  };
+
+  function uiLang() {
+    return window.RTISahayakI18n ? window.RTISahayakI18n.getLanguage() : 'en';
+  }
+
+  function actLang() {
+    return showOriginal ? 'en' : uiLang();
+  }
+
+  // Shown above the text whenever the reader's language isn't English.
+  function translationNotice(anyTranslated) {
+    var lang = uiLang();
+    if (lang === 'en' || (!anyTranslated && !showOriginal)) {
+      return '';
+    }
+    var pdf = OFFICIAL_PDF[lang];
+    var html = '<div id="act-translation-note" class="mb-lg p-sm rounded-lg border border-custom-border bg-[#F5EADF] font-caption text-caption text-on-surface-variant flex flex-wrap items-center gap-x-md gap-y-xs">';
+    html += '<span>' + (showOriginal ? 'Showing the official English text.' : 'Unofficial AI translation of the official English text. For legal use, rely on the official text.') + '</span>';
+    if (pdf) {
+      html += '<a class="underline text-custom-ink" href="' + pdf[0] + '" target="_blank" rel="noopener">' + pdf[1] + '</a>';
+    }
+    html += '<button type="button" id="act-lang-toggle" class="underline text-custom-ink">' + (showOriginal ? 'Show translation' : 'Show original English') + '</button>';
+    return html + '</div>';
+  }
+
+  function wireToggle() {
+    var btn = document.getElementById('act-lang-toggle');
+    if (btn) {
+      btn.addEventListener('click', function () {
+        showOriginal = !showOriginal;
+        refresh();
+      });
+    }
+  }
+
+  function refresh() {
+    if (currentSection) {
+      loadSection(currentSection);
+    } else if (lastQuery) {
+      runSearch(lastQuery);
+    }
+  }
 
   function escapeHtml(s) {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -159,7 +209,7 @@
     setActiveSectionLink(section);
     sectionContent.innerHTML = '<p class="text-on-surface-variant italic">Loading...</p>';
 
-    fetch('/api/act/section/' + encodeURIComponent(section))
+    fetch('/api/act/section/' + encodeURIComponent(section) + '?lang=' + actLang())
       .then(function (r) {
         if (!r.ok) {
           return r.json().then(function (b) { throw new Error(b.detail || ('Request failed with status ' + r.status)); });
@@ -168,6 +218,7 @@
       })
       .then(function (data) {
         var html = '<div class="mb-lg"><h1 class="font-headline-lg text-headline-lg text-custom-ink">' + escapeHtml(data.section) + '</h1></div>';
+        html += translationNotice(data.chunks.some(function (c) { return c.translated; }));
         html += '<div class="font-headline-lg text-body-lg text-custom-ink leading-relaxed statutory-line-browse">';
         data.chunks.forEach(function (chunk) {
           html += '<p class="mb-2 font-headline-md text-body-lg whitespace-pre-wrap">' + escapeHtml(chunk.text) + '</p>';
@@ -175,6 +226,7 @@
         });
         html += '</div>';
         sectionContent.innerHTML = html;
+        wireToggle();
         askBtn.disabled = false;
       })
       .catch(function (err) {
@@ -184,11 +236,12 @@
 
   function runSearch(query) {
     currentSection = null;
+    lastQuery = query;
     breadcrumbLabel.textContent = 'Search results for "' + query + '"';
     askBtn.disabled = true;
     sectionContent.innerHTML = '<p class="text-on-surface-variant italic">Searching...</p>';
 
-    fetch('/api/act/search?q=' + encodeURIComponent(query))
+    fetch('/api/act/search?q=' + encodeURIComponent(query) + '&lang=' + actLang())
       .then(function (r) {
         if (!r.ok) {
           return r.json().then(function (b) { throw new Error(b.detail || ('Request failed with status ' + r.status)); });
@@ -200,7 +253,8 @@
           sectionContent.innerHTML = '<p class="text-on-surface-variant italic">No relevant sections found for &ldquo;' + escapeHtml(query) + '&rdquo;.</p>';
           return;
         }
-        var html = '<div class="space-y-md">';
+        var html = translationNotice(data.results.some(function (r) { return r.translated; }));
+        html += '<div class="space-y-md">';
         data.results.forEach(function (r) {
           var snippet = r.text.length > 300 ? r.text.slice(0, 300) + '...' : r.text;
           html += '<div class="bg-white border border-custom-border rounded-xl p-md cursor-pointer hover:border-custom-ink transition-colors" data-section="' + escapeHtml(r.section) + '">';
@@ -213,6 +267,7 @@
         });
         html += '</div>';
         sectionContent.innerHTML = html;
+        wireToggle();
         sectionContent.querySelectorAll('[data-section]').forEach(function (card) {
           card.addEventListener('click', function () {
             loadSection(card.getAttribute('data-section'));
@@ -254,6 +309,11 @@
       mobileNavLinks.classList.toggle('flex');
     });
   }
+
+  window.addEventListener('rtisahayak:languagechange', function () {
+    showOriginal = false;
+    refresh();
+  });
 
   loadSections();
 })();

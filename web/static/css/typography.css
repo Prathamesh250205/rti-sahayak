@@ -95,3 +95,6 @@ button:is(.text-label-mono, .text-caption, .text-body-md, .text-sm),
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
+
+/* Browse: links in the "unofficial translation" notice */
+#act-translation-note a, #act-translation-note button { text-decoration: underline; text-underline-offset: 2px; font-weight: 600; }

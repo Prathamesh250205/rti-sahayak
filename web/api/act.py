@@ -4,13 +4,41 @@ without modifying that module. Nothing here is hardcoded: every section name,
 chunk count, and piece of text comes straight out of the collection that
 rag/ingest.py populated from the actual corpus PDF(s).
 """
+import functools
+import json
+import os
 import re
 
 from fastapi import APIRouter, HTTPException
 
-from rag.retriever import RetrieverError, _get_collection, retrieve
+from rag.retriever import INDEX_DIR, RetrieverError, _get_collection, retrieve
 
 router = APIRouter()
+
+
+@functools.cache
+def _translations() -> dict:
+    """Unofficial Hindi/Marathi translations of each chunk, by chunk id
+    (tools/translate_act.py). The official Hindi/Marathi PDFs have no
+    extractable text, so these are what the site can show; the page labels
+    them and keeps the English one click away. Missing file = English only."""
+    try:
+        with open(os.path.join(INDEX_DIR, "translations.json"), encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+
+
+def _localise(chunk_id: str, text: str, lang: str) -> tuple[str, bool]:
+    translated = _translations().get(lang, {}).get(chunk_id)
+    return (translated, True) if translated else (text, False)
+
+
+@functools.cache
+def _id_by_text() -> dict:
+    # search results come from retrieve(), which returns text but not ids
+    result = _get_collection().get(include=["documents"])
+    return dict(zip(result["documents"], result["ids"]))
 
 # rag/ingest.py ids chunks "{filename}-c{chunk_id}", where chunk_id increments
 # in the order chunks were sliced out of the document - i.e. true reading
@@ -63,7 +91,7 @@ def list_sections():
 
 
 @router.get("/api/act/section/{section}")
-def get_section(section: str):
+def get_section(section: str, lang: str = "en"):
     """All chunks tagged with `section`, ordered by page."""
     try:
         collection = _get_collection()
@@ -77,17 +105,17 @@ def get_section(section: str):
     if not documents:
         raise HTTPException(status_code=404, detail=f"No chunks found for section {section!r}.")
 
-    chunks = [
-        {"text": doc, "page": meta.get("page"), "source": meta.get("source")}
-        for doc, meta in zip(documents, metadatas)
-    ]
+    chunks = []
+    for chunk_id, doc, meta in zip(result["ids"], documents, metadatas):
+        text, translated = _localise(chunk_id, doc, lang)
+        chunks.append({"text": text, "translated": translated, "page": meta.get("page"), "source": meta.get("source")})
     chunks.sort(key=lambda c: c["page"] if isinstance(c["page"], int) else 0)
 
     return {"section": section, "chunks": chunks}
 
 
 @router.get("/api/act/search")
-def search_act(q: str = ""):
+def search_act(q: str = "", lang: str = "en"):
     if not q.strip():
         raise HTTPException(status_code=400, detail="Query parameter 'q' is required.")
 
@@ -99,7 +127,8 @@ def search_act(q: str = ""):
     return {
         "query": q,
         "results": [
-            {"text": c.text, "section": c.section, "page": c.page, "source": c.source, "distance": c.distance}
+            dict(zip(("text", "translated"), _localise(_id_by_text().get(c.text, ""), c.text, lang)),
+                 section=c.section, page=c.page, source=c.source, distance=c.distance)
             for c in chunks
         ],
     }

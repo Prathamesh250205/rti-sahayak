@@ -17,7 +17,7 @@ is most legitimate requests.
 - **Draft** an RTI application from a plain-language problem - every procedural clause cited
   to the section of the Act that justifies it, exported as a ready-to-file PDF
 - **Ask** questions about the Act, answered only from its text with inline citations
-- **Browse** the Act section by section, and **Track** statutory deadlines for filings
+- **Browse** the Act section by section (in Hindi or Marathi too, as a labelled unofficial AI translation with the English one click away - `tools/translate_act.py`), and **Track** statutory deadlines for filings
 - English, Hindi and Marathi drafting
 - Optional **accounts**: email + password, **Continue with Google**, forgot / reset
   password, account settings
