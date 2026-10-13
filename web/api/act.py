@@ -1,19 +1,35 @@
-"""GET endpoints for browsing the RTI Act corpus - read directly from the
-same corpus index rag/retriever.py uses (via its _get_collection()),
-without modifying that module. Nothing here is hardcoded: every section name,
-chunk count, and piece of text comes straight out of the collection that
-rag/ingest.py populated from the actual corpus PDF(s).
+"""GET endpoints for browsing the RTI Act corpus. Nothing here is hardcoded:
+every section name, chunk count, and piece of text comes straight out of the
+index rag/ingest.py built from the actual corpus PDF(s).
+
+Browsing reads only data/index/chunks.json - never the embedding model, which
+takes 5-25s to load on a cold start (only /search needs it). Section data is
+the same for everyone and changes only on deploy, so the CDN caches it.
 """
 import functools
 import json
 import os
 import re
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 
-from rag.retriever import INDEX_DIR, RetrieverError, _get_collection, retrieve
+from rag.retriever import INDEX_DIR, RetrieverError, retrieve
 
 router = APIRouter()
+# Vercel's CDN keeps a copy per deployment (s-maxage), so most visitors are
+# answered without the Python function starting at all.
+CDN_CACHE = "public, max-age=300, s-maxage=86400, stale-while-revalidate=604800"
+
+
+@functools.cache
+def _chunks() -> list[tuple[str, str, dict]]:
+    """(id, text, metadata) for every indexed chunk, from chunks.json."""
+    try:
+        with open(os.path.join(INDEX_DIR, "chunks.json"), encoding="utf-8") as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        raise RetrieverError("RTI corpus is not ingested yet. Run `python -m rag.ingest` first.")
+    return list(zip(data["ids"], data["documents"], data["metadatas"]))
 
 
 @functools.cache
@@ -37,8 +53,7 @@ def _localise(chunk_id: str, text: str, lang: str) -> tuple[str, bool]:
 @functools.cache
 def _id_by_text() -> dict:
     # search results come from retrieve(), which returns text but not ids
-    result = _get_collection().get(include=["documents"])
-    return dict(zip(result["documents"], result["ids"]))
+    return {text: chunk_id for chunk_id, text, _ in _chunks()}
 
 
 def chunk_translations(text: str) -> dict:
@@ -62,20 +77,16 @@ def _chunk_order_key(chunk_id: str, source: str, page) -> tuple:
 
 
 @router.get("/api/act/sections")
-def list_sections():
+def list_sections(response: Response):
     """Distinct sections in the collection, each with its chunk count, in
     document order where determinable (see _chunk_order_key above)."""
     try:
-        collection = _get_collection()
+        chunks = _chunks()
     except RetrieverError as e:
         raise HTTPException(status_code=503, detail=str(e))
 
-    result = collection.get(include=["metadatas"])
-    ids = result["ids"]
-    metadatas = result["metadatas"]
-
     sections: dict[str, dict] = {}
-    for chunk_id, meta in zip(ids, metadatas):
+    for chunk_id, _, meta in chunks:
         section = meta.get("section") or "unknown"
         source = meta.get("source", "")
         page = meta.get("page")
@@ -93,30 +104,28 @@ def list_sections():
     for s in ordered:
         del s["_order_key"]
 
-    return {"sections": ordered, "total_chunks": len(ids)}
+    response.headers["Cache-Control"] = CDN_CACHE
+    return {"sections": ordered, "total_chunks": len(chunks)}
 
 
 @router.get("/api/act/section/{section}")
-def get_section(section: str, lang: str = "en"):
+def get_section(section: str, response: Response, lang: str = "en"):
     """All chunks tagged with `section`, ordered by page."""
     try:
-        collection = _get_collection()
+        matching = [c for c in _chunks() if c[2].get("section") == section]
     except RetrieverError as e:
         raise HTTPException(status_code=503, detail=str(e))
 
-    result = collection.get(where={"section": section}, include=["documents", "metadatas"])
-    documents = result["documents"]
-    metadatas = result["metadatas"]
-
-    if not documents:
+    if not matching:
         raise HTTPException(status_code=404, detail=f"No chunks found for section {section!r}.")
 
     chunks = []
-    for chunk_id, doc, meta in zip(result["ids"], documents, metadatas):
+    for chunk_id, doc, meta in matching:
         text, translated = _localise(chunk_id, doc, lang)
         chunks.append({"text": text, "translated": translated, "page": meta.get("page"), "source": meta.get("source")})
     chunks.sort(key=lambda c: c["page"] if isinstance(c["page"], int) else 0)
 
+    response.headers["Cache-Control"] = CDN_CACHE
     return {"section": section, "chunks": chunks}
 
 
