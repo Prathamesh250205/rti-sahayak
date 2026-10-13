@@ -38,7 +38,6 @@ from fastapi.responses import JSONResponse, StreamingResponse
 import llm.client as llm_client
 from agent.drafter import compose_letter, gather_grounding, understand_request
 from agent.intake import IntakeState
-from export.pdf_writer import build_pdf
 from web import state as web_state
 from web.rate_limit import is_rate_limited
 from web.schemas import ChunkOut, ClauseOut, DraftRequest, DraftResponse, PdfRequest
@@ -200,6 +199,9 @@ def create_draft(req: DraftRequest, request: Request):
 @router.post("/api/draft/pdf")
 def download_pdf(req: PdfRequest):
     try:
+        # Imported here: fpdf + fonttools add ~1s to a cold start, and only
+        # this endpoint needs them.
+        from export.pdf_writer import build_pdf
         pdf_bytes = build_pdf(req.application_text)
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})

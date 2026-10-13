@@ -6,5 +6,11 @@
       "maxDuration": 60,
       "excludeFiles": "{.venv/**,**/node_modules/**,design/**,docs/**,tools/**,data/corpus/**}"
     }
-  }
+  },
+  "headers": [
+    {
+      "source": "/static/vendor/fonts/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    }
+  ]
 }

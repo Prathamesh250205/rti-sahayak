@@ -1,4 +1,6 @@
-# Only for rebuilding the search index (python -m rag.ingest) - the deployed app
-# reads the committed data/index/ and never opens the PDF.
+# Only for maintenance scripts, never the deployed app:
+#   python -m rag.ingest        - rebuild the search index from the PDF (pymupdf)
+#   python -m tools.subset_icons - re-cut the icon font after adding an icon (brotli, for .woff2)
 -r requirements.txt
 pymupdf==1.28.2
+brotli==1.2.0
