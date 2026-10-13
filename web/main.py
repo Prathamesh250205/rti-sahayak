@@ -19,6 +19,7 @@ from rag.retriever import warm_up as warm_up_retriever
 from web import state as web_state
 from web.api.act import router as act_router
 from web.api.ask import router as ask_router
+from web.api.auth import COOKIE as AUTH_COOKIE
 from web.api.auth import current_user, oauth_providers
 from web.api.auth import router as auth_router
 from web.api.draft import router as draft_router
@@ -139,6 +140,24 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="RTI Sahayak", lifespan=lifespan)
+
+# Pages that look the same for every signed-out visitor (language and theme
+# are applied in the browser). Vercel's CDN serves these without starting the
+# Python function - a cold start is ~2.5s. Only requests without a session
+# cookie are ever cached, so no signed-in page (account menu, "Welcome back")
+# reaches the shared cache; Vary: Cookie keeps signed-in visitors off the
+# cached copy. The CDN copy lives per deployment.
+CDN_PAGES = {"/", "/ask", "/draft", "/browse", "/track", "/demo", "/legal", "/privacy", "/terms", "/support"}
+
+
+@app.middleware("http")
+async def cache_public_pages(request: Request, call_next):
+    response = await call_next(request)
+    if request.method == "GET" and request.url.path in CDN_PAGES and response.status_code == 200:
+        response.headers["Vary"] = "Cookie"
+        if AUTH_COOKIE not in request.cookies and "set-cookie" not in response.headers:
+            response.headers["Cache-Control"] = "public, max-age=0, s-maxage=86400, stale-while-revalidate=604800"
+    return response
 
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
