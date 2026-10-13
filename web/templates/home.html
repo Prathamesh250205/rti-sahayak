@@ -111,16 +111,18 @@
 <!-- CTA -->
 <section class="lp-cta reveal">
 <h2>Your right to information, drafted in minutes.</h2>
-{% if current_user(request) %}
-<p>Welcome back, {{ current_user(request).name }}. Pick up where you left off.</p>
+{# Signed-in variant is filled in by static/js/account.js #}
+<div id="cta-signed-in" hidden>
+<p id="cta-welcome"></p>
 <div class="lp-cta-row"><a class="btn btn-amber" href="/draft">Start drafting <span class="material-symbols-outlined">arrow_forward</span></a></div>
-{% else %}
+</div>
+<div id="cta-signed-out">
 <p>Create a free account, or start drafting right away - no sign-up required.</p>
 <div class="lp-cta-row">
 <a class="btn btn-amber" href="/signup">Create free account <span class="material-symbols-outlined">arrow_forward</span></a>
 <a class="btn btn-ghost" href="/draft">Draft without an account</a>
 </div>
-{% endif %}
+</div>
 </section>
 </div>
 </main>

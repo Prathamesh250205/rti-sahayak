@@ -1,31 +1,21 @@
 {# Sign-in / account control, included at the end of every page's desktop
-   and mobile nav. `mobile` is set by the mobile-nav include. #}
-{% set u = current_user(request) %}
+   and mobile nav. `mobile` is set by the mobile-nav include. Always rendered
+   signed-out - pages are cached at the CDN for everyone - and
+   static/js/account.js swaps the .acct-slot for the account menu when the
+   visitor is signed in. #}
 {% set theme_toggle %}<button class="theme-toggle" type="button" aria-label="Toggle dark mode" title="Toggle light / dark"><span class="material-symbols-outlined icon-dark">dark_mode</span><span class="material-symbols-outlined icon-light">light_mode</span></button>{% endset %}
 {% if mobile %}
 <div class="acct-mobile">
 {{ theme_toggle }}
-{% if u %}
-<a class="acct-hello" href="/account">Signed in as <strong>{{ u.name }}</strong></a>
-<form method="post" action="/logout"><button class="acct-ghost" type="submit">Sign out</button></form>
-{% else %}
+<span class="acct-slot" data-variant="mobile">
 <a class="acct-ghost" href="/login?next={{ request.url.path }}">Sign in</a>
 <a class="acct-cta" href="/signup?next={{ request.url.path }}">Create account</a>
-{% endif %}
+</span>
 </div>
-{% elif u %}
-{{ theme_toggle }}
-<details class="acct-menu">
-<summary aria-label="Account menu"><span class="acct-avatar">{{ u.name[:1] | upper }}</span></summary>
-<div class="acct-pop">
-<p class="acct-pop-name">{{ u.name }}</p>
-<p class="acct-pop-mail">{{ u.email }}</p>
-<a class="acct-pop-link" href="/account">Account settings</a>
-<form method="post" action="/logout"><button type="submit">Sign out</button></form>
-</div>
-</details>
 {% else %}
 {{ theme_toggle }}
+<span class="acct-slot" data-variant="desktop">
 <a class="acct-link" href="/login?next={{ request.url.path }}">Sign in</a>
 <a class="acct-cta" href="/signup?next={{ request.url.path }}">Get started</a>
+</span>
 {% endif %}

@@ -25,7 +25,7 @@ from email.message import EmailMessage
 from pathlib import Path
 
 from fastapi import APIRouter, Form, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from web.rate_limit import is_rate_limited
 
@@ -43,6 +43,10 @@ SECRET = (os.getenv("SESSION_SECRET") or secrets.token_hex(32)).encode()
 if ON_VERCEL and not os.getenv("SESSION_SECRET"):
     print("[auth] ERROR: SESSION_SECRET is not set - logins will randomly drop.", file=sys.stderr)
 COOKIE = "rti_session"
+# Readable by page JS, holds nothing but "1": pages are cached at the CDN and
+# rendered signed-out, and this tells static/js/account.js to fetch the
+# account menu from /api/auth/me. The session itself stays HttpOnly.
+HINT_COOKIE = "rti_signed_in"
 STATE_COOKIE = "rti_oauth_state"
 SESSION_DAYS_REMEMBER = 30
 SESSION_HOURS_DEFAULT = 12
@@ -200,12 +204,16 @@ def _render(request: Request, mode: str, status_code: int = 200, **ctx):
 
 
 def _set_session(response, user: sqlite3.Row, expires: int, persistent: bool):
-    response.set_cookie(
-        COOKIE, _session_value(user, expires),
-        max_age=max(expires - int(time.time()), 0) if persistent else None,
-        httponly=True, samesite="lax",
-        secure=_secure_cookies(),
-    )
+    max_age = max(expires - int(time.time()), 0) if persistent else None
+    response.set_cookie(COOKIE, _session_value(user, expires), max_age=max_age,
+                        httponly=True, samesite="lax", secure=_secure_cookies())
+    response.set_cookie(HINT_COOKIE, "1", max_age=max_age, samesite="lax", secure=_secure_cookies())
+    return response
+
+
+def _end_session(response):
+    response.delete_cookie(COOKIE)
+    response.delete_cookie(HINT_COOKIE)
     return response
 
 
@@ -310,11 +318,19 @@ def signup(request: Request, name: str = Form(""), email: str = Form(""), passwo
     return _signed_in(user, next, remember=True)
 
 
+@router.get("/api/auth/me")
+def me(request: Request):
+    """The signed-in user's name and email for the account menu, or 401."""
+    user = current_user(request)
+    headers = {"Cache-Control": "private, no-store"}
+    if not user:
+        return JSONResponse({"detail": "Not signed in."}, status_code=401, headers=headers)
+    return JSONResponse({"name": user["name"], "email": user["email"]}, headers=headers)
+
+
 @router.post("/logout")
 def logout():
-    response = RedirectResponse("/", status_code=303)
-    response.delete_cookie(COOKIE)
-    return response
+    return _end_session(RedirectResponse("/", status_code=303))
 
 
 # ---------- Forgot / reset password ----------
@@ -525,6 +541,4 @@ def account_delete(request: Request, confirm_email: str = Form("")):
     with _db() as conn:
         conn.execute("DELETE FROM resets WHERE user_id = ?", (user["id"],))
         conn.execute("DELETE FROM users WHERE id = ?", (user["id"],))
-    response = RedirectResponse("/", status_code=303)
-    response.delete_cookie(COOKIE)
-    return response
+    return _end_session(RedirectResponse("/", status_code=303))

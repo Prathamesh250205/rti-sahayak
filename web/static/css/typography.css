@@ -98,3 +98,6 @@ button:is(.text-label-mono, .text-caption, .text-body-md, .text-sm),
 
 /* Browse: links in the "unofficial translation" notice */
 #act-translation-note a, #act-translation-note button { text-decoration: underline; text-underline-offset: 2px; font-weight: 600; }
+
+/* Account controls: the wrapper static/js/account.js swaps adds no box */
+.acct-slot { display: contents; }

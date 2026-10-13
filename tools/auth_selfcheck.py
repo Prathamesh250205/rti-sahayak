@@ -15,7 +15,7 @@ for k in ("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GITHUB_CLIENT_ID", "GITHU
 from fastapi.testclient import TestClient  # noqa: E402
 
 import web.api.auth as auth  # noqa: E402
-from web.main import app  # noqa: E402
+from web.main import CDN_PAGES, app  # noqa: E402
 
 PROFILE = {}
 
@@ -54,7 +54,16 @@ def main():
     c = TestClient(app)
     r = oauth(c, "google", "new@example.com")
     assert r.status_code == 303 and r.headers["location"] == "/draft", r.headers
-    assert 'class="acct-avatar"' in c.get("/").text
+    assert c.get("/api/auth/me").json()["email"] == "new@example.com"
+    assert c.cookies.get(auth.HINT_COOKIE) == "1", "account.js has no hint to fetch the menu"
+
+    # CDN-cached pages are shared by everyone: a signed-in render must carry
+    # no user data, and must still be marked cacheable.
+    for path in CDN_PAGES:
+        r = c.get(path)
+        assert r.status_code == 200 and "s-maxage" in r.headers["cache-control"], path
+        assert "new@example.com" not in r.text and "Gita" not in r.text, f"{path} leaks user data into the CDN cache"
+    assert "no-store" in c.get("/api/auth/me").headers["cache-control"]
 
     # Tampered state is rejected.
     assert oauth(TestClient(app), "google", "new@example.com", tamper=True).status_code == 400
@@ -68,7 +77,7 @@ def main():
     squatter = TestClient(app)
     assert signup(squatter, "victim@example.com").status_code == 303
     assert oauth(TestClient(app), "google", "victim@example.com").status_code == 303
-    assert 'class="acct-avatar"' not in squatter.get("/").text, "squatter session survived"
+    assert squatter.get("/api/auth/me").status_code == 401, "squatter session survived"
     login = TestClient(app).post("/login", data={"email": "victim@example.com", "password": "Passw0rd!x"},
                                  follow_redirects=False)
     assert login.status_code == 401, "squatter password survived"
@@ -89,9 +98,16 @@ def main():
     # Delete needs the exact email; then the account is gone.
     assert me.post("/account/delete", data={"confirm_email": "wrong@example.com"}).status_code == 400
     me.post("/account/delete", data={"confirm_email": "ME@example.com"})
+    assert auth.HINT_COOKIE not in me.cookies, "hint cookie outlived the account"
     assert me.get("/account", follow_redirects=False).status_code == 303
     assert TestClient(app).post("/login", data={"email": "me@example.com", "password": "N3w-pass!!"},
                                 follow_redirects=False).status_code == 401
+    # Sign out clears both cookies.
+    out = TestClient(app)
+    signup(out, "out@example.com")
+    assert out.cookies.get(auth.HINT_COOKIE) == "1"
+    out.post("/logout")
+    assert auth.HINT_COOKIE not in out.cookies and out.get("/api/auth/me").status_code == 401
     print("auth self-check: all passed")
 
 
