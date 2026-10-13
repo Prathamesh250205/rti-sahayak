@@ -168,17 +168,28 @@
     });
   }
 
-  function loadSections() {
-    // Three distinct states below - a failed fetch and a successful-but-
-    // empty one must never look the same to the user (they didn't
-    // previously: an empty result silently rendered nothing at all).
-    fetch('/api/act/sections')
-      .then(function (r) {
+  // The whole Act in one language, fetched once (CDN-cached, ~25 KB
+  // gzipped): opening a section is then instant, with no network trip.
+  var actCache = {};
+
+  function actData(lang) {
+    if (!actCache[lang]) {
+      actCache[lang] = fetch('/api/act/all?lang=' + lang).then(function (r) {
         if (!r.ok) {
           return r.json().then(function (b) { throw new Error(b.detail || ('Request failed with status ' + r.status)); });
         }
         return r.json();
-      })
+      });
+      actCache[lang].catch(function () { delete actCache[lang]; });  // let a retry refetch
+    }
+    return actCache[lang];
+  }
+
+  function loadSections() {
+    // Three distinct states below - a failed fetch and a successful-but-
+    // empty one must never look the same to the user (they didn't
+    // previously: an empty result silently rendered nothing at all).
+    actData(actLang())
       .then(function (data) {
         if (!data.sections || data.sections.length === 0) {
           sectionNav.innerHTML = '<p class="px-md text-sm text-outline italic">No sections found in the corpus.</p>';
@@ -209,14 +220,12 @@
     setActiveSectionLink(section);
     sectionContent.innerHTML = '<p class="text-on-surface-variant italic">Loading...</p>';
 
-    fetch('/api/act/section/' + encodeURIComponent(section) + '?lang=' + actLang())
-      .then(function (r) {
-        if (!r.ok) {
-          return r.json().then(function (b) { throw new Error(b.detail || ('Request failed with status ' + r.status)); });
+    actData(actLang())
+      .then(function (act) {
+        var data = { section: section, chunks: act.chunks[section] };
+        if (!data.chunks) {
+          throw new Error('No chunks found for section ' + section + '.');
         }
-        return r.json();
-      })
-      .then(function (data) {
         var html = '<div class="mb-lg"><h1 class="font-headline-lg text-headline-lg text-custom-ink">' + escapeHtml(data.section) + '</h1></div>';
         html += translationNotice(data.chunks.some(function (c) { return c.translated; }));
         html += '<div class="font-headline-lg text-body-lg text-custom-ink leading-relaxed statutory-line-browse">';

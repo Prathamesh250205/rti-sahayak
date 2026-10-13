@@ -129,6 +129,16 @@ def get_section(section: str, response: Response, lang: str = "en"):
     return {"section": section, "chunks": chunks}
 
 
+@router.get("/api/act/all")
+def get_all(response: Response, lang: str = "en"):
+    """Every section's chunks in one response (~25 KB gzipped), so Browse
+    opens sections from memory instead of a network trip per click."""
+    sections = list_sections(Response())["sections"]
+    response.headers["Cache-Control"] = CDN_CACHE
+    return {"sections": sections,
+            "chunks": {s["section"]: get_section(s["section"], Response(), lang)["chunks"] for s in sections}}
+
+
 @router.get("/api/act/search")
 def search_act(q: str = "", lang: str = "en"):
     if not q.strip():
