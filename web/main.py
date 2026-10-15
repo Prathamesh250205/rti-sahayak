@@ -130,7 +130,7 @@ async def _warm_up_in_background() -> None:
         # Set even on failure - a wedged "still warming up" response
         # forever would be worse than letting retrieve() surface its own
         # real error on first genuine use.
-        web_state.ready = True
+        web_state.ready.set()
 
 
 @asynccontextmanager

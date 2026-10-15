@@ -33,7 +33,7 @@ def ask_question(req: AskRequest, request: Request):
             content={"error": "Too many requests have come from this network in a short time. Please wait a few minutes and try again."},
         )
 
-    if not web_state.ready:
+    if not web_state.ready.wait(web_state.READY_TIMEOUT_SECONDS):
         return AskResponse(
             answer="",
             citations=[],

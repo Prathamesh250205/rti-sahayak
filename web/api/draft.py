@@ -60,10 +60,9 @@ def create_draft(req: DraftRequest, request: Request):
         )
 
     # The retriever's embedding model loads in a background task (see
-    # web/main.py's lifespan) so the server can bind its port immediately.
-    # A request landing before that finishes would otherwise race an
-    # unloaded collection - tell the client plainly instead.
-    if not web_state.ready:
+    # web/main.py's lifespan). Wait for it - about a second on a cold
+    # instance - and only give up if it is genuinely stuck.
+    if not web_state.ready.wait(web_state.READY_TIMEOUT_SECONDS):
         return DraftResponse(
             application_text="",
             department_guess="",

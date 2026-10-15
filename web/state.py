@@ -8,11 +8,14 @@ None on every restart, which is the honest behavior for a live telemetry
 readout (no stale numbers surviving past a redeploy).
 """
 
+import threading
+
 warm_up_seconds: float | None = None
 last_request: dict | None = None
 
-# False from process start until the background warm-up task in
-# web/main.py's lifespan finishes (success or failure). Lets /api/draft
-# return a clear "still warming up" response instead of either blocking
-# the request or racing an unloaded retriever - see web/api/draft.py.
-ready: bool = False
+# Set when the background warm-up task in web/main.py's lifespan finishes
+# (success or failure). Pages come from the CDN, so a visitor's first
+# Generate/Ask is often the request that starts a cold instance: /api/draft
+# and /api/ask wait on this (~1s) rather than refuse while it loads.
+ready = threading.Event()
+READY_TIMEOUT_SECONDS = 45
